@@ -1,6 +1,6 @@
 [Core]
-Name = IMDB
-Module = imdb
+Name = OMDBMovie
+Module = omdbmovie
    
 [Documentation]
 Description = Default movie metadata provider

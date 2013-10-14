@@ -1,9 +1,0 @@
-[Core]
-Name = IMDBCover
-Module = imdb
-   
-[Documentation]
-Description = Cover movie metadata provider
-Author = Christoph Piechula
-Version = 1.0
-Website = http://www.omdbapi.com/

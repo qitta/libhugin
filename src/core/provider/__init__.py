@@ -4,14 +4,38 @@
 
 from yapsy.IPlugin import IPlugin
 
+__all__ = ['IMovieProvider', 'IPosterProvider', 'IBackdropProvider',
+           'IPlotProvider', 'IPersonProvider', 'IOutputConverter',
+           'IPostprocessing', 'IProvider']
 
-class IMovieMetadata(IPlugin):
+
+class IProvider(IPlugin):
     pass
 
 
-class IMovieCover(IPlugin):
+class IMovieProvider(IProvider):
     pass
 
 
-class IPlotProvider(IPlugin):
+class IPosterProvider(IProvider):
+    pass
+
+
+class IBackdropProvider(IProvider):
+    pass
+
+
+class IPlotProvider(IProvider):
+    pass
+
+
+class IPersonProvider(IProvider):
+    pass
+
+
+class IOutputConverter(IPlugin):
+    pass
+
+
+class IPostprocessing(IPlugin):
     pass
