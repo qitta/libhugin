@@ -1,0 +1,9 @@
+[Core]
+Name = OFDBMovie
+Module = ofdbmovie
+   
+[Documentation]
+Description = Default ofdb movie metadata provider
+Author = Christoph Piechula
+Version = 1.0
+Website = http://www.ofdbgw.org

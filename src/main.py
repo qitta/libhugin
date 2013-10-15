@@ -53,24 +53,29 @@ class PluginHandler:
         self._plugin_manager.collectPlugins()
 
     def activate_plugins_by_category(self, category):
-        plugins = self._plugin_manager.getPluginsOfCategory(category)
-        for pluginInfo in plugins:
-            self._plugin_manager.activatePluginByName(
-                name=pluginInfo.name,
-                category=category
-            )
-            self._plugin_from_category[category].append(pluginInfo)
-        self._category_active[category] = True
+        self._toggle_activate_plugins_by_categroy(category)
 
     def deactivate_plugins_by_category(self, category):
+        self._toggle_activate_plugins_by_categroy(category)
+
+    def _toggle_activate_plugins_by_categroy(self, category):
         plugins = self._plugin_manager.getPluginsOfCategory(category)
-        for pluginInfo in plugins:
-            self._plugin_manager.deactivatePluginByName(
-                name=pluginInfo.name,
-                category=category
-            )
-            self._plugin_from_category[category].remove(pluginInfo)
-        self._category_active[category] = False
+        if self._category_active[category] is False:
+            for pluginInfo in plugins:
+                self._plugin_manager.activatePluginByName(
+                    name=pluginInfo.name,
+                    category=category
+                )
+                self._plugin_from_category[category].append(pluginInfo)
+            self._category_active[category] = True
+        else:
+            for pluginInfo in plugins:
+                self._plugin_manager.deactivatePluginByName(
+                    name=pluginInfo.name,
+                    category=category
+                )
+                self._plugin_from_category[category].remove(pluginInfo)
+            self._category_active[category] = False
 
     def get_plugins_from_category(self, category):
         return [x.plugin_object for x in self._plugin_from_category[category]]
@@ -83,10 +88,25 @@ if __name__ == '__main__':
     pm = PluginHandler()
     print(pm.is_activated('Provider'))
     pm.activate_plugins_by_category('Provider')
-    print(pm.is_activated('Provider'))
+    print('Provider activated:', pm.is_activated('Provider'))
     plugins = pm.get_plugins_from_category('Provider')
-    print(len(plugins))
+
+    from core.downloader import DownloadQueue
+    import pprint
+    import time
+    dq = DownloadQueue()
     for plugin in plugins:
-        print(plugin.search(title=None))
+        dq.push(plugin.search(imdbid='tt1034302'))
+        dq.push(plugin.search(imdbid='tt2230342'))
+
+    while True:
+        time.sleep(0.5)
+        try:
+            result = dq.pop()
+            if result and result.status_code == 200:
+                pprint.pprint(result.json())
+        except LookupError as le:
+            print(le)
+
     pm.deactivate_plugins_by_category('Provider')
-    print(pm.is_activated('Provider'))
+    print('Provider activated:', pm.is_activated('Provider'))

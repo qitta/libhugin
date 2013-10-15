@@ -40,7 +40,7 @@ class DownloadQueue:
             if url not in self.url_to_future:
                 future = self._session.get(
                     url,
-                    timeout=0.2,
+                    timeout=5,
                     background_callback=partial(
                         self._response_finished,
                         url=url
