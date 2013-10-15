@@ -20,6 +20,12 @@ class IMovieProvider(IProvider):
 class IPosterProvider(IProvider):
     pass
 
+    def search(self, title=None, year=None, imdbid=None):
+        return 'Not implemented yet.'
+
+    def parse(self, content):
+        return 'Not implemented yet.'
+
 
 class IBackdropProvider(IProvider):
     pass
