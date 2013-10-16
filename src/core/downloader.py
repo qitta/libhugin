@@ -9,11 +9,11 @@ from queue import Queue, Empty
 import requests
 
 
-DEFAULT_USER_AGENT = "libhugin 'rebellic raven'/0.1"
+USER_AGENT = "libhugin 'rebellic raven'/0.1"
 
 
 class DownloadQueue:
-    def __init__(self, num_threads=50, user_agent=DEFAULT_USER_AGENT):
+    def __init__(self, num_threads=20, user_agent=USER_AGENT, timeout=5):
         '''
         A simple multithreaded add/get download queue wrapper using standard
         queue and future-requests
@@ -21,32 +21,35 @@ class DownloadQueue:
         :param num_threads: Number of threads to be used for simultanous
                             downloading
         '''
-        self._url_to_future_lock = Lock()
+        self._url_to_provider_data_lock = Lock()
         self._session = FuturesSession(
             executor=ThreadPoolExecutor(max_workers=num_threads)
         )
         self._session.headers['User-Agent'] = user_agent
         self._request_queue = Queue()
-        self.url_to_future = {}
+        self._url_to_provider_data = {}
+        self._timeout = timeout
 
-    def push(self, url):
+    def push(self, provider_data):
         '''
         Feeds DownloadQueue with url to fetch
         //TODO: Exchange url with ProviderDataObject
 
         :param url: Given url to be downloaded
         '''
-        with self._url_to_future_lock:
-            if url not in self.url_to_future:
+        with self._url_to_provider_data_lock:
+            url = provider_data['url']
+            if url not in self._url_to_provider_data:
                 future = self._session.get(
                     url,
-                    timeout=5,
+                    timeout=self._timeout,
                     background_callback=partial(
                         self._response_finished,
                         url=url
                     )
                 )
-                self.url_to_future[url] = future
+                provider_data['future'] = future
+                self._url_to_provider_data[url] = provider_data
 
     def pop(self):
         '''
@@ -56,10 +59,10 @@ class DownloadQueue:
         :raises:  LookupError if queue is empty.
         '''
         try:
-            return self._request_queue.get_nowait()
+            return self._request_queue.get(timeout=0.5)
         except Empty:
-            if len(self.url_to_future) > 0:
-                return self._get_stalled_futures()
+            if len(self._url_to_provider_data) > 0:
+                self._get_stalled_futures()
             else:
                 raise LookupError('download queue is empty.')
 
@@ -70,42 +73,25 @@ class DownloadQueue:
         :returns: Future result, if a timeout occured, 'timeout' is returned.
         :raises:  LookupError if queue is empty and no futures are done.
         '''
-        with self._url_to_future_lock:
-            for url, future in self.url_to_future.items():
-                if future.done() is True:
-                    try:
-                        return self.url_to_future.pop(url).result()
-                    except requests.exceptions.Timeout:
-                        return 'timeout while fetching:'.format(url)
+        with self._url_to_provider_data_lock:
+            stalled_urls = []
+            for url, provider_data in self._url_to_provider_data.items():
+                if provider_data['future'].done() is True:
+                    stalled_urls.append(url)
                 else:
                     raise LookupError('no url done yet.')
+            for url in stalled_urls:
+                result = self._url_to_provider_data.pop(url)
+                result['response'] = 'invalid.'
+                self._request_queue.put(result)
 
     def _response_finished(self, _, response, url):
         '''
         :param response: Finished response object
         :param url: Given url to download
         '''
-        with self._url_to_future_lock:
-            self.url_to_future.pop(url)
-        self._request_queue.put(response)
-
-
-# some testing purposes
-if __name__ == '__main__':
-    import time
-
-    dq = DownloadQueue()
-    imdbids = open('core/imdbid_small.txt', 'r').read().splitlines()
-
-    for imdbid in imdbids:
-        url = 'http://www.omdbapi.com/?i={0}'.format(imdbid)
-        # url = 'http://httpbin.org/get'
-        # url = 'http://ofdbgw.org/imdb2ofdb_json/{0}'.format(imdbid)
-        dq.push(url)
-
-    while True:
-        time.sleep(0.1)
-        try:
-            print(dq.pop())
-        except LookupError as le:
-            print(le)
+        with self._url_to_provider_data_lock:
+            provider_data = self._url_to_provider_data.pop(url)
+            provider_data['response'] = response
+            provider_data['future'] = None
+            self._request_queue.put(provider_data)

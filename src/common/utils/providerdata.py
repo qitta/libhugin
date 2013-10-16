@@ -9,5 +9,6 @@ def get_provider_data_object(provider, search_string, num_retries):
         'url': None,
         'response': None,
         'status_code': None,
-        'retries': int(num_retries)
+        'retries': int(num_retries),
+        'custom': None
     }
