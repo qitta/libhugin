@@ -73,7 +73,7 @@ class PluginHandler:
         self._category_active[category] = not is_active
 
     def get_plugins_from_category(self, category):
-        return [x.plugin_object for x in self._plugin_from_category[category]]
+        return [(x.plugin_object, x.name) for x in self._plugin_from_category[category]]
 
     def is_activated(self, category):
         return self._category_active[category]

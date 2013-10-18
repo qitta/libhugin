@@ -10,35 +10,53 @@ if __name__ == '__main__':
     print(pm.is_activated('Provider'))
     pm.activate_plugins_by_category('Provider')
     print('Provider activated:', pm.is_activated('Provider'))
-    plugins = pm.get_plugins_from_category('Provider')
+    provider_plugins = pm.get_plugins_from_category('Provider')
 
     from core.downloader import DownloadQueue
     import pprint
     import time
-    dq = DownloadQueue()
-    ph = ProviderHandler()
+    download_queue = DownloadQueue()
+    provider_handler = ProviderHandler()
+    movies = ['Sin City']
+    params = {'title': 'Watchmen', 'year': 2005, 'imdbid': None, 'items': 4}
 
-    for provider in plugins:
-        for item in open('core/tmp/imdbid_huge.txt', 'r').read().splitlines():
-            pd1 = ph.create_provider_data(
-                item,
-                5,
-                'Movie'
-            )
-            pd1['provider'] = provider
-            pd1['url'] = provider.search(imdbid=pd1['search'])
-            pprint.pprint(pd1)
-            print('...appending to download queue')
-            dq.push(pd1)
+    for provider in provider_plugins:
+        for movie_title in movies:
+            provider_item, name = provider
+            if 'OFDB' in name.upper():
+                pd1 = provider_handler.create_provider_data(
+                    provider=provider_item,
+                    search_params=params
+                )
+                pd1['provider'] = provider_item
+                pd1['url'] = provider_item.search(params)
+                download_queue.push(pd1)
 
-    i = 0
     while True:
         try:
-            result = dq.pop()
-            if result:
-                print('#:', i, result['response'])
-                i += 1
+            provider_data = download_queue.pop()
+            print('POPPED PROVIDERDATA:', provider_data)
+            provider = provider_data.get('provider')
+            print('PROVIDER', provider)
+            response = provider_data.get('response')
+            if response:
+                result = provider.parse(
+                    response,
+                    params
+                )
+                if isinstance(result, list):
+                    for url in result:
+                        pd = provider_handler.create_provider_data(
+                            provider=provider_data.get('provider'),
+                            search_params=provider_data.get('params')
+                        )
+                        print('PROVIDERDATA NEW:', pd)
+                        download_queue.push(pd)
+                else:
+                    print('no parse feedback')
         except LookupError as le:
-            print(le)
+            print('EXCEPTION:', le)
+
+
     #pm.deactivate_plugins_by_category('Provider')
     #print('Provider activated:', pm.is_activated('Provider'))

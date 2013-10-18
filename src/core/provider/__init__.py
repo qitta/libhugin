@@ -20,10 +20,10 @@ class IMovieProvider(IProvider):
 class IPosterProvider(IProvider):
     pass
 
-    def search(self, title=None, year=None, imdbid=None):
+    def search(self, search_params):
         return 'Not implemented yet.'
 
-    def parse(self, content):
+    def parse(self, result, search_params):
         return 'Not implemented yet.'
 
 

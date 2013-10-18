@@ -39,7 +39,7 @@ class DownloadQueue:
         '''
         with self._url_to_provider_data_lock:
             url = provider_data['url']
-            if url not in self._url_to_provider_data:
+            if url and url not in self._url_to_provider_data:
                 future = self._session.get(
                     url,
                     timeout=self._timeout,
@@ -59,6 +59,8 @@ class DownloadQueue:
         :raises:  LookupError if queue is empty.
         '''
         try:
+            print('QUEUE SIZE:', self._request_queue.qsize())
+            print('PROVIDERARRAY SIZE:', len(self._url_to_provider_data))
             return self._request_queue.get(timeout=0.5)
         except Empty:
             if len(self._url_to_provider_data) > 0:
@@ -95,3 +97,29 @@ class DownloadQueue:
             provider_data['response'] = response
             provider_data['future'] = None
             self._request_queue.put(provider_data)
+
+if __name__ == '__main__':
+    import unittest
+    import time
+
+    class TestDownloadQueue(unittest.TestCase):
+
+        def setUp(self):
+            self._dq = DownloadQueue()
+
+        def test_push(self):
+            pd = {
+                'provider': 'Testprovider',
+                'type': 'Testtpye',
+                'search_params': 'Testsearchparams',
+                'url': 'alskdjalsdja',
+                'response': None,
+                'retries': 5,
+                'custom': None
+            }
+            self._dq.push(pd)
+            time.sleep(3)
+            pd = self._dq.pop()
+            print('INFO:',  pd)
+
+    unittest.main()
