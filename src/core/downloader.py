@@ -33,9 +33,9 @@ class DownloadQueue:
     def push(self, provider_data):
         '''
         Feeds DownloadQueue with url to fetch
-        //TODO: Exchange url with ProviderDataObject
 
-        :param url: Given url to be downloaded
+        :param provider_data: A dictionary that encapsulates some provider
+        information url, response, provider
         '''
         with self._url_to_provider_data_lock:
             url = provider_data['url']
@@ -59,12 +59,10 @@ class DownloadQueue:
         :raises:  LookupError if queue is empty.
         '''
         try:
-            print('QUEUE SIZE:', self._request_queue.qsize())
-            print('PROVIDERARRAY SIZE:', len(self._url_to_provider_data))
             return self._request_queue.get(timeout=0.5)
         except Empty:
             if len(self._url_to_provider_data) > 0:
-                self._get_stalled_futures()
+                return self._get_stalled_futures()
             else:
                 raise LookupError('download queue is empty.')
 
@@ -84,8 +82,9 @@ class DownloadQueue:
                     raise LookupError('no url done yet.')
             for url in stalled_urls:
                 result = self._url_to_provider_data.pop(url)
-                result['response'] = 'invalid.'
+                result['response'] = None
                 self._request_queue.put(result)
+            return self._request_queue.get()
 
     def _response_finished(self, _, response, url):
         '''
@@ -101,25 +100,46 @@ class DownloadQueue:
 if __name__ == '__main__':
     import unittest
     import time
+    from core.providerhandler import create_provider_data
 
     class TestDownloadQueue(unittest.TestCase):
 
         def setUp(self):
             self._dq = DownloadQueue()
 
-        def test_push(self):
-            pd = {
-                'provider': 'Testprovider',
-                'type': 'Testtpye',
-                'search_params': 'Testsearchparams',
-                'url': 'alskdjalsdja',
-                'response': None,
-                'retries': 5,
-                'custom': None
-            }
+        def test_push_pop(self):
+            pd = create_provider_data(
+                provider='',
+                retries=5
+            )
+
+            #  try downloading valid url
+            pd['url'] = 'http://www.google.de'
             self._dq.push(pd)
-            time.sleep(3)
+            time.sleep(1)
             pd = self._dq.pop()
-            print('INFO:',  pd)
+            self.assertTrue(pd is not None)
+            self.assertTrue(pd['response'] is not None)
+
+            #  try downloading invalid url
+            pd['url'] = 'a9sduasjd'
+            self._dq.push(pd)
+            time.sleep(1)
+            pd = self._dq.pop()
+            self.assertTrue(pd is not None)
+            self.assertTrue(pd['response'] is None)
+
+            # pull from empty queue, LookupError will tell us the truth
+            with self.assertRaisesRegex(
+                LookupError,
+                'download queue is empty.'
+            ):
+                pd = self._dq.pop()
+
+            # try to pop before download is finished, LoopupError should rise
+            with self.assertRaisesRegex(LookupError, 'no url done yet.'):
+                pd['url'] = 'http://up.nullcat.de/hft/combined.pdf'
+                self._dq.push(pd)
+                pd = self._dq.pop()
 
     unittest.main()

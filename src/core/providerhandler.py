@@ -5,7 +5,20 @@
 from core.pluginhandler import PluginHandler
 
 
-class ProviderHandler:
-    def create_provider_data(self, **kwargs):
-        kwargs['response'] = kwargs['url'] = kwargs['custom'] = None
-        return kwargs
+def create_provider_data(**kwargs):
+    kwargs['response'] = kwargs['url'] = kwargs['custom'] = None
+    return kwargs
+
+if __name__ == '__main__':
+    import unittest
+    class TestProviderUtils(unittest.TestCase):
+
+
+        def test(self):
+            pd = create_provider_data(
+                provider='some_prov',
+            )
+            pd['url'] = 'http://google.de'
+            print('INFO:',  pd)
+
+    unittest.main()
