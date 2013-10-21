@@ -2,10 +2,10 @@
 # encoding: utf-8
 
 
+from common.utils.provider import string_similarity_ratio
 from yapsy.IPlugin import IPlugin
-from urllib.parse import urlencode
 import core.provider as provider
-import difflib
+import json
 
 
 class OFDBMovie(provider.IMovieProvider):
@@ -19,11 +19,12 @@ class OFDBMovie(provider.IMovieProvider):
         else:
             path, query = 'search_json', search_params['title']
 
-        return self._base_url.format(path=path, query=query)
+        return (self._base_url.format(path=path, query=query), False)
 
     def parse(self, response, search_params):
-        ofdb_response = response.json().get('ofdbgw')
+        ofdb_response = json.loads(response).get('ofdbgw')
         status = ofdb_response['status']
+        print('Status:', status)
         if status['rcode'] == 0:
             select_parse_method = {
                 'movie': self._parse_movie_module,
@@ -32,13 +33,15 @@ class OFDBMovie(provider.IMovieProvider):
             }.get(status['modul'])
 
             if select_parse_method is not None:
-                return select_parse_method(ofdb_response['resultat'], search_params)
+                return select_parse_method(
+                    ofdb_response['resultat'],
+                    search_params
+                )
 
     def _parse_imdb2ofdb_module(self, result, _):
         return self._build_movie_url([result['ofdbid']])
 
     def _parse_search_module(self, result, search_params):
-
         # create similarity matrix for title, check agains german and original
         # title, higher ratio wins
         similarity_map = []
@@ -48,7 +51,7 @@ class OFDBMovie(provider.IMovieProvider):
             for title_key in ['titel_de', 'titel_orig']:
                 ratio = max(
                     ratio,
-                    self._string_similarity_ratio(
+                    string_similarity_ratio(
                         result[title_key],
                         search_params['title']
                     )
@@ -76,9 +79,6 @@ class OFDBMovie(provider.IMovieProvider):
             )
         return url_list
 
-    def _string_similarity_ratio(self, s1, s2):
-        return difflib.SequenceMatcher(None, s1.upper(), s2.upper()).ratio()
-
     def activate(self):
         provider.IMovieProvider.activate(self)
         print('activating... ', __name__)
@@ -86,3 +86,46 @@ class OFDBMovie(provider.IMovieProvider):
     def deactivate(self):
         provider.IMovieProvider.deactivate(self)
         print('deactivating... ', __name__)
+
+
+if __name__ == '__main__':
+    from core.providerhandler import create_provider_data
+    import unittest
+
+    class TestOFDBMovie(unittest.TestCase):
+
+        def setUp(self):
+            self._pd = create_provider_data()
+            self._ofdb = OFDBMovie()
+            with open('core/tmp/ofdb_response.json', 'r') as f:
+                self._ofdb_response_fail = f.read()
+
+            with open('core/tmp/ofdb_response_fail.json', 'r') as f:
+                self._ofdb_response = f.read()
+
+        def test_search_title(self):
+            params = {'title': 'Sin City', 'imdbid': None}
+            url = 'http://ofdbgw.org/search_json/Sin City'
+            self.assertTrue(self._ofdb.search(params), url)
+
+        def test_search_title_imdbid(self):
+            params = {'title': 'Sin City', 'imdbid': 'tt2389238'}
+            url = 'http://ofdbgw.org/imdb2ofdb_json/tt2389238'
+            self.assertTrue(self._ofdb.search(params), url)
+
+        def test_search_imdbid_only(self):
+            params = {'title': None, 'imdbid': 'tt2389238'}
+            url = 'http://ofdbgw.org/imdb2ofdb_json/tt2389238'
+            self.assertTrue(self._ofdb.search(params), url)
+
+        def test_parse_response(self):
+            params = {'title': 'Sin City', 'imdbid': None, 'items': 5}
+            r = self._ofdb.parse(self._ofdb_response, params)
+            print(r)
+
+        def test_parse_response_fail(self):
+            params = {'title': 'Sin City', 'imdbid': None, 'items': 5}
+            r = self._ofdb.parse(self._ofdb_response_fail, params)
+            print(r)
+
+    unittest.main()

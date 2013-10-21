@@ -1,11 +1,12 @@
 #/usr/bin/env python
 # encoding: utf-8
 
-from requests_futures.sessions import FuturesSession
+from requests.exceptions import Timeout, InvalidSchema, ConnectionError
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from threading import Lock
 from queue import Queue, Empty
+import urllib.request
 import requests
 
 
@@ -13,7 +14,7 @@ USER_AGENT = "libhugin 'rebellic raven'/0.1"
 
 
 class DownloadQueue:
-    def __init__(self, num_threads=20, user_agent=USER_AGENT, timeout=5):
+    def __init__(self, num_threads=50, user_agent=USER_AGENT, timeout=1):
         '''
         A simple multithreaded add/get download queue wrapper using standard
         queue and future-requests
@@ -22,13 +23,26 @@ class DownloadQueue:
                             downloading
         '''
         self._url_to_provider_data_lock = Lock()
-        self._session = FuturesSession(
-            executor=ThreadPoolExecutor(max_workers=num_threads)
-        )
-        self._session.headers['User-Agent'] = user_agent
+        self._executor = ThreadPoolExecutor(max_workers=num_threads)
+        self._headers = {'User-Agent': user_agent}
         self._request_queue = Queue()
         self._url_to_provider_data = {}
         self._timeout = timeout
+
+    def _fetch_url(self, url, timeout):
+        return requests.get(url, timeout=timeout, headers=self._headers)
+        # return urllib.request.urlopen(url, timeout=timeout)
+
+    def _future_callback(self, url, future):
+        with self._url_to_provider_data_lock:
+            provider_data = self._url_to_provider_data.pop(url)
+            try:
+                provider_data['response'] = future.result()
+                provider_data['response'].close()
+            except (Timeout, InvalidSchema, ConnectionError) as e:
+                print(e)
+                provider_data['retries'] -= 1
+            self._request_queue.put(provider_data)
 
     def push(self, provider_data):
         '''
@@ -37,65 +51,32 @@ class DownloadQueue:
         :param provider_data: A dictionary that encapsulates some provider
         information url, response, provider
         '''
-        with self._url_to_provider_data_lock:
-            url = provider_data['url']
-            if url and url not in self._url_to_provider_data:
-                future = self._session.get(
-                    url,
-                    timeout=self._timeout,
-                    background_callback=partial(
-                        self._response_finished,
-                        url=url
-                    )
-                )
-                provider_data['future'] = future
+        url = provider_data['url']
+        if url and url not in self._url_to_provider_data:
+            with self._url_to_provider_data_lock:
                 self._url_to_provider_data[url] = provider_data
+            self._executor.submit(
+                self._fetch_url,
+                url=url,
+                timeout=self._timeout).add_done_callback(
+                    partial(self._future_callback, url)
+                )
 
     def pop(self):
         '''
-        Simple DownloadQueue getter
+        Simple DownloadQueue get wrapper
 
         :returns: Next avaiable response object.
-        :raises:  LookupError if queue is empty.
+        :raises:  Empty if queue is empty.
         '''
         try:
-            return self._request_queue.get(timeout=0.5)
+            return self._request_queue.get_nowait()
         except Empty:
-            if len(self._url_to_provider_data) > 0:
-                return self._get_stalled_futures()
+            if not len(self._url_to_provider_data) > 0:
+                raise
             else:
-                raise LookupError('download queue is empty.')
+                return self._request_queue.get()
 
-    def _get_stalled_futures(self):
-        '''
-        Checks futures dictionary for stalled or timeouted futures.
-
-        :returns: Future result, if a timeout occured, 'timeout' is returned.
-        :raises:  LookupError if queue is empty and no futures are done.
-        '''
-        with self._url_to_provider_data_lock:
-            stalled_urls = []
-            for url, provider_data in self._url_to_provider_data.items():
-                if provider_data['future'].done() is True:
-                    stalled_urls.append(url)
-                else:
-                    raise LookupError('no url done yet.')
-            for url in stalled_urls:
-                result = self._url_to_provider_data.pop(url)
-                result['response'] = None
-                self._request_queue.put(result)
-            return self._request_queue.get()
-
-    def _response_finished(self, _, response, url):
-        '''
-        :param response: Finished response object
-        :param url: Given url to download
-        '''
-        with self._url_to_provider_data_lock:
-            provider_data = self._url_to_provider_data.pop(url)
-            provider_data['response'] = response
-            provider_data['future'] = None
-            self._request_queue.put(provider_data)
 
 if __name__ == '__main__':
     import unittest
@@ -106,40 +87,36 @@ if __name__ == '__main__':
 
         def setUp(self):
             self._dq = DownloadQueue()
+            self._urls = ['http://www.nullcat.de', 'http://httpbin.org/get']
 
-        def test_push_pop(self):
+        def _create_dummy_provider(self, url):
             pd = create_provider_data(
                 provider='',
                 retries=5
             )
+            pd['url'] = url
+            return pd
 
-            #  try downloading valid url
-            pd['url'] = 'http://www.google.de'
-            self._dq.push(pd)
-            time.sleep(1)
-            pd = self._dq.pop()
-            self.assertTrue(pd is not None)
-            self.assertTrue(pd['response'] is not None)
+        def test_push_pop(self):
+            f = open('core/tmp/imdbid_small.txt', 'r').read().splitlines()
+            for item in f:
+                url = 'http://www.omdbapi.com/?i={imdbid}'.format(imdbid=item)
+                p = self._create_dummy_provider(url)
+                self._dq.push(p)
 
-            #  try downloading invalid url
-            pd['url'] = 'a9sduasjd'
-            self._dq.push(pd)
-            time.sleep(1)
-            pd = self._dq.pop()
-            self.assertTrue(pd is not None)
-            self.assertTrue(pd['response'] is None)
+            for item in f:
+                print(self._dq.pop())
 
-            # pull from empty queue, LookupError will tell us the truth
-            with self.assertRaisesRegex(
-                LookupError,
-                'download queue is empty.'
-            ):
+            for url in self._urls:
+                pd = self._create_dummy_provider(url)
+                pd = self._dq.push(pd)
                 pd = self._dq.pop()
+                self.assertTrue(pd is not None)
+                self.assertTrue(pd['response'] is not None)
 
-            # try to pop before download is finished, LoopupError should rise
-            with self.assertRaisesRegex(LookupError, 'no url done yet.'):
-                pd['url'] = 'http://up.nullcat.de/hft/combined.pdf'
-                self._dq.push(pd)
-                pd = self._dq.pop()
+        def test_pop_from_empty(self):
+            # pull from empty queue, Empty Exception will be raised
+            with self.assertRaises(Empty):
+                self._dq.pop()
 
     unittest.main()
