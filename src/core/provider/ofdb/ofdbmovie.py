@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-
 from common.utils.provider import string_similarity_ratio
 import core.provider as provider
 import json
@@ -60,6 +59,7 @@ class OFDBMovie(provider.IMovieProvider):
                 )
             similarity_map.append({'ofdbid': result['id'], 'ratio': ratio})
 
+        print(similarity_map)
         # sort by ratio, generate ofdbid list with requestet item count
         similarity_map.sort(
             key=lambda value: value['ratio'],
@@ -127,11 +127,13 @@ if __name__ == '__main__':
 
         def test_search_title(self):
             self._params['imdbid'] = self._params['items'] = None
+            print('search title:', self._params)
             url = 'http://ofdbgw.org/search_json/Sin City'
             self.assertTrue(self._ofdb.search(self._params), url)
 
         def test_search_title_imdbid(self):
             self._params['items'] = None
+            print('search title and imdbid:', self._params)
             url = 'http://ofdbgw.org/imdb2ofdb_json/tt0401792'
             result, finished = self._ofdb.search(self._params)
             self.assertFalse(finished)
@@ -139,6 +141,7 @@ if __name__ == '__main__':
 
         def test_search_imdbid_only(self):
             self._params['items'] = self._params['title'] = None
+            print('search imdbid only:', self._params)
             url = 'http://ofdbgw.org/imdb2ofdb_json/tt0401792'
             result, finished = self._ofdb.search(self._params)
             self.assertFalse(finished)
