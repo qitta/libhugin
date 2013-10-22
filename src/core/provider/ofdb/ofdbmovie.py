@@ -3,14 +3,12 @@
 
 
 from common.utils.provider import string_similarity_ratio
-from yapsy.IPlugin import IPlugin
 import core.provider as provider
 import json
 
 
 class OFDBMovie(provider.IMovieProvider):
     def __init__(self):
-        print('__init__ ofdb Movie Provider.')
         self._base_url = 'http://ofdbgw.org/{path}/{query}'
 
     def search(self, search_params):
@@ -24,7 +22,9 @@ class OFDBMovie(provider.IMovieProvider):
     def parse(self, response, search_params):
         ofdb_response = json.loads(response).get('ofdbgw')
         status = ofdb_response['status']
-        print('Status:', status)
+        if status['rcode'] == 4:
+            return ([], True)
+
         if status['rcode'] == 0:
             select_parse_method = {
                 'movie': self._parse_movie_module,
@@ -37,9 +37,11 @@ class OFDBMovie(provider.IMovieProvider):
                     ofdb_response['resultat'],
                     search_params
                 )
+        else:
+            return (None, False)
 
     def _parse_imdb2ofdb_module(self, result, _):
-        return self._build_movie_url([result['ofdbid']])
+        return (self._build_movie_url([result['ofdbid']]), False)
 
     def _parse_search_module(self, result, search_params):
         # create similarity matrix for title, check agains german and original
@@ -66,10 +68,15 @@ class OFDBMovie(provider.IMovieProvider):
         item_count = min(len(similarity_map), search_params['items'])
 
         matches = [item['ofdbid'] for item in similarity_map[:item_count]]
-        return self._build_movie_url(matches)
+        return (self._build_movie_url(matches), False)
 
     def _parse_movie_module(self, result, _):
-        print(result['titel'])
+        result = {
+            'title': result['titel'],
+            'year': result['jahr'],
+            'imdbid': result['imdbid'],
+        }
+        return (result, True)
 
     def _build_movie_url(self, ofdbid_list):
         url_list = []
@@ -97,35 +104,69 @@ if __name__ == '__main__':
         def setUp(self):
             self._pd = create_provider_data()
             self._ofdb = OFDBMovie()
-            with open('core/tmp/ofdb_response.json', 'r') as f:
+            self._params = {
+                'title': 'Sin City',
+                'imdbid': 'tt0401792',
+                'items': 5
+            }
+            self._matches = [
+                'http://ofdbgw.org/movie_json/72886',
+                'http://ofdbgw.org/movie_json/181754',
+                'http://ofdbgw.org/movie_json/16429',
+                'http://ofdbgw.org/movie_json/157214',
+                'http://ofdbgw.org/movie_json/85240'
+            ]
+            with open('core/tmp/ofdb_response_fail.json', 'r') as f:
                 self._ofdb_response_fail = f.read()
 
-            with open('core/tmp/ofdb_response_fail.json', 'r') as f:
+            with open('core/tmp/ofdb_response_movie.json', 'r') as f:
+                self._ofdb_response_movie = f.read()
+
+            with open('core/tmp/ofdb_response.json', 'r') as f:
                 self._ofdb_response = f.read()
 
         def test_search_title(self):
-            params = {'title': 'Sin City', 'imdbid': None}
+            self._params['imdbid'] = self._params['items'] = None
             url = 'http://ofdbgw.org/search_json/Sin City'
-            self.assertTrue(self._ofdb.search(params), url)
+            self.assertTrue(self._ofdb.search(self._params), url)
 
         def test_search_title_imdbid(self):
-            params = {'title': 'Sin City', 'imdbid': 'tt2389238'}
-            url = 'http://ofdbgw.org/imdb2ofdb_json/tt2389238'
-            self.assertTrue(self._ofdb.search(params), url)
+            self._params['items'] = None
+            url = 'http://ofdbgw.org/imdb2ofdb_json/tt0401792'
+            result, finished = self._ofdb.search(self._params)
+            self.assertFalse(finished)
+            self.assertTrue(result == url)
 
         def test_search_imdbid_only(self):
-            params = {'title': None, 'imdbid': 'tt2389238'}
-            url = 'http://ofdbgw.org/imdb2ofdb_json/tt2389238'
-            self.assertTrue(self._ofdb.search(params), url)
-
-        def test_parse_response(self):
-            params = {'title': 'Sin City', 'imdbid': None, 'items': 5}
-            r = self._ofdb.parse(self._ofdb_response, params)
-            print(r)
+            self._params['items'] = self._params['title'] = None
+            url = 'http://ofdbgw.org/imdb2ofdb_json/tt0401792'
+            result, finished = self._ofdb.search(self._params)
+            self.assertFalse(finished)
+            self.assertTrue(result == url)
 
         def test_parse_response_fail(self):
-            params = {'title': 'Sin City', 'imdbid': None, 'items': 5}
-            r = self._ofdb.parse(self._ofdb_response_fail, params)
-            print(r)
+            result, finished = self._ofdb.parse(
+                self._ofdb_response_fail,
+                self._params
+            )
+            self.assertFalse(finished)
+            self.assertTrue(result is None)
+
+        def test_parse_response(self):
+            result, finished = self._ofdb.parse(
+                self._ofdb_response,
+                self._params
+            )
+            self.assertFalse(finished)
+            for item in result:
+                self.assertTrue(item in self._matches)
+
+        def test_parse_movie(self):
+            result, finished = self._ofdb.parse(
+                self._ofdb_response_movie,
+                self._params
+            )
+            self.assertTrue(finished)
+            self.assertTrue(isinstance(result, dict))
 
     unittest.main()
