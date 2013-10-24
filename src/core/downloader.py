@@ -1,20 +1,24 @@
 #/usr/bin/env python
 # encoding: utf-8
 
-from requests.exceptions import Timeout, InvalidSchema, ConnectionError
 from concurrent.futures import ThreadPoolExecutor
+from http.client import BadStatusLine
+from queue import Queue, Empty
 from functools import partial
 from threading import Lock
-from queue import Queue, Empty
+from common.utils import logutil
+import logging
+import contextlib
+import socket
 import urllib.request
-import requests
+import charade
 
 
 USER_AGENT = "libhugin 'rebellic raven'/0.1"
-
+LOGGER = logging.getLogger('hugin.downloader')
 
 class DownloadQueue:
-    def __init__(self, num_threads=50, user_agent=USER_AGENT, timeout=1):
+    def __init__(self, num_threads=10, user_agent=USER_AGENT, timeout=5):
         '''
         A simple multithreaded add/get download queue wrapper using standard
         queue and future-requests
@@ -30,19 +34,34 @@ class DownloadQueue:
         self._timeout = timeout
 
     def _fetch_url(self, url, timeout):
-        return requests.get(url, timeout=timeout, headers=self._headers)
-        # return urllib.request.urlopen(url, timeout=timeout)
+        headers = {'connection': 'close'}
+       # with urllib.request.Request(url, headers=headers) as request:
+        with urllib.request.urlopen(url, timeout=timeout) as request:
+            return (request.code, request.readall())
 
     def _future_callback(self, url, future):
         with self._url_to_provider_data_lock:
             provider_data = self._url_to_provider_data.pop(url)
             try:
-                provider_data['response'] = future.result()
-                provider_data['response'].close()
-            except (Timeout, InvalidSchema, ConnectionError) as e:
-                print(e)
-                provider_data['retries'] -= 1
+                _, result = future.result()
+                if result:
+                    provider_data['response'] = self._encode_to_utf8(result)
+            except (
+                ValueError,
+                socket.timeout,
+                urllib.error.URLError,
+                BadStatusLine
+            ) as e:
+                LOGGER.warning('Timeout')
             self._request_queue.put(provider_data)
+
+    def _encode_to_utf8(self, data):
+        try:
+            return data.decode('utf-8')
+        except (TypeError) as e:
+            print(e, 'trying to use charade now to quess encoding.')
+            encoding = charade.detect(data).get('encoding')
+            return data.decode(encoding)
 
     def push(self, provider_data):
         '''
@@ -70,7 +89,7 @@ class DownloadQueue:
         :raises:  Empty if queue is empty.
         '''
         try:
-            return self._request_queue.get_nowait()
+            return self._request_queue.get()
         except Empty:
             if not len(self._url_to_provider_data) > 0:
                 raise
@@ -81,13 +100,15 @@ class DownloadQueue:
 if __name__ == '__main__':
     import unittest
     import time
+    import json
     from core.providerhandler import create_provider_data
 
     class TestDownloadQueue(unittest.TestCase):
 
         def setUp(self):
-            self._dq = DownloadQueue()
+            self._dq = DownloadQueue(timeout=2)
             self._urls = ['http://www.nullcat.de', 'http://httpbin.org/get']
+            logutil.create_logger(None)
 
         def _create_dummy_provider(self, url):
             pd = create_provider_data(
@@ -98,25 +119,29 @@ if __name__ == '__main__':
             return pd
 
         def test_push_pop(self):
-            f = open('core/tmp/imdbid_small.txt', 'r').read().splitlines()
-            for item in f:
-                url = 'http://www.omdbapi.com/?i={imdbid}'.format(imdbid=item)
+            with open('core/tmp/imdbid_huge.txt', 'r') as f:
+                imdbid_list = f.read().splitlines()
+            for item in imdbid_list:
+                #url = 'http://www.omdbapi.com/?i={imdbid}'.format(imdbid=item)
+                url = 'http://ofdbgw.org/imdb2ofdb_json/{0}'.format(item)
                 p = self._create_dummy_provider(url)
                 self._dq.push(p)
 
-            for item in f:
-                print(self._dq.pop())
-
-            for url in self._urls:
-                pd = self._create_dummy_provider(url)
-                pd = self._dq.push(pd)
-                pd = self._dq.pop()
-                self.assertTrue(pd is not None)
-                self.assertTrue(pd['response'] is not None)
-
-        def test_pop_from_empty(self):
-            # pull from empty queue, Empty Exception will be raised
-            with self.assertRaises(Empty):
-                self._dq.pop()
+            while True:
+                rpd = self._dq.pop()
+                res = rpd['response']
+                try:
+                    j = json.loads(res)
+                    rcode = j["ofdbgw"]["status"]["rcode"]
+                    if rcode == 2 and rpd['retries'] >= 0:
+                        p = self._create_dummy_provider(rpd['url'])
+                        p['retries'] -= 1
+                        self._dq.push(p)
+                    else:
+                        print(rpd['retries'], j['ofdbgw']['resultat']['titel'])
+                except (TypeError, KeyError) as e:
+                    pass
+                except Exception as E:
+                    pass
 
     unittest.main()

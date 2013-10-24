@@ -41,7 +41,6 @@ class PluginHandler:
             'Movie': IMovieProvider,
             'Poster': IPosterProvider,
             'Backdrop': IBackdropProvider,
-            'Plot': IPlotProvider,
             'Person': IPersonProvider,
 
             # output converter

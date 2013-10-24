@@ -152,6 +152,5 @@ if __name__ == '__main__':
             )
             self.assertTrue(finished)
             self.assertTrue(isinstance(result, dict))
-            print(result)
 
     unittest.main()
