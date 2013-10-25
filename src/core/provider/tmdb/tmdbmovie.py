@@ -2,13 +2,11 @@
 # encoding: utf-8
 
 
-from common.utils.provider import string_similarity_ratio
+from common.utils.stringcompare import string_similarity_ratio
 from yapsy.IPlugin import IPlugin
 from urllib.parse import quote
 import core.provider as provider
 import json
-
-#api.themoviedb.org/3/movie/550?api_key=ff9d65f1e39e8a239124b7e098001a57
 
 
 class TMDBMovie(provider.IMovieProvider):
@@ -40,10 +38,8 @@ class TMDBMovie(provider.IMovieProvider):
             if tmdb_response['total_results'] == 0:
                 return ([], True)
             else:
-                print('...searching movie')
                 return self._parse_search_module(tmdb_response, search_params)
         elif 'adult' in tmdb_response:
-            print('...parsing movie')
             return self._parse_movie_module(tmdb_response, search_params)
         else:
             return (None, False)
