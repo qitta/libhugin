@@ -5,7 +5,7 @@
 from yapsy.IPlugin import IPlugin
 
 __all__ = ['IMovieProvider', 'IPosterProvider', 'IBackdropProvider',
-           'IPlotProvider', 'IPersonProvider', 'IOutputConverter',
+           'IPhotoProvider', 'IPersonProvider', 'IOutputConverter',
            'IPostprocessing', 'IProvider']
 
 
@@ -30,9 +30,8 @@ class IProvider(IPlugin):
 
         Possible combinations ::
 
-                valid response, item found      => ([url], False)
-                valid response, nothing found   => ([], True)
-                invalid response                => (None, False)
+                valid search_params             => ([url], False)
+                invalid search_params           => (None, True)
         """
         raise NotImplementedError
 
@@ -42,14 +41,14 @@ class IProvider(IPlugin):
         :params response: A utf-8 encoded http response. The provider itself is
         responsible for parsing its previously requested data.
 
-        :params search_params: See :func `core.provider.IProvider.search`.
+        :params search_params: See :func: `core.provider.IProvider.search`.
 
         :returns: A tuple with data and a finished flag. Data may be a list of
         new urls to fetch, empty list or a finished result object. If the
         response is invalid, (None, False) will be returned. This triggers the
-        retry mechanism. See :func `core.provider.IProvider.search`. If the
-        response is valid but parsing it fails, ([], True) is returned. Qeury
-        is finiished.
+        retry mechanism. See :func: `core.provider.IProvider.search`. If the
+        response is valid but parsing it fails, ([], True) is returned. Query
+        is finished.
 
         Possible combinations ::
 
@@ -65,7 +64,7 @@ class IProvider(IPlugin):
 
 class IMovieProvider(IProvider):
     """
-    Base class for movie metadata plugins. All metadata plugins shoud inherit
+    A base class for movie metadata plugins. All metadata plugins should inherit
     from this class.
     """
     pass
