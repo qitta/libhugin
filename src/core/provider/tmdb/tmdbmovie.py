@@ -6,31 +6,33 @@ from common.utils.stringcompare import string_similarity_ratio
 from yapsy.IPlugin import IPlugin
 from urllib.parse import quote
 import core.provider as provider
+import core.provider.tmdb as tmdb_common
 import json
 
 
 class TMDBMovie(provider.IMovieProvider):
-    name = __name__
-
     def __init__(self):
-        self._api_key = '?api_key=ff9d65f1e39e8a239124b7e098001a57'
-        self._base_url = 'http://api.themoviedb.org/3/{path}{apikey}{query}'
+        self._api_key = tmdb_common.get_api_key()
+        self._base_url = tmdb_common.get_base_url()
+        self._path = 'search/movie'
 
     def search(self, search_params):
         if search_params['title']:
-            path = 'search/movie'
             title = quote(search_params['title'])
-            query = '&query={value}'.format(value=title)
+            query = '{title}&year={year}'.format(
+                title=title,
+                year=search_params['year'] or ''
+            )
             return (
                 self._base_url.format(
-                    path=path,
+                    path=self._path,
                     apikey=self._api_key,
                     query=query
                 ),
                 False
             )
         else:
-            return ([], False)
+            return (None, True)
 
     def parse(self, response, search_params):
         tmdb_response = json.loads(response)
@@ -99,6 +101,7 @@ class TMDBMovie(provider.IMovieProvider):
 if __name__ == '__main__':
     from core.providerhandler import create_provider_data
     import unittest
+    import pprint
 
     class TestOMDBMovie(unittest.TestCase):
 
@@ -111,27 +114,56 @@ if __name__ == '__main__':
                 'imdbid': 'tt0401792',
                 'items': 5
             }
-            with open('core/tmp/tmdb_response_search.json', 'r') as f:
+            with open('core/testdata/tmdb_response_search.json', 'r') as f:
                 self._tmdb_response_movie_search = f.read()
 
-            with open('core/tmp/tmdb_response_movie.json', 'r') as f:
+            with open('core/testdata/tmdb_response_movie.json', 'r') as f:
                 self._tmdb_response_movie = f.read()
 
-        def test_search(self):
-            r = self._tmdb.search(self._params)
+        # static search tests, see :func: `core.provider.IProvider.search`
+        # specs for further information
+        def test_search_title(self):
+            self._params['year'] = None
+            result, finished = self._tmdb.search(self._params)
+            self.assertFalse(finished)
+            self.assertTrue('year=None' not in result)
+            self.assertTrue('year=' in result)
+            self.assertTrue('Sin%20City' in result)
 
+        def test_search_title_year(self):
+            result, finished = self._tmdb.search(self._params)
+            self.assertFalse(finished)
+            self.assertTrue('year=2005' in result)
+
+        def test_search_invalid_params(self):
+            self._params = {key: None for key in self._params.keys()}
+            result, finished = self._tmdb.search(self._params)
+            self.assertTrue(finished)
+            self.assertTrue(result is None)
+
+        def test_search_year_only(self):
+            self._params = {key: None for key in self._params.keys()}
+            self._params['year'] = '2005'
+            result, finished = self._tmdb.search(self._params)
+            self.assertTrue(finished)
+            self.assertTrue(result is None)
+
+        # static parse tests, see :func: `core.provider.IProvider.parse` specs
+        # for further information
         def test_parse(self):
-            r = self._tmdb.parse(
+            result, finished = self._params = self._tmdb.parse(
                 self._tmdb_response_movie_search,
                 self._params
             )
+            self.assertTrue(result is not None)
+            self.assertFalse(finished)
 
         def test_parse_movie(self):
-            r = self._tmdb.parse(
+            result, finished = self._tmdb.parse(
                 self._tmdb_response_movie,
                 self._params
             )
-            import pprint
-            pprint.pprint(r)
+            self.assertTrue(isinstance(result, dict))
+            self.assertTrue(finished)
 
     unittest.main()

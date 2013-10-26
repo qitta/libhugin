@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 
-from common.utils.provider import string_similarity_ratio
+from common.utils.stringcompare import string_similarity_ratio
 from yapsy.IPlugin import IPlugin
 from urllib.parse import urlencode
 import core.provider as provider
@@ -100,15 +100,20 @@ if __name__ == '__main__':
                 'imdbid': 'tt0401792',
                 'items': 5
             }
-            with open('core/tmp/omdb_response_fail.json', 'r') as f:
+            with open('core/testdata/omdb_response_fail.json', 'r') as f:
                 self._omdb_response_fail = f.read()
 
-            with open('core/tmp/omdb_response_movie.json', 'r') as f:
+            with open('core/testdata/omdb_response_movie.json', 'r') as f:
                 self._omdb_response_movie = f.read()
 
-            with open('core/tmp/omdb_response_search.json', 'r') as f:
+            with open('core/testdata/omdb_response_search.json', 'r') as f:
                 self._omdb_response = f.read()
 
+        def _init_with_none(self, params):
+            return {key: None for key in params.keys()}
+
+        # static search tests, see :func: `core.provider.IProvider.search`
+        # specs for further information
         def test_search_title(self):
             self._params['imdbid'] = self._params['items'] = None
             self._params['year'] = None
@@ -130,6 +135,8 @@ if __name__ == '__main__':
             result, finished = self._omdb.search(self._params)
             self.assertFalse(finished)
 
+        # static parse tests, see :func: `core.provider.IProvider.parse` specs
+        # for further information
         def test_parse_response(self):
             result, finished = self._omdb.parse(
                 self._omdb_response,

@@ -118,30 +118,30 @@ if __name__ == '__main__':
             pd['url'] = url
             return pd
 
-        def test_push_pop(self):
-            with open('core/tmp/imdbid_huge.txt', 'r') as f:
-                imdbid_list = f.read().splitlines()
-            for item in imdbid_list:
-                #url = 'http://www.omdbapi.com/?i={imdbid}'.format(imdbid=item)
-                url = 'http://ofdbgw.org/imdb2ofdb_json/{0}'.format(item)
-                p = self._create_dummy_provider(url)
-                self._dq.push(p)
+        #def test_push_pop(self):
+        #    with open('core/testdata/imdbid_huge.txt', 'r') as f:
+        #        imdbid_list = f.read().splitlines()
+        #    for item in imdbid_list:
+        #        #url = 'http://www.omdbapi.com/?i={imdbid}'.format(imdbid=item)
+        #        url = 'http://ofdbgw.org/imdb2ofdb_json/{0}'.format(item)
+        #        p = self._create_dummy_provider(url)
+        #        self._dq.push(p)
 
-            while True:
-                rpd = self._dq.pop()
-                res = rpd['response']
-                try:
-                    j = json.loads(res)
-                    rcode = j["ofdbgw"]["status"]["rcode"]
-                    if rcode == 2 and rpd['retries'] >= 0:
-                        p = self._create_dummy_provider(rpd['url'])
-                        p['retries'] -= 1
-                        self._dq.push(p)
-                    else:
-                        print(rpd['retries'], j['ofdbgw']['resultat']['titel'])
-                except (TypeError, KeyError) as e:
-                    pass
-                except Exception as E:
-                    pass
+        #    while True:
+        #        rpd = self._dq.pop()
+        #        res = rpd['response']
+        #        try:
+        #            j = json.loads(res)
+        #            rcode = j["ofdbgw"]["status"]["rcode"]
+        #            if rcode == 2 and rpd['retries'] >= 0:
+        #                p = self._create_dummy_provider(rpd['url'])
+        #                p['retries'] -= 1
+        #                self._dq.push(p)
+        #            else:
+        #                print(rpd['retries'], j['ofdbgw']['resultat']['titel'])
+        #        except (TypeError, KeyError) as e:
+        #            pass
+        #        except Exception as E:
+        #            pass
 
     unittest.main()
