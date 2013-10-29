@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 
-from core.pluginhandler import PluginHandler
+from hugin.core.pluginhandler import PluginHandler
 
 
 def create_provider_data(**kwargs):

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-from common.utils.stringcompare import string_similarity_ratio
-import core.provider as provider
+from hugin.common.utils.stringcompare import string_similarity_ratio
+import hugin.core.provider as provider
 from urllib.parse import quote
 import json
 
@@ -101,8 +101,8 @@ class OFDBMovie(provider.IMovieProvider):
 
 
 if __name__ == '__main__':
-    from core.providerhandler import create_provider_data
-    from common.utils.testing_dummies import create_search_params_dummy
+    from hugin.core.providerhandler import create_provider_data
+    from hugin.common.utils.testing_dummies import create_search_params_dummy
     import unittest
 
     class TestOFDBMovie(unittest.TestCase):
@@ -122,13 +122,13 @@ if __name__ == '__main__':
                 'http://ofdbgw.org/movie_json/157214',
                 'http://ofdbgw.org/movie_json/85240'
             ]
-            with open('core/testdata/ofdb_response_fail.json', 'r') as f:
+            with open('hugin/core/testdata/ofdb_response_fail.json', 'r') as f:
                 self._ofdb_response_fail = f.read()
 
-            with open('core/testdata/ofdb_response_movie.json', 'r') as f:
+            with open('hugin/core/testdata/ofdb_response_movie.json', 'r') as f:
                 self._ofdb_response_movie = f.read()
 
-            with open('core/testdata/ofdb_response.json', 'r') as f:
+            with open('hugin/core/testdata/ofdb_response.json', 'r') as f:
                 self._ofdb_response = f.read()
 
         # static search tests, see :func: `core.provider.IProvider.search`

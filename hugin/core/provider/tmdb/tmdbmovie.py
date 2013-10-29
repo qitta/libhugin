@@ -2,10 +2,10 @@
 # encoding: utf-8
 
 
-from common.utils.stringcompare import string_similarity_ratio
+from hugin.common.utils.stringcompare import string_similarity_ratio
 from urllib.parse import quote
-import core.provider as provider
-import core.provider.tmdb as tmdb_common
+import hugin.core.provider as provider
+import hugin.core.provider.tmdb as tmdb_common
 import json
 
 
@@ -98,7 +98,7 @@ class TMDBMovie(provider.IMovieProvider):
 
 
 if __name__ == '__main__':
-    from core.providerhandler import create_provider_data
+    from hugin.core.providerhandler import create_provider_data
     import unittest
 
     class TestOMDBMovie(unittest.TestCase):
@@ -112,10 +112,10 @@ if __name__ == '__main__':
                 'imdbid': 'tt0401792',
                 'items': 5
             }
-            with open('core/testdata/tmdb_response_search.json', 'r') as f:
+            with open('hugin/core/testdata/tmdb_response_search.json', 'r') as f:
                 self._tmdb_response_movie_search = f.read()
 
-            with open('core/testdata/tmdb_response_movie.json', 'r') as f:
+            with open('hugin/core/testdata/tmdb_response_movie.json', 'r') as f:
                 self._tmdb_response_movie = f.read()
 
         # static search tests, see :func: `core.provider.IProvider.search`

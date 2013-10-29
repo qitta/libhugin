@@ -6,7 +6,7 @@ from http.client import BadStatusLine
 from queue import Queue, Empty
 from functools import partial
 from threading import Lock
-from common.utils import logutil
+from hugin.common.utils import logutil
 import logging
 import socket
 import urllib.request
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     import unittest
     # import time
     # import json
-    from core.providerhandler import create_provider_data
+    from hugin.core.providerhandler import create_provider_data
 
     class TestDownloadQueue(unittest.TestCase):
 
@@ -150,7 +150,7 @@ if __name__ == '__main__':
 
 # hehehe
         #def test_push_pop(self):
-        #    with open('core/testdata/imdbid_huge.txt', 'r') as f:
+        #    with open('hugin/core/testdata/imdbid_huge.txt', 'r') as f:
         #        imdbid_list = f.read().splitlines()
         #    for item in imdbid_list:
         #        #url = 'http://www.omdbapi.com/?i={imdbid}'.format(imdbid=item)

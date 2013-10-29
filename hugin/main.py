@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-from core.downloader import DownloadQueue
-from core.pluginhandler import PluginHandler
-from core.providerhandler import ProviderHandler
+from hugin.core.downloader import DownloadQueue
+from hugin.core.pluginhandler import PluginHandler
+from hugin.core.providerhandler import ProviderHandler
 
 if __name__ == '__main__':
     pm = PluginHandler()
@@ -12,7 +12,7 @@ if __name__ == '__main__':
     print('Provider activated:', pm.is_activated('Provider'))
     provider_plugins = pm.get_plugins_from_category('Provider')
 
-    from core.downloader import DownloadQueue
+    from hugin.core.downloader import DownloadQueue
     import pprint
     import time
     download_queue = DownloadQueue()

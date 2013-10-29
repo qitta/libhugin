@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 from yapsy.PluginManager import PluginManager
-from core.provider import *
+from hugin.core.provider import *
 
 
 class PluginHandler:
