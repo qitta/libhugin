@@ -8,23 +8,25 @@ from functools import partial
 from threading import Lock
 from common.utils import logutil
 import logging
-import contextlib
 import socket
 import urllib.request
 import charade
 
-
 USER_AGENT = "libhugin 'rebellic raven'/0.1"
 LOGGER = logging.getLogger('hugin.downloader')
+
 
 class DownloadQueue:
     def __init__(self, num_threads=10, user_agent=USER_AGENT, timeout=5):
         '''
-        A simple multithreaded add/get download queue wrapper using standard
-        queue and future-requests
+        A simple multithreaded queue wrapper for simultanous downloading using
+        standard queue and futures ThreadPoolExecutor. Provider data
+        dictionaries can only be used.
 
-        :param num_threads: Number of threads to be used for simultanous
-                            downloading
+        :params num_threads: Number of threads to be used for simultanous
+        downloading
+        :params user_agent: User-Agent to be used.
+        :params timeout: Url timeout to be used for each url
         '''
         self._url_to_provider_data_lock = Lock()
         self._executor = ThreadPoolExecutor(max_workers=num_threads)
@@ -34,12 +36,28 @@ class DownloadQueue:
         self._timeout = timeout
 
     def _fetch_url(self, url, timeout):
-        headers = {'connection': 'close'}
+        """
+        Download method which is triggered by ThreadPoolExecutor for
+        downloading.
+
+        :params url: Url to be downloaded
+        :params timeout: Timeout in seconds
+
+        :returns: Request code and request itself as tuple => (r code, r)
+        """
+       # headers = {'connection': 'close'}
        # with urllib.request.Request(url, headers=headers) as request:
         with urllib.request.urlopen(url, timeout=timeout) as request:
             return (request.code, request.readall())
 
     def _future_callback(self, url, future):
+        """
+        Callback that is triggered by a future on sucess or error.
+
+        :params url: The url is used to pop finished/failed provider data
+        elements from url_to_provider_data dictionary and put them into result
+        queue
+        """
         with self._url_to_provider_data_lock:
             provider_data = self._url_to_provider_data.pop(url)
             try:
@@ -53,22 +71,34 @@ class DownloadQueue:
                 BadStatusLine
             ) as e:
                 LOGGER.warning('Timeout')
+                LOGGER.exception(e)
             self._request_queue.put(provider_data)
 
-    def _encode_to_utf8(self, data):
+    def _encode_to_utf8(self, byte_data):
+        """
+        Tries to decode bytestream to utf-8. If this fails, encoding is guessed
+        by charade and decoding is repeated with just dedected encoding.
+
+        :params byte_data: A bytestream that will be ecoded to its specific
+        encoding characteristics
+
+        :returns: Decoded byte_data
+        """
         try:
-            return data.decode('utf-8')
+            return byte_data.decode('utf-8')
         except (TypeError) as e:
             print(e, 'trying to use charade now to quess encoding.')
-            encoding = charade.detect(data).get('encoding')
-            return data.decode(encoding)
+            encoding = charade.detect(byte_data).get('encoding')
+            return byte_data.decode(encoding)
 
     def push(self, provider_data):
         '''
-        Feeds DownloadQueue with url to fetch
+        Feeds DownloadQueue with provider_data dictionary. The url to fetch is
+        used as key for url_to_provider_data dictionary. Provider_data with
+        urls that are already being processed, will be ignored.
 
         :param provider_data: A dictionary that encapsulates some provider
-        information url, response, provider
+        information url, response, provider.
         '''
         url = provider_data['url']
         if url and url not in self._url_to_provider_data:
@@ -85,8 +115,8 @@ class DownloadQueue:
         '''
         Simple DownloadQueue get wrapper
 
-        :returns: Next avaiable response object.
-        :raises:  Empty if queue is empty.
+        :returns: Next avaiable provider data object.
+        :raises:  Empty exception if queue is empty.
         '''
         try:
             return self._request_queue.get()
@@ -99,8 +129,8 @@ class DownloadQueue:
 
 if __name__ == '__main__':
     import unittest
-    import time
-    import json
+    # import time
+    # import json
     from core.providerhandler import create_provider_data
 
     class TestDownloadQueue(unittest.TestCase):
@@ -118,6 +148,7 @@ if __name__ == '__main__':
             pd['url'] = url
             return pd
 
+# hehehe
         #def test_push_pop(self):
         #    with open('core/testdata/imdbid_huge.txt', 'r') as f:
         #        imdbid_list = f.read().splitlines()

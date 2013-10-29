@@ -3,7 +3,6 @@
 
 
 from common.utils.stringcompare import string_similarity_ratio
-from yapsy.IPlugin import IPlugin
 from urllib.parse import quote
 import core.provider as provider
 import core.provider.tmdb as tmdb_common
@@ -101,7 +100,6 @@ class TMDBMovie(provider.IMovieProvider):
 if __name__ == '__main__':
     from core.providerhandler import create_provider_data
     import unittest
-    import pprint
 
     class TestOMDBMovie(unittest.TestCase):
 
