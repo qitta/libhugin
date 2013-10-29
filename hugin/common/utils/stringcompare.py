@@ -18,7 +18,6 @@ def string_similarity_ratio(s1, s2):
 
 
 if __name__ == '__main__':
-    from hugin.core.providerhandler import create_provider_data
     import unittest
 
     class TestUtils(unittest.TestCase):
