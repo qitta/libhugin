@@ -7,4 +7,4 @@ python:
 install: "pip install -r pip_requirements.txt --use-mirrors"
 
 # command to run tests
-script: export PYTHONPATH='.' ./run_tests.sh
+script: PYTHONPATH='.' ./run_tests.sh
