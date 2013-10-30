@@ -1,6 +1,6 @@
-##############################################
-libhugin - A extensible movie metadata library
-##############################################
+###################################
+libhugin - A movie metadata library
+###################################
 
 **Note:** Library is currently under developement.
 
@@ -19,14 +19,11 @@ All modules are Python3 compatible:
 
 .. code-block:: bash
 
-    $ sudo pip install:
-        charade   # The Universal character encoding detector
-        yapsy     # A small library implementing the core mechanisms needed to
-                  # build a plugin system into a wider application.
+    $ sudo pip install charade   # A Universal character encoding detector.
+    $ sudo pip install yapsy     # A library for implementing a plugin system.
 
-Optional modules:
+Optional dependencies:
 
 .. code-block:: bash
 
-    $ sudo pip install <
-        colorlog # Colorful messages for the commandline.
+    $ sudo pip install colorlog  # Colorful messages for the commandline.
