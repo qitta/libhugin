@@ -7,7 +7,5 @@
 charade
 
 #: yapsy
+#: yapsy.IPlugin
 yapsy
-
-#: numpy
-numpy

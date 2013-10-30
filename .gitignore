@@ -4,5 +4,6 @@
 *.pyc
 *.toc
 *.pdf
+doc/_build
 
 src/core/tmp

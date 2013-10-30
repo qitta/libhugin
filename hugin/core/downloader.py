@@ -17,6 +17,7 @@ LOGGER = logging.getLogger('hugin.downloader')
 
 
 class DownloadQueue:
+    'Test'
     def __init__(self, num_threads=10, user_agent=USER_AGENT, timeout=5):
         '''
         A simple multithreaded queue wrapper for simultanous downloading using
@@ -129,8 +130,6 @@ class DownloadQueue:
 
 if __name__ == '__main__':
     import unittest
-    # import time
-    # import json
     from hugin.core.providerhandler import create_provider_data
 
     class TestDownloadQueue(unittest.TestCase):
@@ -148,7 +147,6 @@ if __name__ == '__main__':
             pd['url'] = url
             return pd
 
-# hehehe
         #def test_push_pop(self):
         #    with open('hugin/core/testdata/imdbid_huge.txt', 'r') as f:
         #        imdbid_list = f.read().splitlines()
