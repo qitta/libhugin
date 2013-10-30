@@ -8,3 +8,6 @@ charade
 
 #: yapsy
 yapsy
+
+#: numpy
+numpy
