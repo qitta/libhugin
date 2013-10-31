@@ -16,6 +16,8 @@ Contents:
 
 .. todolist::
 
+.. autoclass:: hugin.core.provider.IProvider
+   :members:
 
 .. automodule:: hugin.core.downloader
    :members:

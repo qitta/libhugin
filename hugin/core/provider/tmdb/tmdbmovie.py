@@ -3,9 +3,9 @@
 
 
 from hugin.common.utils.stringcompare import string_similarity_ratio
-from urllib.parse import quote
 import hugin.core.provider as provider
 import hugin.core.provider.tmdb as tmdb_common
+from urllib.parse import quote
 import json
 
 
@@ -112,10 +112,10 @@ if __name__ == '__main__':
                 'imdbid': 'tt0401792',
                 'items': 5
             }
-            with open('hugin/core/testdata/tmdb_response_search.json', 'r') as f:
+            with open('hugin/core/testdata/tmdb_search.json', 'r') as f:
                 self._tmdb_response_movie_search = f.read()
 
-            with open('hugin/core/testdata/tmdb_response_movie.json', 'r') as f:
+            with open('hugin/core/testdata/tmdb_movie.json', 'r') as f:
                 self._tmdb_response_movie = f.read()
 
         # static search tests, see :func: `core.provider.IProvider.search`

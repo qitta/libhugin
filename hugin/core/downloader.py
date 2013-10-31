@@ -24,10 +24,10 @@ class DownloadQueue:
         standard queue and futures ThreadPoolExecutor. Provider data
         dictionaries can only be used.
 
-        :params num_threads: Number of threads to be used for simultanous
+        :param num_threads: Number of threads to be used for simultanous
         downloading
-        :params user_agent: User-Agent to be used.
-        :params timeout: Url timeout to be used for each url
+        :param user_agent: User-Agent to be used.
+        :param timeout: Url timeout to be used for each url
         '''
         self._url_to_provider_data_lock = Lock()
         self._executor = ThreadPoolExecutor(max_workers=num_threads)
@@ -41,8 +41,8 @@ class DownloadQueue:
         Download method which is triggered by ThreadPoolExecutor for
         downloading.
 
-        :params url: Url to be downloaded
-        :params timeout: Timeout in seconds
+        :param url: Url to be downloaded
+        :param timeout: Timeout in seconds
 
         :returns: Request code and request itself as tuple => (r code, r)
         """
@@ -55,7 +55,7 @@ class DownloadQueue:
         """
         Callback that is triggered by a future on sucess or error.
 
-        :params url: The url is used to pop finished/failed provider data
+        :param url: The url is used to pop finished/failed provider data
         elements from url_to_provider_data dictionary and put them into result
         queue
         """
@@ -80,7 +80,7 @@ class DownloadQueue:
         Tries to decode bytestream to utf-8. If this fails, encoding is guessed
         by charade and decoding is repeated with just dedected encoding.
 
-        :params byte_data: A bytestream that will be ecoded to its specific
+        :param byte_data: A bytestream that will be ecoded to its specific
         encoding characteristics
 
         :returns: Decoded byte_data

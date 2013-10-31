@@ -28,19 +28,15 @@ sys.path.insert(0, os.path.abspath('../'))
 # http://read-the-docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
 
 
-class Mock:
-    def __init__(self, *args, **kwargs):
+
+class Mock(object):
+    __all__ = []
+
+    def __init__(self, *args):
         pass
 
-    def __call__(self, *args, **kwargs):
-        return Mock()
-
-    @classmethod
-    def __getattr__(cls, name):
-        if name in ('__file__', '__path__'):
-            return '/dev/null'
-        else:
-            return Mock()
+    def __getattr__(self, name):
+        return Mock
 
 
 MOCK_MODULES = []
