@@ -4,10 +4,10 @@
 
 def get_movie_result_dict():
     attrs = [
-        'title', 'original_title', 'alternative_titles', 'set', 'tagline',
-        'rating', 'year', 'runtime', 'director', 'writer', 'certification',
-        'trailer', 'plot', 'poster', 'fanart', 'countries', 'actors', 'genres',
-        'studios', 'imdbid', 'vote_count', 'type'
+        'title', 'original_title', 'alternative_titles', 'collection',
+        'tagline', 'rating', 'year', 'runtime', 'director', 'writer',
+        'certification', 'trailer', 'plot', 'poster', 'fanart', 'countries',
+        'actors', 'genres', 'studios', 'imdbid', 'vote_count', 'type'
     ]
     return ({key: None for key in attrs}, 'movie')
 

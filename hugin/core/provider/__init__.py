@@ -4,8 +4,9 @@
 
 from yapsy.IPlugin import IPlugin
 
-__all__ = ['IMovieProvider', 'IPersonProvider', 'IOutputConverter',
-           'IPostprocessing', 'IProvider']
+
+__all__ = ['IMovieProvider', 'IPersonProvider', 'IPictureProvider',
+           'IOutputConverter', 'IPostprocessing', 'IProvider']
 
 
 class IProvider(IPlugin):
@@ -13,9 +14,18 @@ class IProvider(IPlugin):
     This abstract interface declares methods to be implemented by all provider
     plugins.
     """
-    def __init__(self):
-        '''ijesfijijseifjijs'''
-        pass
+
+    @property
+    def supported_attrs(self):
+        return []
+
+    def set_name(self, name):
+        setattr(self, '_name', name)
+
+    def get_name(self):
+        return self._name
+
+    name = property(fget=get_name, fset=set_name)
 
     def search(self, search_params):
         """
@@ -23,40 +33,27 @@ class IProvider(IPlugin):
         the number of items to fetch. Query parameters are title, year and
         imdbid, if all parameters are available, imdbid will be prefered if
         possible.
-
         :returns: A tuple containing data and a 'finished' flag that can be
-        True or False. True indicates that the query is finished, False that
-        there is data left to be processed.  If data is None, a retry will be
-        triggered inside the core module, decrementing the num of retries
-        inside the provider_data dictionary on every retry down to zero.
 
         Possible combinations ::
 
             valid search_params             => ([url,...], False)
             invalid search_params           => (None, True)
-
         """
+
         raise NotImplementedError
 
-    @property
-    def is_picture(self):
-        return False
-
     def parse(self, response, search_params):
-
         """
         :param response: A utf-8 encoded http response. The provider itself is
         responsible for parsing its previously requested data.
-
         :param search_params: See :func: `core.provider.IProvider.search`.
-
         :returns: A tuple with data and a finished flag. Data may be a list of
         new urls to fetch, empty list or a finished result object. If the
         response is invalid, (None, False) will be returned. This triggers the
         retry mechanism. See :func: `core.provider.IProvider.search`. If the
         response is valid but parsing it fails, ([], True) is returned. Query
         is finished.
-
 
         Possible combinations ::
 
@@ -65,9 +62,48 @@ class IProvider(IPlugin):
                                     (result, True)
 
             invalid response    => (None, False)
-                                   (None, True)
         """
+
         raise NotImplementedError
+
+    @property
+    def is_picture_provider(self):
+        return isinstance(self, IPictureProvider)
+
+    @property
+    def is_movie_provider(self):
+        return isinstance(self, IMovieProvider)
+
+    @property
+    def is_person_provider(self):
+        return isinstance(self, IPersonProvider)
+
+    def __repr__(self):
+        return '{name} <{type}>'.format(name=self._name, type=self._type)
+
+    @property
+    def _type(self):
+        provider_types = {
+            'person': IPersonProvider,
+            'movie': IMovieProvider,
+            'picture': IPersonProvider
+        }
+        types = []
+        for string, instance in provider_types.items():
+            if isinstance(self, instance):
+                types.append(string)
+        return ', '.join(types)
+
+
+
+    def init(self):
+        '''
+        Initialisation of a provider
+        :returns: True on success, else False
+        '''
+        return True
+
+
 
 
 class IMovieProvider(IProvider):
@@ -75,6 +111,7 @@ class IMovieProvider(IProvider):
     A base class for movie metadata plugins. All metadata plugins should
     inherit from this class.
     """
+
     pass
 
 
@@ -85,13 +122,14 @@ class IPersonProvider(IProvider):
     """
     pass
 
+
 class IPictureProvider(IProvider):
     @property
     def is_picture(self):
         return True
 
-# converter plugins
 
+# converter plugins
 class IOutputConverter(IPlugin):
     """
     A base class for output converter plugins. All output converter should
@@ -101,7 +139,6 @@ class IOutputConverter(IPlugin):
 
 
 #  postprocessing plugins
-
 class IPostprocessing(IPlugin):
     """
     A base class postprocessing plugins. All postprocessing plugins should

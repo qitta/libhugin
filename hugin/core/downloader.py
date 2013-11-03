@@ -12,12 +12,12 @@ import socket
 import urllib.request
 import charade
 
-USER_AGENT = "libhugin 'rebellic raven'/0.1"
+USER_AGENT = "firefox1"
 LOGGER = logging.getLogger('hugin.downloader')
 
 
 class DownloadQueue:
-    'Test'
+
     def __init__(self, num_threads=10, user_agent=USER_AGENT, timeout=5):
         '''
         A simple multithreaded queue wrapper for simultanous downloading using
@@ -46,8 +46,6 @@ class DownloadQueue:
 
         :returns: Request code and request itself as tuple => (r code, r)
         """
-       # headers = {'connection': 'close'}
-       # with urllib.request.Request(url, headers=headers) as request:
         with urllib.request.urlopen(url, timeout=timeout) as request:
             return (request.code, request.readall())
 
@@ -71,8 +69,7 @@ class DownloadQueue:
                 urllib.error.URLError,
                 BadStatusLine
             ) as e:
-                LOGGER.warning('Timeout')
-                LOGGER.exception(e)
+                LOGGER.warning(e)
             self._request_queue.put(provider_data)
 
     def _encode_to_utf8(self, byte_data):
@@ -120,7 +117,7 @@ class DownloadQueue:
         :raises:  Empty exception if queue is empty.
         '''
         try:
-            return self._request_queue.get()
+            return self._request_queue.get_nowait()
         except Empty:
             if not len(self._url_to_provider_data) > 0:
                 raise
@@ -129,8 +126,9 @@ class DownloadQueue:
 
 
 if __name__ == '__main__':
-    import unittest
     from hugin.core.providerhandler import create_provider_data
+    import unittest
+    import json
 
     class TestDownloadQueue(unittest.TestCase):
 
@@ -147,30 +145,30 @@ if __name__ == '__main__':
             pd['url'] = url
             return pd
 
-        #def test_push_pop(self):
-        #    with open('hugin/core/testdata/imdbid_huge.txt', 'r') as f:
-        #        imdbid_list = f.read().splitlines()
-        #    for item in imdbid_list:
-        #        #url = 'http://www.omdbapi.com/?i={imdbid}'.format(imdbid=item)
-        #        url = 'http://ofdbgw.org/imdb2ofdb_json/{0}'.format(item)
-        #        p = self._create_dummy_provider(url)
-        #        self._dq.push(p)
+        def test_push_pop(self):
+            with open('hugin/core/testdata/imdbid_small.txt', 'r') as f:
+                imdbid_list = f.read().splitlines()
+            for item in imdbid_list:
+                #url = 'http://www.omdbapi.com/?i={imdbid}'.format(imdbid=item)
+                url = 'http://ofdbgw.org/imdb2ofdb_json/{0}'.format(item)
+                p = self._create_dummy_provider(url)
+                self._dq.push(p)
 
-        #    while True:
-        #        rpd = self._dq.pop()
-        #        res = rpd['response']
-        #        try:
-        #            j = json.loads(res)
-        #            rcode = j["ofdbgw"]["status"]["rcode"]
-        #            if rcode == 2 and rpd['retries'] >= 0:
-        #                p = self._create_dummy_provider(rpd['url'])
-        #                p['retries'] -= 1
-        #                self._dq.push(p)
-        #            else:
-        #                print(rpd['retries'], j['ofdbgw']['resultat']['titel'])
-        #        except (TypeError, KeyError) as e:
-        #            pass
-        #        except Exception as E:
-        #            pass
+            while True:
+                rpd = self._dq.pop()
+                res = rpd['response']
+                try:
+                    j = json.loads(res)
+                    rcode = j["ofdbgw"]["status"]["rcode"]
+                    if rcode == 2 and rpd['retries'] >= 0:
+                        p = self._create_dummy_provider(rpd['url'])
+                        p['retries'] -= 1
+                        self._dq.push(p)
+                    else:
+                        print(rpd['retries'], j['ofdbgw']['resultat']['titel'])
+                except (TypeError, KeyError) as e:
+                    print(e)
+                except Exception as E:
+                    print(E)
 
     unittest.main()

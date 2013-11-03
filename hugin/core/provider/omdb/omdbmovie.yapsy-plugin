@@ -1,7 +1,7 @@
 [Core]
-Name = OMDBMovie
+Name = OMDB
 Module = omdbmovie
-   
+
 [Documentation]
 Description = Default movie metadata provider
 Author = Christoph Piechula

@@ -11,12 +11,11 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-
 .. todo:: CONTENT!
 
 .. todolist::
 
-.. autoclass:: hugin.core.provider.IProvider
+.. autoclass:: hugin.core.provider
    :members:
 
 .. automodule:: hugin.core.downloader
@@ -28,4 +27,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

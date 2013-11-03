@@ -31,9 +31,11 @@ sys.path.insert(0, os.path.abspath('../'))
 
 class Mock(object):
     __all__ = []
-
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         pass
+
+    def __call__(self, *args, **kwargs):
+        return Mock
 
     def __getattr__(self, name):
         return Mock

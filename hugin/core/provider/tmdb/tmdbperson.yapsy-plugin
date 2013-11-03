@@ -1,9 +1,9 @@
 [Core]
 Name = TMDB
-Module = tmdbmovie
+Module = tmdbperson
 
 [Documentation]
-Description = Default movie metadata provider
+Description = Default person metadata provider
 Author = Christoph Piechula
 Version = 1.0
 Website = http://docs.themoviedb.apiary.io/

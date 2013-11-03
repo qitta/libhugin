@@ -1,5 +1,5 @@
 [Core]
-Name = OFDBMovie
+Name = OFDB
 Module = ofdbmovie
 
 [Documentation]

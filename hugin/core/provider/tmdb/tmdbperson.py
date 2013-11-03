@@ -9,12 +9,11 @@ from urllib.parse import quote
 import json
 
 
-class TMDBMovie(provider.IMovieProvider):
+class TMDBPerson(provider.IPersonProvider):
     def __init__(self):
         self._api_key = tmdb_common.get_api_key()
         self._base_url = tmdb_common.get_base_url()
         self._path = 'search/movie'
-        self._attrs = ['title', 'original_title', 'imdbid', 'genre', 'plot']
 
     def search(self, search_params):
         if search_params['title']:
@@ -35,10 +34,7 @@ class TMDBMovie(provider.IMovieProvider):
             return (None, True)
 
     def parse(self, response, search_params):
-        try:
-            tmdb_response = json.loads(response)
-        except TypeError as e:
-            return (None, False)
+        tmdb_response = json.loads(response)
         if 'total_results' in tmdb_response:
             if tmdb_response['total_results'] == 0:
                 return ([], True)
@@ -91,10 +87,6 @@ class TMDBMovie(provider.IMovieProvider):
             'imdbid': data['imdb_id'],
         }
         return (result, True)
-
-    @property
-    def supported_attrs(self):
-        return self._attrs
 
     def activate(self):
         provider.IMovieProvider.activate(self)
