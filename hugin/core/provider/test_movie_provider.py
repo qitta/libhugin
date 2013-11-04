@@ -13,7 +13,7 @@ PROVIDER = {
         'movie': 'tmdb_movie.json',
         'nothing_found': 'tmdb_nothing_found.json',
         'critical': 'tmdb_critical.json',
-        'search_by_imdb': False
+        'search_by_imdb': True
     },
 
     OFDBMovie(): {

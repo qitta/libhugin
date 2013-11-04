@@ -17,6 +17,9 @@ class TMDBMovie(provider.IMovieProvider):
         self._attrs = ['title', 'original_title', 'imdbid', 'genre', 'plot']
 
     def search(self, search_params):
+        if search_params['imdbid']:
+            return ''.join(self._build_movie_url([search_params['imdbid']]))
+
         if search_params['title']:
             title = quote_plus(search_params['title'])
             query = '{title}&year={year}'.format(

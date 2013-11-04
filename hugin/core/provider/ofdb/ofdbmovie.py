@@ -3,7 +3,6 @@
 
 from hugin.common.utils.stringcompare import string_similarity_ratio
 import hugin.core.provider as provider
-from urllib.parse import quote_plus
 from urllib.parse import quote
 import json
 
@@ -37,8 +36,10 @@ class OFDBMovie(provider.IMovieProvider):
         '''
         try:
             ofdb_response = json.loads(response).get('ofdbgw')
-        except (TypeError, ValueError) as e:
-            return (None, True)
+        except (TypeError, ValueError):
+            ofdb_response = self._try_sanitize(response)
+            if ofdb_response is None:
+                return (None, True)
 
         status = ofdb_response['status']
 
@@ -65,6 +66,19 @@ class OFDBMovie(provider.IMovieProvider):
                 )
         else:
             return (None, False)
+
+    def _try_sanitize(self, response):
+        if response is not None:
+            splited = response.splitlines()
+            response = ''
+            for item in splited:
+                if '{"ofdbgw"' in item:
+                    response = item
+                    break
+            try:
+                return json.loads(response).get('ofdbgw')
+            except (TypeError, ValueError):
+                return None
 
     def _parse_imdb2ofdb_module(self, result, _):
         return (self._build_movie_url([result['ofdbid']]), False)

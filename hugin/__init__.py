@@ -165,11 +165,11 @@ class ProviderData(UserDict):
 if __name__ == '__main__':
     hs = Session(timeout_sec=15)
     q = hs.create_query(
-        title='django unchained', # make tmdb search bei imdbid
+        title='the watchmen', # make tmdb search bei imdbid
         # http://api.themoviedb.org/3/movie/tt0105236?api_key=###
         year='',
         type='movie',
-        imdbid='tt0401792',
-        search_text=True,
+        # imdbid='tt0401792',
+        search_text=True
     )
     hs.submit(q)
