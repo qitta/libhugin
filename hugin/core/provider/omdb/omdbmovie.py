@@ -4,6 +4,7 @@
 
 from hugin.common.utils.stringcompare import string_similarity_ratio
 from urllib.parse import urlencode
+from urllib.parse import quote_plus
 import hugin.core.provider as provider
 import json
 
@@ -21,21 +22,25 @@ class OMDBMovie(provider.IMovieProvider):
             }
         elif search_params['title']:
             params = {
-                's': search_params['title'] or '',
+                's': quote_plus(search_params['title']) or '',
                 'y': search_params['year'] or ''
             }
         else:
-            return (None, True)
-        return (self._base_url.format(query=urlencode(params)), False)
+            return None
+        return self._base_url.format(query=urlencode(params))
 
     def parse(self, response, search_params):
+        fail_states = ['Incorrect IMDb ID', 'Movie not found!']
         try:
             response = json.loads(response)
         except TypeError:
-            return (None, False)
+            return (None, True)
         else:
             if 'Error' in response:
-                return (None, False)
+                if response['Error'] in fail_states:
+                    return ([], True)
+                else:
+                    return (None, True)
             if 'Search' in response:
                 return self._parse_search_module(response, search_params)
 

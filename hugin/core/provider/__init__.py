@@ -15,8 +15,54 @@ class IProvider(IPlugin):
     plugins.
     """
 
+    def search(self, search_params):
+        """
+        The search method builds the url according to the given search
+        parameters.  The search method has to return a tuple containing data
+        and a flag. Data might be the url string on success or None if building
+        the url fails.
+
+        :param search_params: A dictionary containing query parameters
+        :returns: A url on success, else None
+
+        """
+
+        raise NotImplementedError
+
+    def parse(self, response, search_params):
+        """
+        The provider itself is responsible for parsing its previously requested
+        data.  Data might be a list of new urls to fetch, a empty list or a
+        finished result object.
+
+        The state flag indicates if provider is done. If the flag is True,
+        than there is nothing to do left, otherwise the query is not ready yet.
+
+        Possible combinations ::
+
+            valid response      =>  ([url,...], False)
+                                    ([], True)
+                                    (result, True)
+
+            invalid response    => (None, True)
+
+        :param response: A utf-8 encoded http response.
+        :param search_params: See :func: `core.provider.IProvider.search`.
+        :returns: A tuple containing a data and a state flag.
+
+
+        """
+
+        raise NotImplementedError
+
     @property
     def supported_attrs(self):
+        '''
+        Helper function to determinate which result attribues are handled by
+        the provider.
+
+        :returns: A list with result attributes supported by provider.
+        '''
         return []
 
     def set_name(self, name):
@@ -26,45 +72,6 @@ class IProvider(IPlugin):
         return self._name
 
     name = property(fget=get_name, fset=set_name)
-
-    def search(self, search_params):
-        """
-        :param search_params: A dictionary containing query parameters and
-        the number of items to fetch. Query parameters are title, year and
-        imdbid, if all parameters are available, imdbid will be prefered if
-        possible.
-        :returns: A tuple containing data and a 'finished' flag that can be
-
-        Possible combinations ::
-
-            valid search_params             => ([url,...], False)
-            invalid search_params           => (None, True)
-        """
-
-        raise NotImplementedError
-
-    def parse(self, response, search_params):
-        """
-        :param response: A utf-8 encoded http response. The provider itself is
-        responsible for parsing its previously requested data.
-        :param search_params: See :func: `core.provider.IProvider.search`.
-        :returns: A tuple with data and a finished flag. Data may be a list of
-        new urls to fetch, empty list or a finished result object. If the
-        response is invalid, (None, False) will be returned. This triggers the
-        retry mechanism. See :func: `core.provider.IProvider.search`. If the
-        response is valid but parsing it fails, ([], True) is returned. Query
-        is finished.
-
-        Possible combinations ::
-
-            valid response      =>  ([url,...], False)
-                                    ([], True)
-                                    (result, True)
-
-            invalid response    => (None, False)
-        """
-
-        raise NotImplementedError
 
     @property
     def is_picture_provider(self):
@@ -93,17 +100,6 @@ class IProvider(IPlugin):
             if isinstance(self, instance):
                 types.append(string)
         return ', '.join(types)
-
-
-
-    def init(self):
-        '''
-        Initialisation of a provider
-        :returns: True on success, else False
-        '''
-        return True
-
-
 
 
 class IMovieProvider(IProvider):

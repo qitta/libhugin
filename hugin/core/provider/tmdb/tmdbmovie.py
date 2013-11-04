@@ -5,7 +5,7 @@
 from hugin.common.utils.stringcompare import string_similarity_ratio
 import hugin.core.provider as provider
 import hugin.core.provider.tmdb as tmdb_common
-from urllib.parse import quote
+from urllib.parse import quote_plus
 import json
 
 
@@ -18,27 +18,24 @@ class TMDBMovie(provider.IMovieProvider):
 
     def search(self, search_params):
         if search_params['title']:
-            title = quote(search_params['title'])
+            title = quote_plus(search_params['title'])
             query = '{title}&year={year}'.format(
                 title=title,
                 year=search_params['year'] or ''
             )
-            return (
-                self._base_url.format(
-                    path=self._path,
-                    apikey=self._api_key,
-                    query=query
-                ),
-                False
+            return self._base_url.format(
+                path=self._path,
+                apikey=self._api_key,
+                query=query
             )
         else:
-            return (None, True)
+            return None
 
     def parse(self, response, search_params):
         try:
             tmdb_response = json.loads(response)
         except TypeError as e:
-            return (None, False)
+            return (None, True)
         if 'total_results' in tmdb_response:
             if tmdb_response['total_results'] == 0:
                 return ([], True)
@@ -46,8 +43,8 @@ class TMDBMovie(provider.IMovieProvider):
                 return self._parse_search_module(tmdb_response, search_params)
         elif 'adult' in tmdb_response:
             return self._parse_movie_module(tmdb_response, search_params)
-        else:
-            return (None, False)
+        elif 'status_code' in tmdb_response:
+            return (None, True)
 
     def _parse_search_module(self, result, search_params):
         similarity_map = []

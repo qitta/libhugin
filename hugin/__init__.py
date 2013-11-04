@@ -2,7 +2,6 @@
 # encoding: utf-8
 
 from collections import UserDict
-from .core import provider
 from hugin.core.pluginhandler import PluginHandler
 from hugin.core.downloader import DownloadQueue
 import queue
@@ -127,6 +126,8 @@ class Query(UserDict):
     def _set_query_values(self, data):
         for key, value in data.items():
             self.data[key] = value
+        if self.data['items'] is None:
+            self.data['items'] = 1
 
 
 class ProviderData(UserDict):
@@ -138,11 +139,12 @@ class ProviderData(UserDict):
             'response': None,
             'done': False,
             'result': None,
-            'retries': 10
+            'retries': 50
         }
 
     def search(self):
-        self['url'], self['done'] = self['provider'].search(self['query'])
+        self['url'] = self['provider'].search(self['query'])
+        self['done'] = True
 
     def parse(self):
         provider, query = self['provider'], self['query']
@@ -161,24 +163,13 @@ class ProviderData(UserDict):
 
 
 if __name__ == '__main__':
-    hs = Session(timeout_sec=5)
+    hs = Session(timeout_sec=15)
     q = hs.create_query(
-        title='Cry Owl',
+        title='django unchained', # make tmdb search bei imdbid
+        # http://api.themoviedb.org/3/movie/tt0105236?api_key=###
         year='',
         type='movie',
-        imdbid='',
+        imdbid='tt0401792',
         search_text=True,
-        items=1
     )
-    q2 = hs.create_query(
-        title='Sin City',
-        # year='',
-        type='movie',
-        # imdbid='',
-        # search_text=True
-        #items=1
-    )
-    print('submit #1')
     hs.submit(q)
-    print('submit #2')
-    hs.submit(q2)

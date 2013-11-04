@@ -126,7 +126,6 @@ class DownloadQueue:
 
 
 if __name__ == '__main__':
-    from hugin.core.providerhandler import create_provider_data
     import unittest
     import json
 
@@ -137,38 +136,38 @@ if __name__ == '__main__':
             self._urls = ['http://www.nullcat.de', 'http://httpbin.org/get']
             logutil.create_logger(None)
 
-        def _create_dummy_provider(self, url):
-            pd = create_provider_data(
-                provider='',
-                retries=5
-            )
-            pd['url'] = url
-            return pd
+        #def _create_dummy_provider(self, url):
+        #    pd = create_provider_data(
+        #        provider='',
+        #        retries=5
+        #    )
+        #    pd['url'] = url
+        #    return pd
 
-        def test_push_pop(self):
-            with open('hugin/core/testdata/imdbid_small.txt', 'r') as f:
-                imdbid_list = f.read().splitlines()
-            for item in imdbid_list:
-                #url = 'http://www.omdbapi.com/?i={imdbid}'.format(imdbid=item)
-                url = 'http://ofdbgw.org/imdb2ofdb_json/{0}'.format(item)
-                p = self._create_dummy_provider(url)
-                self._dq.push(p)
+        #def test_push_pop(self):
+        #    with open('hugin/core/testdata/imdbid_small.txt', 'r') as f:
+        #        imdbid_list = f.read().splitlines()
+        #    for item in imdbid_list:
+        #        #url = 'http://www.omdbapi.com/?i={imdbid}'.format(imdbid=item)
+        #        url = 'http://ofdbgw.org/imdb2ofdb_json/{0}'.format(item)
+        #        p = self._create_dummy_provider(url)
+        #        self._dq.push(p)
 
-            while True:
-                rpd = self._dq.pop()
-                res = rpd['response']
-                try:
-                    j = json.loads(res)
-                    rcode = j["ofdbgw"]["status"]["rcode"]
-                    if rcode == 2 and rpd['retries'] >= 0:
-                        p = self._create_dummy_provider(rpd['url'])
-                        p['retries'] -= 1
-                        self._dq.push(p)
-                    else:
-                        print(rpd['retries'], j['ofdbgw']['resultat']['titel'])
-                except (TypeError, KeyError) as e:
-                    print(e)
-                except Exception as E:
-                    print(E)
+        #    while True:
+        #        rpd = self._dq.pop()
+        #        res = rpd['response']
+        #        try:
+        #            j = json.loads(res)
+        #            rcode = j["ofdbgw"]["status"]["rcode"]
+        #            if rcode == 2 and rpd['retries'] >= 0:
+        #                p = self._create_dummy_provider(rpd['url'])
+        #                p['retries'] -= 1
+        #                self._dq.push(p)
+        #            else:
+        #                print(rpd['retries'], j['ofdbgw']['resultat']['titel'])
+        #        except (TypeError, KeyError) as e:
+        #            print(e)
+        #        except Exception as E:
+        #            print(E)
 
     unittest.main()

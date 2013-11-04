@@ -3,6 +3,7 @@
 
 from hugin.common.utils.stringcompare import string_similarity_ratio
 import hugin.core.provider as provider
+from urllib.parse import quote_plus
 from urllib.parse import quote
 import json
 
@@ -15,23 +16,40 @@ class OFDBMovie(provider.IMovieProvider):
     def search(self, search_params):
         # not enough search params
         if search_params['title'] is None and search_params['imdbid'] is None:
-            return (None, True)
+            return None
 
         # try to search by imdbid if available, else use title
         if search_params['imdbid']:
             path, query = 'imdb2ofdb_json', search_params['imdbid']
         else:
             path, query = 'search_json', quote(search_params['title'])
-        return (self._base_url.format(path=path, query=query), False)
+        return self._base_url.format(path=path, query=query)
 
     def parse(self, response, search_params):
+        '''
+        0 = Keine Fehler
+        1 = Unbekannter Fehler
+        2 = Fehler oder Timeout bei Anfrage an IMDB bzw. OFDB
+        3 = Keine oder falsche ID angebene
+        4 = Keine Daten zu angegebener ID oder Query gefunden
+        5 = Fehler bei der Datenverarbeitung
+        9 = Wartungsmodus, OFDBGW derzeit nicht verfügbar.
+        '''
         try:
             ofdb_response = json.loads(response).get('ofdbgw')
         except (TypeError, ValueError) as e:
-            return (None, False)
+            return (None, True)
+
         status = ofdb_response['status']
-        if status['rcode'] == 4:
+
+        if status['rcode'] in [4, 5, 9]:
             return ([], True)
+
+        if status['rcode'] in [1, 2, 5]:
+            return (None, False)
+
+        if status['rcode'] in [3]:
+            return (None, True)
 
         if status['rcode'] == 0:
             select_parse_method = {
