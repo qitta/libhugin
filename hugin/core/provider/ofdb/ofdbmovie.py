@@ -65,6 +65,7 @@ class OFDBMovie(provider.IMovieProvider):
                     search_params
                 )
         else:
+            print('ganz unten')
             return (None, False)
 
     def _try_sanitize(self, response):
@@ -78,6 +79,7 @@ class OFDBMovie(provider.IMovieProvider):
             try:
                 return json.loads(response).get('ofdbgw')
             except (TypeError, ValueError):
+                print('.............oh oh ...............')
                 return None
 
     def _parse_imdb2ofdb_module(self, result, _):

@@ -12,7 +12,7 @@ import socket
 import urllib.request
 import charade
 
-USER_AGENT = "firefox1"
+USER_AGENT = None
 LOGGER = logging.getLogger('hugin.downloader')
 
 
@@ -46,6 +46,7 @@ class DownloadQueue:
 
         :returns: Request code and request itself as tuple => (r code, r)
         """
+        print(url)
         with urllib.request.urlopen(url, timeout=timeout) as request:
             return (request.code, request.readall())
 
@@ -108,6 +109,9 @@ class DownloadQueue:
                 timeout=self._timeout).add_done_callback(
                     partial(self._future_callback, url)
                 )
+
+    def requeue(self, provider_data):
+        self._request_queue.put(provider_data)
 
     def pop(self):
         '''

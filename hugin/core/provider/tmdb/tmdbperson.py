@@ -4,34 +4,29 @@
 
 from hugin.common.utils.stringcompare import string_similarity_ratio
 import hugin.core.provider as provider
-import hugin.core.provider.tmdb as tmdb_common
+from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
 from urllib.parse import quote
 import json
 
 
 class TMDBPerson(provider.IPersonProvider):
     def __init__(self):
-        self._api_key = tmdb_common.get_api_key()
-        self._base_url = tmdb_common.get_base_url()
-        self._path = 'search/movie'
+        self._config = TMDBConfig()
+        self._path = 'search/person'
 
     def search(self, search_params):
-        if search_params['title']:
-            title = quote(search_params['title'])
-            query = '{title}&year={year}'.format(
-                title=title,
-                year=search_params['year'] or ''
+        if search_params['name']:
+            name = quote(search_params['name'])
+            query = '{name}'.format(
+                name=name
             )
-            return (
-                self._base_url.format(
-                    path=self._path,
-                    apikey=self._api_key,
-                    query=query
-                ),
-                False
+            return  self._config.baseurl.format(
+                path=self._path,
+                apikey=self._config.apikey,
+                query=query
             )
         else:
-            return (None, True)
+            return None
 
     def parse(self, response, search_params):
         tmdb_response = json.loads(response)
@@ -40,7 +35,7 @@ class TMDBPerson(provider.IPersonProvider):
                 return ([], True)
             else:
                 return self._parse_search_module(tmdb_response, search_params)
-        elif 'adult' in tmdb_response:
+        elif 'name' in tmdb_response:
             return self._parse_movie_module(tmdb_response, search_params)
         else:
             return (None, False)
@@ -49,12 +44,12 @@ class TMDBPerson(provider.IPersonProvider):
         similarity_map = []
         for result in result['results']:
             ratio = 0.0
-            for title_key in ['original_title', 'title']:
+            for title_key in ['name']:
                 ratio = max(
                     ratio,
                     string_similarity_ratio(
                         result[title_key],
-                        search_params['title']
+                        search_params['name']
                     )
                 )
             similarity_map.append({'tmdbid': result['id'], 'ratio': ratio})
@@ -70,11 +65,11 @@ class TMDBPerson(provider.IPersonProvider):
     def _build_movie_url(self, matches):
         url_list = []
         for tmdbid in matches:
-            path = 'movie/{tmdbid}'.format(tmdbid=tmdbid)
+            path = 'person/{tmdbid}'.format(tmdbid=tmdbid)
             url_list.append(
-                self._base_url.format(
+                self._config.baseurl.format(
                     path=path,
-                    apikey=self._api_key,
+                    apikey=self._config.apikey,
                     query='&language=de'
                 )
             )
@@ -82,14 +77,21 @@ class TMDBPerson(provider.IPersonProvider):
 
     def _parse_movie_module(self, data, search_params):
         result = {
-            'title': data['title'],
-            'year': data['release_date'][:4],
+            'name': data['name'],
+            'photo': self._get_image_url(data['profile_path']),
             'imdbid': data['imdb_id'],
+            'birthday': data['birthday'],
+            'deathday': data['deathday'],
+            'biography': data['biography']
         }
         return (result, True)
 
+    def _get_image_url(self, profile_path):
+        return 'http://d3gtl9l2a4fn1j.cloudfront.net/t/p/w185/{0}'.format(profile_path)
+
     def activate(self):
         provider.IMovieProvider.activate(self)
+        self._config = TMDBConfig.get_instance()
         print('activating... ', __name__)
 
     def deactivate(self):

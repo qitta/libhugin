@@ -4,15 +4,14 @@
 
 from hugin.common.utils.stringcompare import string_similarity_ratio
 import hugin.core.provider as provider
-import hugin.core.provider.tmdb as tmdb_common
+from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
 from urllib.parse import quote_plus
 import json
 
 
 class TMDBMovie(provider.IMovieProvider):
     def __init__(self):
-        self._api_key = tmdb_common.get_api_key()
-        self._base_url = tmdb_common.get_base_url()
+        self._config = TMDBConfig()
         self._path = 'search/movie'
         self._attrs = ['title', 'original_title', 'imdbid', 'genre', 'plot']
 
@@ -26,9 +25,9 @@ class TMDBMovie(provider.IMovieProvider):
                 title=title,
                 year=search_params['year'] or ''
             )
-            return self._base_url.format(
+            return self._config.baseurl.format(
                 path=self._path,
-                apikey=self._api_key,
+                apikey=self._config.apikey,
                 query=query
             )
         else:
@@ -52,16 +51,17 @@ class TMDBMovie(provider.IMovieProvider):
     def _parse_search_module(self, result, search_params):
         similarity_map = []
         for result in result['results']:
-            ratio = 0.0
-            for title_key in ['original_title', 'title']:
-                ratio = max(
-                    ratio,
-                    string_similarity_ratio(
-                        result[title_key],
-                        search_params['title']
+            if result is not None:
+                ratio = 0.0
+                for title_key in ['original_title', 'title']:
+                    ratio = max(
+                        ratio,
+                        string_similarity_ratio(
+                            result[title_key],
+                            search_params['title']
+                        )
                     )
-                )
-            similarity_map.append({'tmdbid': result['id'], 'ratio': ratio})
+                similarity_map.append({'tmdbid': result['id'], 'ratio': ratio})
 
         similarity_map.sort(
             key=lambda value: value['ratio'],
@@ -76,9 +76,9 @@ class TMDBMovie(provider.IMovieProvider):
         for tmdbid in matches:
             path = 'movie/{tmdbid}'.format(tmdbid=tmdbid)
             url_list.append(
-                self._base_url.format(
+                self._config.baseurl.format(
                     path=path,
-                    apikey=self._api_key,
+                    apikey=self._config.apikey,
                     query='&language=de'
                 )
             )
