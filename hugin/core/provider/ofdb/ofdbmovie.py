@@ -124,14 +124,22 @@ class OFDBMovie(provider.IMovieProvider):
             'countries': result['produktionsland'],
             'rating': result['bewertung']['note'],
             'writer': result['drehbuch'],
-            'actors': result['besetzung'],
+            'actors': self._get_actor_list(result['besetzung']),
             'imdbid':  'tt{0}'.format(result['imdbid'])
 
         }
         return (result, True)
 
-    def _get_actor_list(self):
-        pass
+    def _get_actor_list(self, actors):
+        actor_list = []
+        for actor in actors:
+            item = {
+                'id': actor['id'],
+                'name': actor['name'],
+                'role': actor['rolle']
+            }
+            actor_list.append(item)
+        return actor_list
 
     def _build_movie_url(self, ofdbid_list):
         url_list = []
