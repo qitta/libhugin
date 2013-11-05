@@ -6,7 +6,6 @@ from hugin.core.pluginhandler import PluginHandler
 from hugin.core.downloader import DownloadQueue
 from hugin.providerdata import ProviderData
 from hugin.query import Query
-from hugin.jobhandler import JobHandler
 import queue
 
 
