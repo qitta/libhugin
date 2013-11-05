@@ -18,7 +18,7 @@ LOGGER = logging.getLogger('hugin.downloader')
 
 class DownloadQueue:
 
-    def __init__(self, num_threads=10, user_agent=USER_AGENT, timeout=5):
+    def __init__(self, num_threads=5, user_agent=USER_AGENT, timeout=5):
         '''
         A simple multithreaded queue wrapper for simultanous downloading using
         standard queue and futures ThreadPoolExecutor. Provider data
@@ -109,8 +109,8 @@ class DownloadQueue:
                     partial(self._future_callback, url)
                 )
 
-    def requeue(self, provider_data):
-        self._request_queue.put(provider_data)
+    def running_jobs(self):
+        print(len(self._url_to_provider_data), self._request_queue.qsize())
 
     def pop(self):
         '''
@@ -122,8 +122,8 @@ class DownloadQueue:
         try:
             return self._request_queue.get_nowait()
         except Empty:
-            if not len(self._url_to_provider_data) > 0:
-                raise
+            if len(self._url_to_provider_data) == 0:
+                raise Empty
             else:
                 return self._request_queue.get()
 

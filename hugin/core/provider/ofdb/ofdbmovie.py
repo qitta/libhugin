@@ -43,10 +43,10 @@ class OFDBMovie(provider.IMovieProvider):
 
         status = ofdb_response['status']
 
-        if status['rcode'] in [4, 5, 9]:
+        if status['rcode'] in [4, 9]:
             return ([], True)
 
-        # wie want retries to start
+        # we want retries to start
         if status['rcode'] in [1, 2, 5]:
             return (None, False)
 
@@ -66,7 +66,6 @@ class OFDBMovie(provider.IMovieProvider):
                     search_params
                 )
         else:
-            print('ganz unten')
             return (None, False)
 
     def _try_sanitize(self, response):
@@ -80,7 +79,6 @@ class OFDBMovie(provider.IMovieProvider):
             try:
                 return json.loads(response).get('ofdbgw')
             except (TypeError, ValueError):
-                print('.............oh oh ...............')
                 return None
 
     def _parse_imdb2ofdb_module(self, result, _):
@@ -115,11 +113,25 @@ class OFDBMovie(provider.IMovieProvider):
 
     def _parse_movie_module(self, result, _):
         result = {
+            'original_title': result['alternativ'],
             'title': result['titel'],
+            'plot': result['beschreibung'],
             'year': result['jahr'],
+            'poster': result['bild'],
+            'tagline': result['kurzbeschreibung'],
+            'genre': result['genre'],
+            'director': [r['name'] for r in result['regie']],
+            'countries': result['produktionsland'],
+            'rating': result['bewertung']['note'],
+            'writer': result['drehbuch'],
+            'actors': result['besetzung'],
             'imdbid':  'tt{0}'.format(result['imdbid'])
+
         }
         return (result, True)
+
+    def _get_actor_list(self):
+        pass
 
     def _build_movie_url(self, ofdbid_list):
         url_list = []

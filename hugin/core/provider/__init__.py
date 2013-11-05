@@ -3,7 +3,7 @@
 
 
 from yapsy.IPlugin import IPlugin
-
+import abc
 
 __all__ = ['IMovieProvider', 'IPersonProvider', 'IPictureProvider',
            'IOutputConverter', 'IPostprocessing', 'IProvider']
@@ -48,6 +48,7 @@ class IProvider(IPlugin):
             invalid response    => (None, True)
 
         :param response: A utf-8 encoded http response.
+        :type response: str
         :param search_params: See :func: `core.provider.IProvider.search`.
         :returns: A tuple containing a data and a state flag.
 

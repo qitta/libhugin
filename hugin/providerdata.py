@@ -12,26 +12,27 @@ class ProviderData(UserDict):
             'provider': provider,
             'query': query,
             'response': None,
-            'done': False,
+            'is_done': False,
             'result': None,
-            'retries': 5,
+            'return_code': None,
+            'retries_left': 5,
             'job_id': id(query)
         }
 
     def search(self):
         self['url'] = self['provider'].search(self['query'])
         if self['url'] is None:
-            self['retries'] = 0
-            self['done'] = True
+            self['retries_left'] = 0
+            self['is_done'] = True
 
     def parse(self):
-        self['result'], self['done'] = self['provider'].parse(
+        self['result'], self['is_done'] = self['provider'].parse(
             self['response'], self['query']
         )
-        if self['done'] is True and self['result'] is None:
-            self['retries'] = 0
-        elif self['done'] is False and self['result'] is None:
-            self['retries'] -= 1
+        if self['is_done'] is True and self['result'] is None:
+            self['retries_left'] = 0
+        elif self['is_done'] is False and self['result'] is None:
+            self['retries_left'] -= 1
 
     def __repr__(self):
         return 'Provider: ' + str(self['provider']) + str(self['result'])
@@ -42,7 +43,7 @@ class ProviderData(UserDict):
 
     @property
     def is_done(self):
-        return self['done']
+        return self['is_done']
 
     @property
     def has_valid_result(self):
@@ -50,11 +51,10 @@ class ProviderData(UserDict):
 
     @property
     def retries_left(self):
-        return self['retries'] > 0
+        return self['retries_left'] > 0
 
-    @property
     def dec_retries(self):
-        self['retries'] -= 1
+        self['retries_left'] -= 1
 
 
 if __name__ == '__main__':

@@ -27,12 +27,10 @@ class Session:
         ]
         self._plugin_handler = PluginHandler()
         self._plugin_handler.activate_plugins_by_category('Provider')
-        self._downloadqueue = DownloadQueue()
-        self._jobhandler = JobHandler(self._downloadqueue)
         self._provider = self._plugin_handler.get_plugins_from_category(
             'Provider'
         )
-        self._async_executor = ThreadPoolExecutor(max_workers=20)
+        self._async_executor = ThreadPoolExecutor(max_workers=10)
 
         self._provider_types = {
             'movie': [],
@@ -47,35 +45,28 @@ class Session:
         return Query(self._query_attrs, kwargs)
 
     def submit(self, query):
+        download_queue = DownloadQueue()
         finished_jobs = []
-        active_jobs = self._process_new_query(query)
 
-        for provider_data in active_jobs:
-            self._downloadqueue.push(provider_data)
+        jobs = self._process_new_query(query)
+        for provider_data in jobs:
+            download_queue.push(provider_data)
 
-        while len(active_jobs) > 0:
-            print(len(active_jobs))
-            try:
-                provider_data = self._downloadqueue.pop()
-                if provider_data.query is query:
-                    provider_data.parse()
-                    if provider_data.is_done:
-                        finished_jobs.append(provider_data)
-                        active_jobs.remove(provider_data)
-                    else:
-                        finished, new = self._process(provider_data)
-                        for provider_data in finished:
-                            active_jobs.remove(provider_data)
-                            finished_jobs.append(provider_data)
+        try:
+            while True:
+                # wait for next provider_data
+                provider_data = download_queue.pop()
+                provider_data.parse()
 
-                        for provider_data in new:
-                            if provider_data not in active_jobs:
-                                active_jobs.append(provider_data)
-                            self._downloadqueue.push(provider_data)
+                if provider_data.is_done:
+                    finished_jobs.append(provider_data)
                 else:
-                    self._downloadqueue.requeue(provider_data)
-            except queue.Empty:
-                pass
+                    new = self._process(provider_data)
+                    for provider_data in new:
+                        download_queue.push(provider_data)
+        except (queue.Empty, ValueError) as e:
+            print(e)
+        download_queue.running_jobs()
         return finished_jobs
 
     def _process_new_query(self, query):
@@ -89,26 +80,19 @@ class Session:
 
     def _process(self, provider_data):
         new_jobs = []
-        finished_jobs = []
 
-        if provider_data.is_done:
-            finished_jobs.append(provider_data)
+        if provider_data.has_valid_result:
+            for url in provider_data['result']:
+                provider_data = ProviderData(
+                    provider=provider_data['provider'],
+                    url=url,
+                    query=provider_data['query']
+                )
+                new_jobs.append(provider_data)
         else:
-            if provider_data.has_valid_result:
-                for url in provider_data['result']:
-                    provider_data = ProviderData(
-                        provider=provider_data['provider'],
-                        url=url,
-                        query=provider_data['query']
-                    )
-                    new_jobs.append(provider_data)
-            else:
-                if provider_data.retries_left:
-                    provider_data.dec_retries
-                    new_jobs.append(provider_data)
-                else:
-                    finished_jobs.append(provider_data)
-        return (finished_jobs, new_jobs)
+            provider_data.dec_retries()
+            new_jobs.append(provider_data)
+        return new_jobs
 
     def submit_async(self, query):
         return self._async_executor.submit(
@@ -158,27 +142,29 @@ class Session:
 
 if __name__ == '__main__':
     hs = Session(timeout_sec=15)
-    # f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
+    f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
     futures = []
     # f = ['tt0425413']
-    # for imdbid in f:
-    q = hs.create_query(
-        title='sin city',
-        year='',
-        name='emma stone',
-        type='movie',
-        search_text=True,
-        items=1
-    )
-    print(hs.submit(q))
+    for imdbid in f:
+        q = hs.create_query(
+            name='Emma Stone',
+            year='',
+            type='movie',
+            imdbid='{0}'.format(imdbid),
+            search_text=True,
+            items=1
+        )
+        futures.append(hs.submit_async(q))
 
-    # while len(futures) > 0:
-    #     for item in futures:
-    #         if item.done():
-    #             print(item.result())
-    #             futures.remove(item)
-    #         else:
-    #             pass
+    while len(futures) > 0:
+        for item in futures:
+            if item.done():
+                provider_data = item.result()
+                import pprint
+                pprint.pprint(provider_data)
+                futures.remove(item)
+            else:
+                pass
 
     #full = len(futures)
     #while len(futures) > 0:
