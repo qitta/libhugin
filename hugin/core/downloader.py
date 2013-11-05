@@ -46,7 +46,6 @@ class DownloadQueue:
 
         :returns: Request code and request itself as tuple => (r code, r)
         """
-        print(url)
         with urllib.request.urlopen(url, timeout=timeout) as request:
             return (request.code, request.readall())
 

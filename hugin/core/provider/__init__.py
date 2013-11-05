@@ -41,6 +41,7 @@ class IProvider(IPlugin):
         Possible combinations ::
 
             valid response      =>  ([url,...], False)
+                                    (None, False)
                                     ([], True)
                                     (result, True)
 
@@ -93,7 +94,7 @@ class IProvider(IPlugin):
         provider_types = {
             'person': IPersonProvider,
             'movie': IMovieProvider,
-            'picture': IPersonProvider
+            'picture': IPictureProvider
         }
         types = []
         for string, instance in provider_types.items():

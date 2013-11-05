@@ -2,14 +2,16 @@
 # encoding: utf-8
 
 from concurrent.futures import ThreadPoolExecutor
-from collections import UserDict
 from hugin.core.pluginhandler import PluginHandler
 from hugin.core.downloader import DownloadQueue
+from hugin.providerdata import ProviderData
+from hugin.query import Query
+from hugin.jobhandler import JobHandler
 import queue
 
 
 class Session:
-    def __init__(self, cache_path='/tmp', parallel_jobs=100, timeout_sec=3.0):
+    def __init__(self, cache_path='/tmp', parallel_jobs=10, timeout_sec=3.0):
         self._config = {
             'cache_path': cache_path,
             'parallel_jobs:': parallel_jobs,
@@ -27,10 +29,11 @@ class Session:
         self._plugin_handler = PluginHandler()
         self._plugin_handler.activate_plugins_by_category('Provider')
         self._downloadqueue = DownloadQueue()
+        self._jobhandler = JobHandler(self._downloadqueue)
         self._provider = self._plugin_handler.get_plugins_from_category(
             'Provider'
         )
-        self._async_executor = ThreadPoolExecutor(max_workers=10)
+        self._async_executor = ThreadPoolExecutor(max_workers=20)
 
         self._provider_types = {
             'movie': [],
@@ -45,45 +48,68 @@ class Session:
         return Query(self._query_attrs, kwargs)
 
     def submit(self, query):
-        jobs = []
-        self._process_new_query(query)
-        while True:
+        finished_jobs = []
+        active_jobs = self._process_new_query(query)
+
+        for provider_data in active_jobs:
+            self._downloadqueue.push(provider_data)
+
+        while len(active_jobs) > 0:
+            print(len(active_jobs))
             try:
                 provider_data = self._downloadqueue.pop()
-                print('PROVIDERDATA', provider_data)
-                if provider_data['job_id'] != id(query):
-                    self._downloadqueue.requeue(provider_data)
-                else:
-                    print(provider_data)
+                if provider_data.query is query:
                     provider_data.parse()
                     if provider_data.is_done:
-                        jobs.append(provider_data)
+                        finished_jobs.append(provider_data)
+                        active_jobs.remove(provider_data)
                     else:
-                        self._process(provider_data)
+                        finished, new = self._process(provider_data)
+                        for provider_data in finished:
+                            active_jobs.remove(provider_data)
+                            finished_jobs.append(provider_data)
+
+                        for provider_data in new:
+                            if provider_data not in active_jobs:
+                                active_jobs.append(provider_data)
+                            self._downloadqueue.push(provider_data)
+                else:
+                    self._downloadqueue.requeue(provider_data)
             except queue.Empty:
-                return jobs
-            return jobs
+                pass
+        return finished_jobs
 
     def _process_new_query(self, query):
-        provider = self._provider_types[query['type']]
-        for item in provider:
-            provider_data = ProviderData(provider=item, query=query)
+        providers = self._provider_types[query['type']]
+        provider_data_list = []
+        for provider in providers:
+            provider_data = ProviderData(provider=provider, query=query)
             provider_data.search()
-            self._downloadqueue.push(provider_data)
+            provider_data_list.append(provider_data)
+        return provider_data_list
 
     def _process(self, provider_data):
-        if provider_data['retries'] == 0:
-            provider_data['done'] = True
-        elif provider_data['result'] is None:
-            self._downloadqueue.push(provider_data)
+        new_jobs = []
+        finished_jobs = []
+
+        if provider_data.is_done:
+            finished_jobs.append(provider_data)
         else:
-            for url in provider_data['result']:
-                provider_data = ProviderData(
-                    provider=provider_data['provider'],
-                    url=url,
-                    query=provider_data['query']
-                )
-                self._downloadqueue.push(provider_data)
+            if provider_data.has_valid_result:
+                for url in provider_data['result']:
+                    provider_data = ProviderData(
+                        provider=provider_data['provider'],
+                        url=url,
+                        query=provider_data['query']
+                    )
+                    new_jobs.append(provider_data)
+            else:
+                if provider_data.retries_left:
+                    provider_data.dec_retries
+                    new_jobs.append(provider_data)
+                else:
+                    finished_jobs.append(provider_data)
+        return (finished_jobs, new_jobs)
 
     def submit_async(self, query):
         return self._async_executor.submit(
@@ -131,73 +157,22 @@ class Session:
         pass
 
 
-# Simple query object to initialize defaults
-class Query(UserDict):
-    def __init__(self, query_attrs, data):
-        self._query_attrs = query_attrs
-        self.data = {k: None for k in self._query_attrs}
-        self._set_query_values(data)
-
-    def _set_query_values(self, data):
-        for key, value in data.items():
-            self.data[key] = value
-        if self.data['items'] is None:
-            self.data['items'] = 1
-
-
-# Provider data encapsulation for simpler handling
-class ProviderData(UserDict):
-    def __init__(self, url=None, provider=None, query=None):
-        self.data = {
-            'url': url,
-            'provider': provider,
-            'query': query,
-            'response': None,
-            'done': False,
-            'result': None,
-            'retries': 50,
-            'job_id': id(query)
-        }
-
-    def search(self):
-        self['url'] = self['provider'].search(self['query'])
-
-    def parse(self):
-        provider, query = self['provider'], self['query']
-        self['result'], self['done'] = provider.parse(self['response'], query)
-        if self['result'] is None:
-            self['retries'] -= 1
-        if self['retries'] == 0:
-            self['done'] = True
-
-    def __repr__(self):
-        return 'Provider:' + str(self['provider']) + str(self['result'])
-
-    @property
-    def is_done(self):
-        return self['done']
-
-
 if __name__ == '__main__':
     hs = Session(timeout_sec=15)
-    #f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
-    #futures = []
-    #for imdbid in f:
+    # f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
+    futures = []
+    # f = ['tt0425413']
+    # for imdbid in f:
     q = hs.create_query(
-        title='Sin City',
-        name='Emma Stone',
+        title='sin city',
         year='',
-        type='person',
+        name='emma stone',
+        type='movie',
         search_text=True,
-        items=5
+        items=1
     )
     print(hs.submit(q))
-    #print(id(q))
-    #futures.append(hs.submit(q))
 
-    #for item in futures:
-    #    print(item)
-    # full = len(futures)
     # while len(futures) > 0:
     #     for item in futures:
     #         if item.done():
@@ -205,5 +180,14 @@ if __name__ == '__main__':
     #             futures.remove(item)
     #         else:
     #             pass
-    # print(len(futures))
-    # print(full)
+
+    #full = len(futures)
+    #while len(futures) > 0:
+    #    for item in futures:
+    #        if item.done():
+    #            print(item.result())
+    #            futures.remove(item)
+    #        else:
+    #            pass
+    #print(len(futures))
+    #print(full)

@@ -118,8 +118,8 @@ if __name__ == '__main__':
                     response,
                     self._params
                 )
-                self.assertTrue(finished)
                 self.assertTrue(result == [])
+                self.assertTrue(finished)
 
         def test_parse_provider_critical(self):
             for provider in self._providers:

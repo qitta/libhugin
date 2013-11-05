@@ -39,7 +39,9 @@ class TMDBConfig:
         try:
             response = json.loads(response_bytes.readall().decode('utf-8'))
             response = response.get('images')
-            self.image_base_url = response['base_url']
+            self.image_base_url = '{url}{{size}}{{image}}'.format(
+                url=response['base_url']
+            )
             self.poster_sizes = [size for size in response['poster_sizes']]
             self.backdrop_sizes = [size for size in response['backdrop_sizes']]
             self.profile_sizes = [size for size in response['profile_sizes']]
@@ -52,3 +54,4 @@ if __name__ == '__main__':
     t = TMDBConfig.get_instance()
     print(t.baseurl)
     print(t.apikey)
+    print(t.image_base_url)

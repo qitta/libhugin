@@ -46,6 +46,7 @@ class OFDBMovie(provider.IMovieProvider):
         if status['rcode'] in [4, 5, 9]:
             return ([], True)
 
+        # wie want retries to start
         if status['rcode'] in [1, 2, 5]:
             return (None, False)
 

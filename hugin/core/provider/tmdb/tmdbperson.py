@@ -20,7 +20,7 @@ class TMDBPerson(provider.IPersonProvider):
             query = '{name}'.format(
                 name=name
             )
-            return  self._config.baseurl.format(
+            return self._config.baseurl.format(
                 path=self._path,
                 apikey=self._config.apikey,
                 query=query
@@ -79,15 +79,23 @@ class TMDBPerson(provider.IPersonProvider):
         result = {
             'name': data['name'],
             'photo': self._get_image_url(data['profile_path']),
-            'imdbid': data['imdb_id'],
             'birthday': data['birthday'],
+            'placeofbirth': data['place_of_birth'],
+            'imdbid': data['imdb_id'],
+            'providerid': data['id'],
+            'homepage': data['homepage'],
             'deathday': data['deathday'],
+            'popularity': data['popularity'],
             'biography': data['biography']
         }
         return (result, True)
 
     def _get_image_url(self, profile_path):
-        return 'http://d3gtl9l2a4fn1j.cloudfront.net/t/p/w185/{0}'.format(profile_path)
+        url = self._config.image_base_url
+        url_list = []
+        for size in self._config.profile_sizes:
+            url_list.append((size, url.format(size=size, image=profile_path)))
+        return url_list
 
     def activate(self):
         provider.IMovieProvider.activate(self)
