@@ -45,7 +45,9 @@ if __name__ == '__main__':
                 'title': 'Sin City',
                 'year': '2005',
                 'imdbid': 'tt0401792',
-                'items': 5
+                'items': 5,
+                'type': 'movie',
+                'language':'en'
             }
 
         def read_file(self, file_name):
