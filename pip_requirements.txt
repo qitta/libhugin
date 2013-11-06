@@ -9,3 +9,6 @@ charade
 #: yapsy
 #: yapsy.IPlugin
 yapsy
+
+#: httplib2
+httplib2
