@@ -122,9 +122,11 @@ class IPersonProvider(IProvider):
 
 
 class IPictureProvider(IProvider):
-    @property
-    def is_picture(self):
-        return True
+    """
+    A base class for person metadata plugins. All person metadata plugins
+    should inherit from this class.
+    """
+    pass
 
 
 # converter plugins

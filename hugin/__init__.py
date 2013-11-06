@@ -9,6 +9,12 @@ from hugin.query import Query
 import queue
 
 
+class Profile:
+    def __init__(self, provider):
+        self._provider
+
+
+
 class Session:
     def __init__(
         self, cache_path='/tmp', parallel_jobs=2,
@@ -34,7 +40,12 @@ class Session:
         self._provider = self._plugin_handler.get_plugins_from_category(
             'Provider'
         )
-        print(self._config['parallel_jobs'])
+        self._postprocessing = self._plugin_handler.get_plugins_from_category(
+            'Postprocessing'
+        )
+        self._converter = self._plugin_handler.get_plugins_from_category(
+            'OutputConverter'
+        )
         self._async_executor = ThreadPoolExecutor(max_workers=5)
 
         self._provider_types = {
@@ -80,6 +91,7 @@ class Session:
         providers = self._provider_types[query['type']]
         provider_data_list = []
         for provider in providers:
+            provider = provider['name']
             provider_data = ProviderData(provider=provider, query=query)
             provider_data.search()
             provider_data_list.append(provider_data)
@@ -110,8 +122,11 @@ class Session:
     def _build_default_profile(self):
         pass
 
-    def providers_list(self):
-        return self._provider_types
+    def providers_list(self, category):
+        if category in self._provider_types:
+            return self._provider_types[category]
+        else:
+            return self._provider_types
 
     def _categorize(self, provider):
         if provider.is_picture_provider:
@@ -121,15 +136,23 @@ class Session:
 
     def _append_picture_provider(self, provider):
         if provider.is_movie_provider:
-            self._provider_types['movie_picture'].append(provider)
+            self._provider_types['movie_picture'].append(
+                {'name': provider, 'supported_attrs': provider.supported_attrs}
+            )
         else:
-            self._provider_types['person_picture'].append(provider)
+            self._provider_types['person_picture'].append(
+                {'name': provider, 'supported_attrs': provider.supported_attrs}
+            )
 
     def _append_text_provider(self, provider):
         if provider.is_movie_provider:
-            self._provider_types['movie'].append(provider)
+            self._provider_types['movie'].append(
+                {'name': provider, 'supported_attrs': provider.supported_attrs}
+            )
         else:
-            self._provider_types['person'].append(provider)
+            self._provider_types['person'].append(
+                {'name': provider, 'supported_attrs': provider.supported_attrs}
+            )
 
     def converter_list(self):
         pass
@@ -148,34 +171,35 @@ class Session:
 
 
 if __name__ == '__main__':
-    hs = Session(timeout_sec=0.1)
+    import pprint
+    hs = Session(timeout_sec=1)
     f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
     futures = []
     # f = ['tt0425413']
-    for imdbid in f:
-        q = hs.create_query(
-            name='Emma Stone',
-            year='',
-            type='movie',
-            imdbid='{0}'.format(imdbid),
-            search_text=True,
-            items=1
-        )
-        futures.append(hs.submit_async(q))
+    # for imdbid in f:
+    q = hs.create_query(
+        name='Emma Stone',
+        title='sin city',
+        year='',
+        type='movie',
+        search_text=True,
+        items=5
+    )
+    pprint.pprint(hs.submit(q))
 
-    while len(futures) > 0:
-        for item in futures:
-            if item.done():
-                provider_data = item.result()
-                import pprint
-                for k in provider_data:
-                    try:
-                        print(k['result']['title'])
-                    except Exception:
-                        print('-->', k['provider'], k['result'], k['retries_left'], k['return_code'])
-                futures.remove(item)
-            else:
-                pass
+    # while len(futures) > 0:
+    #     for item in futures:
+    #         if item.done():
+    #             provider_data = item.result()
+    #             import pprint
+    #             for k in provider_data:
+    #                 try:
+    #                     print(k['result']['title'])
+    #                 except Exception:
+    #                     print('-->', k['provider'], k['result'], k['retries_left'], k['return_code'])
+    #             futures.remove(item)
+    #         else:
+    #             pass
 
     #full = len(futures)
     #while len(futures) > 0:
