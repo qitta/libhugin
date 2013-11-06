@@ -56,6 +56,18 @@ class ProviderData(UserDict):
     def dec_retries(self):
         self['retries_left'] -= 1
 
+    def retry_on_error(self):
+        if self['return_code'] in [408, 500, 502, 503, 504]:
+            self['retries_left'] -= 1
+            self['done'] = False
+            return True
+        else:
+            return False
+
+
+
+
+
 
 if __name__ == '__main__':
     import unittest
@@ -155,6 +167,5 @@ if __name__ == '__main__':
             self.assertTrue(self._provider_data.is_done)
             self.assertFalse(self._provider_data.has_valid_result)
             self.assertFalse(self._provider_data.retries_left)
-
 
     unittest.main()

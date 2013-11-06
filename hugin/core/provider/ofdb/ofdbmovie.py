@@ -132,13 +132,16 @@ class OFDBMovie(provider.IMovieProvider):
 
     def _get_actor_list(self, actors):
         actor_list = []
-        for actor in actors:
-            item = {
-                'id': actor['id'],
-                'name': actor['name'],
-                'role': actor['rolle']
-            }
-            actor_list.append(item)
+        try:
+            for actor in actors:
+                item = {
+                    'id': actor.get('id'),
+                    'name': actor.get('name'),
+                    'role': actor.get('rolle')
+                }
+                actor_list.append(item)
+        except AttributeError:
+            return []
         return actor_list
 
     def _build_movie_url(self, ofdbid_list):

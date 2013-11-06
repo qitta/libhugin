@@ -6,6 +6,7 @@ from hugin.common.utils.stringcompare import string_similarity_ratio
 import hugin.core.provider as provider
 from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
 from urllib.parse import quote_plus
+from hugin.core.provider.utils import get_movie_result_dict
 import json
 
 
@@ -85,6 +86,7 @@ class TMDBMovie(provider.IMovieProvider):
         return url_list
 
     def _parse_movie_module(self, data, search_params):
+        result = get_movie_result_dict()
         result = {
             'title': data['title'],
             'year': data['release_date'][:4],

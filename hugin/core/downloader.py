@@ -18,7 +18,7 @@ LOGGER = logging.getLogger('hugin.downloader')
 
 class DownloadQueue:
 
-    def __init__(self, num_threads=5, user_agent=USER_AGENT, timeout=5):
+    def __init__(self, num_threads=5, user_agent=USER_AGENT, timeout_sec=5):
         '''
         A simple multithreaded queue wrapper for simultanous downloading using
         standard queue and futures ThreadPoolExecutor. Provider data
@@ -34,7 +34,7 @@ class DownloadQueue:
         self._headers = {'User-Agent': user_agent}
         self._request_queue = Queue()
         self._url_to_provider_data = {}
-        self._timeout = timeout
+        self._timeout_sec = timeout_sec
 
     def _fetch_url(self, url, timeout):
         """
@@ -60,16 +60,17 @@ class DownloadQueue:
         with self._url_to_provider_data_lock:
             provider_data = self._url_to_provider_data.pop(url)
             try:
-                _, result = future.result()
-                if result:
+                return_code, result = future.result()
+                if result and return_code:
                     provider_data['response'] = self._encode_to_utf8(result)
+                    provider_data['return_code'] = return_code
             except (
                 ValueError,
                 socket.timeout,
                 urllib.error.URLError,
                 BadStatusLine
             ) as e:
-                LOGGER.warning(e)
+                LOGGER.warning('{0}{1}'.format(url, e.reason))
             self._request_queue.put(provider_data)
 
     def _encode_to_utf8(self, byte_data):
@@ -105,7 +106,7 @@ class DownloadQueue:
             self._executor.submit(
                 self._fetch_url,
                 url=url,
-                timeout=self._timeout).add_done_callback(
+                timeout=self._timeout_sec).add_done_callback(
                     partial(self._future_callback, url)
                 )
 
@@ -135,7 +136,7 @@ if __name__ == '__main__':
     class TestDownloadQueue(unittest.TestCase):
 
         def setUp(self):
-            self._dq = DownloadQueue(timeout=2)
+            self._dq = DownloadQueue(timeout_sec=2)
             self._urls = ['http://www.nullcat.de', 'http://httpbin.org/get']
             logutil.create_logger(None)
 

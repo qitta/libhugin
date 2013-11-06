@@ -10,11 +10,15 @@ import queue
 
 
 class Session:
-    def __init__(self, cache_path='/tmp', parallel_jobs=10, timeout_sec=3.0):
+    def __init__(
+        self, cache_path='/tmp', parallel_jobs=2,
+        timeout_sec=5, user_agent='libhugin/1.0'
+    ):
         self._config = {
             'cache_path': cache_path,
-            'parallel_jobs:': parallel_jobs,
+            'parallel_jobs': parallel_jobs,
             'timeout_sec': timeout_sec,
+            'user_agent': user_agent,
             'profile': {
                 'default': [],
                 'search_pictures': False,
@@ -30,7 +34,8 @@ class Session:
         self._provider = self._plugin_handler.get_plugins_from_category(
             'Provider'
         )
-        self._async_executor = ThreadPoolExecutor(max_workers=10)
+        print(self._config['parallel_jobs'])
+        self._async_executor = ThreadPoolExecutor(max_workers=5)
 
         self._provider_types = {
             'movie': [],
@@ -45,7 +50,10 @@ class Session:
         return Query(self._query_attrs, kwargs)
 
     def submit(self, query):
-        download_queue = DownloadQueue()
+        download_queue = DownloadQueue(
+            timeout_sec=self._config['timeout_sec'],
+            user_agent=self._config['user_agent']
+        )
         finished_jobs = []
 
         jobs = self._process_new_query(query)
@@ -64,9 +72,8 @@ class Session:
                     new = self._process(provider_data)
                     for provider_data in new:
                         download_queue.push(provider_data)
-        except (queue.Empty, ValueError) as e:
-            print(e)
-        download_queue.running_jobs()
+        except queue.Empty as e:
+            pass
         return finished_jobs
 
     def _process_new_query(self, query):
@@ -141,7 +148,7 @@ class Session:
 
 
 if __name__ == '__main__':
-    hs = Session(timeout_sec=15)
+    hs = Session(timeout_sec=0.1)
     f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
     futures = []
     # f = ['tt0425413']
@@ -161,7 +168,11 @@ if __name__ == '__main__':
             if item.done():
                 provider_data = item.result()
                 import pprint
-                pprint.pprint(provider_data)
+                for k in provider_data:
+                    try:
+                        print(k['result']['title'])
+                    except Exception:
+                        print('-->', k['provider'], k['result'], k['retries_left'], k['return_code'])
                 futures.remove(item)
             else:
                 pass
@@ -174,5 +185,5 @@ if __name__ == '__main__':
     #            futures.remove(item)
     #        else:
     #            pass
-    #print(len(futures))
+    # print(len(futures))
     #print(full)
