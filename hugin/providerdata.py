@@ -29,10 +29,14 @@ class ProviderData(UserDict):
         self['result'], self['is_done'] = self['provider'].parse(
             self['response'], self['query']
         )
+        if self['is_done'] is False and self['result'] is None:
+            if self['retries_left'] > 0:
+                self['retries_left'] -= 1
+            else:
+                self['is_done'] = True
+                self['result'] = None
         if self['is_done'] is True and self['result'] is None:
             self['retries_left'] = 0
-        elif self['is_done'] is False and self['result'] is None:
-            self['retries_left'] -= 1
 
     def __repr__(self):
         return 'Provider: ' + str(self['provider']) + str(self['result'])

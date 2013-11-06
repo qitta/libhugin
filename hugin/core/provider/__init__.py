@@ -83,12 +83,24 @@ class IProvider(IPlugin):
     def is_movie_provider(self):
         return isinstance(self, IMovieProvider)
 
+    def identify_type(self):
+        types = self._type
+        maintype = 'movie' if 'movie' in types else 'person'
+        if 'picture' in types:
+            return '{maintype}_{subtype}'.format(
+                maintype=maintype,
+                subtype='picture'
+            )
+        else:
+            return '{maintype}'.format(maintype=maintype)
+
     @property
     def is_person_provider(self):
         return isinstance(self, IPersonProvider)
 
     def __repr__(self):
-        return '{name} <{type}>'.format(name=self._name, type=self._type)
+        types = ', '.join(self._type)
+        return '{name} <{type}>'.format(name=self._name, type=types)
 
     @property
     def _type(self):
@@ -101,7 +113,7 @@ class IProvider(IPlugin):
         for string, instance in provider_types.items():
             if isinstance(self, instance):
                 types.append(string)
-        return ', '.join(types)
+        return types
 
 
 class IMovieProvider(IProvider):

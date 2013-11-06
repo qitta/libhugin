@@ -18,13 +18,19 @@ class TMDBMovie(provider.IMovieProvider):
 
     def search(self, search_params):
         if search_params['imdbid']:
-            return ''.join(self._build_movie_url([search_params['imdbid']]))
+            return ''.join(
+                self._config.build_movie_url(
+                    [search_params['imdbid']],
+                    search_params,
+                )
+            )
 
         if search_params['title']:
             title = quote_plus(search_params['title'])
-            query = '{title}&year={year}'.format(
+            query = '{title}&year={year}&language={language}'.format(
                 title=title,
-                year=search_params['year'] or ''
+                year=search_params['year'] or '',
+                language=search_params['language'] or ''
             )
             return self._config.baseurl.format(
                 path=self._path,
@@ -37,7 +43,7 @@ class TMDBMovie(provider.IMovieProvider):
     def parse(self, response, search_params):
         try:
             tmdb_response = json.loads(response)
-        except TypeError as e:
+        except TypeError:
             return (None, True)
         if 'total_results' in tmdb_response:
             if tmdb_response['total_results'] == 0:
@@ -70,27 +76,38 @@ class TMDBMovie(provider.IMovieProvider):
         )
         item_count = min(len(similarity_map), search_params['items'])
         matches = [item['tmdbid'] for item in similarity_map[:item_count]]
-        return (self._build_movie_url(matches), False)
-
-    def _build_movie_url(self, matches):
-        url_list = []
-        for tmdbid in matches:
-            path = 'movie/{tmdbid}'.format(tmdbid=tmdbid)
-            url_list.append(
-                self._config.baseurl.format(
-                    path=path,
-                    apikey=self._config.apikey,
-                    query='&language=de'
-                )
-            )
-        return url_list
+        return (self._config.build_movie_url(matches, search_params), False)
 
     def _parse_movie_module(self, data, search_params):
         result = get_movie_result_dict()
         result = {
             'title': data['title'],
+            'original_title': data['title'],
+            'plot': data['overview'],
             'year': data['release_date'][:4],
             'imdbid': data['imdb_id'],
+            'poster': self._config.get_image_url(
+                data['poster_path'],
+                'poster'
+            ),
+            'fanart': self._config.get_image_url(
+                data['backdrop_path'],
+                'backdrop'
+            ),
+            'vote_count': data['vote_count'],
+            'rating': data['vote_average'],
+            'countries': self._config.extract_keyvalue_attrs(
+                data['production_countries']
+            ),
+            'genre': self._config.extract_keyvalue_attrs(
+                data['genres']
+            ),
+            'providerid': data['id'],
+            'collection': data['belongs_to_collection'],
+            'runtime': data['runtime'],
+            'studios': self._config.extract_keyvalue_attrs(
+                data['production_companies']
+            )
         }
         return (result, True)
 

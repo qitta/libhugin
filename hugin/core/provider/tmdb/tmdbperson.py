@@ -60,25 +60,15 @@ class TMDBPerson(provider.IPersonProvider):
         )
         item_count = min(len(similarity_map), search_params['items'])
         matches = [item['tmdbid'] for item in similarity_map[:item_count]]
-        return (self._build_movie_url(matches), False)
-
-    def _build_movie_url(self, matches):
-        url_list = []
-        for tmdbid in matches:
-            path = 'person/{tmdbid}'.format(tmdbid=tmdbid)
-            url_list.append(
-                self._config.baseurl.format(
-                    path=path,
-                    apikey=self._config.apikey,
-                    query='&language=de'
-                )
-            )
-        return url_list
+        return (self._config.build_movie_url(matches, search_params), False)
 
     def _parse_movie_module(self, data, search_params):
         result = {
             'name': data['name'],
-            'photo': self._get_image_url(data['profile_path']),
+            'photo': self._config.get_image_url(
+                data['profile_path'],
+                'profile'
+            ),
             'birthday': data['birthday'],
             'placeofbirth': data['place_of_birth'],
             'imdbid': data['imdb_id'],
@@ -89,13 +79,6 @@ class TMDBPerson(provider.IPersonProvider):
             'biography': data['biography']
         }
         return (result, True)
-
-    def _get_image_url(self, profile_path):
-        url = self._config.image_base_url
-        url_list = []
-        for size in self._config.profile_sizes:
-            url_list.append((size, url.format(size=size, image=profile_path)))
-        return url_list
 
     def activate(self):
         provider.IMovieProvider.activate(self)

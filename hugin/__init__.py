@@ -9,12 +9,6 @@ from hugin.query import Query
 import queue
 
 
-class Profile:
-    def __init__(self, provider):
-        self._provider
-
-
-
 class Session:
     def __init__(
         self, cache_path='/tmp', parallel_jobs=2,
@@ -46,7 +40,9 @@ class Session:
         self._converter = self._plugin_handler.get_plugins_from_category(
             'OutputConverter'
         )
-        self._async_executor = ThreadPoolExecutor(max_workers=5)
+        self._async_executor = ThreadPoolExecutor(
+            max_workers=self._config['parallel_jobs']
+        )
 
         self._provider_types = {
             'movie': [],
@@ -62,28 +58,27 @@ class Session:
 
     def submit(self, query):
         download_queue = DownloadQueue(
+            num_threads=3,
             timeout_sec=self._config['timeout_sec'],
             user_agent=self._config['user_agent']
         )
         finished_jobs = []
 
         jobs = self._process_new_query(query)
-        for provider_data in jobs:
-            download_queue.push(provider_data)
+        [download_queue.push(provider_data) for provider_data in jobs]
 
         try:
             while True:
                 # wait for next provider_data
                 provider_data = download_queue.pop()
                 provider_data.parse()
-
                 if provider_data.is_done:
                     finished_jobs.append(provider_data)
                 else:
                     new = self._process(provider_data)
                     for provider_data in new:
                         download_queue.push(provider_data)
-        except queue.Empty as e:
+        except queue.Empty:
             pass
         return finished_jobs
 
@@ -119,40 +114,22 @@ class Session:
             query
         )
 
-    def _build_default_profile(self):
-        pass
-
-    def providers_list(self, category):
-        if category in self._provider_types:
+    def providers_list(self, category=None):
+        if category and category in self._provider_types:
             return self._provider_types[category]
         else:
             return self._provider_types
 
+    def provider_types(self):
+        return self._provider_types.keys()
+
+    def result_attributes(self):
+        pass
+
     def _categorize(self, provider):
-        if provider.is_picture_provider:
-            self._append_picture_provider(provider)
-        else:
-            self._append_text_provider(provider)
-
-    def _append_picture_provider(self, provider):
-        if provider.is_movie_provider:
-            self._provider_types['movie_picture'].append(
-                {'name': provider, 'supported_attrs': provider.supported_attrs}
-            )
-        else:
-            self._provider_types['person_picture'].append(
-                {'name': provider, 'supported_attrs': provider.supported_attrs}
-            )
-
-    def _append_text_provider(self, provider):
-        if provider.is_movie_provider:
-            self._provider_types['movie'].append(
-                {'name': provider, 'supported_attrs': provider.supported_attrs}
-            )
-        else:
-            self._provider_types['person'].append(
-                {'name': provider, 'supported_attrs': provider.supported_attrs}
-            )
+        self._provider_types[provider.identify_type()].append(
+            {'name': provider, 'supported_attrs': provider.supported_attrs}
+        )
 
     def converter_list(self):
         pass
@@ -160,54 +137,27 @@ class Session:
     def config_list(self):
         return self._config
 
-    def profile_list(self):
-        pass
-
-    def profile_add(self):
-        pass
-
-    def profile_remove(self):
-        pass
-
-
 if __name__ == '__main__':
     import pprint
-    hs = Session(timeout_sec=1)
+    hs = Session(parallel_jobs=5, timeout_sec=5)
     f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
+    # print(hs.providers_list())
     futures = []
-    # f = ['tt0425413']
-    # for imdbid in f:
-    q = hs.create_query(
-        name='Emma Stone',
-        title='sin city',
-        year='',
-        type='movie',
-        search_text=True,
-        items=5
-    )
-    pprint.pprint(hs.submit(q))
+    #f = ['tt0425413']
+    for imdbid in f:
+        q = hs.create_query(
+            type='movie',
+            search_text=True,
+            imdbid='{0}'.format(imdbid)
+        )
+        futures.append(hs.submit_async(q))
 
-    # while len(futures) > 0:
-    #     for item in futures:
-    #         if item.done():
-    #             provider_data = item.result()
-    #             import pprint
-    #             for k in provider_data:
-    #                 try:
-    #                     print(k['result']['title'])
-    #                 except Exception:
-    #                     print('-->', k['provider'], k['result'], k['retries_left'], k['return_code'])
-    #             futures.remove(item)
-    #         else:
-    #             pass
-
-    #full = len(futures)
-    #while len(futures) > 0:
-    #    for item in futures:
-    #        if item.done():
-    #            print(item.result())
-    #            futures.remove(item)
-    #        else:
-    #            pass
-    # print(len(futures))
-    #print(full)
+        while len(futures) > 0:
+            for item in futures:
+                if item.done():
+                    for provider in item.result():
+                        if provider['result']:
+                            pass
+                    futures.remove(item)
+                else:
+                    pass

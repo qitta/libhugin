@@ -11,6 +11,7 @@ import logging
 import socket
 import urllib.request
 import charade
+import httplib2
 
 USER_AGENT = None
 LOGGER = logging.getLogger('hugin.downloader')
@@ -18,7 +19,7 @@ LOGGER = logging.getLogger('hugin.downloader')
 
 class DownloadQueue:
 
-    def __init__(self, num_threads=5, user_agent=USER_AGENT, timeout_sec=5):
+    def __init__(self, num_threads=25, user_agent=USER_AGENT, timeout_sec=5):
         '''
         A simple multithreaded queue wrapper for simultanous downloading using
         standard queue and futures ThreadPoolExecutor. Provider data
@@ -46,8 +47,11 @@ class DownloadQueue:
 
         :returns: Request code and request itself as tuple => (r code, r)
         """
-        with urllib.request.urlopen(url, timeout=timeout) as request:
-            return (request.code, request.readall())
+        http = httplib2.Http(timeout=timeout)
+        resp, content = http.request(url)
+        return (resp.status, content)
+        #with urllib.request.urlopen(url, timeout=timeout) as request:
+        #    return (request.code, request.readall())
 
     def _future_callback(self, url, future):
         """
@@ -70,7 +74,8 @@ class DownloadQueue:
                 urllib.error.URLError,
                 BadStatusLine
             ) as e:
-                LOGGER.warning('{0}{1}'.format(url, e.reason))
+                provider_data['return_code'] = 408
+                LOGGER.warning('timeout')
             self._request_queue.put(provider_data)
 
     def _encode_to_utf8(self, byte_data):

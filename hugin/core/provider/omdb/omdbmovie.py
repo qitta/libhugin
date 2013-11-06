@@ -12,8 +12,11 @@ import json
 class OMDBMovie(provider.IMovieProvider):
 
     def __init__(self):
-        self._base_url = 'http://www.omdbapi.com/?{query}'
-        self._attrs = ['title', 'year', 'imdbid']
+        self._base_url = 'http://www.omdbapi.com/?{query}&plot=full'
+        self._attrs = [
+            'title', 'year', 'poster', 'imdbid', 'rating', 'actors',
+            'director', 'writer', 'genre', 'plot', 'runtime', 'vote_count'
+        ]
 
     def search(self, search_params):
         if search_params['imdbid']:
@@ -73,10 +76,20 @@ class OMDBMovie(provider.IMovieProvider):
         return url_list
 
     def _parse_movie_module(self, data, search_params):
+
         result = {
             'title': data['Title'],
             'year': data['Year'],
+            'poster': (None, data['Poster']),
             'imdbid': data['imdbID'],
+            'rating': data['imdbRating'],
+            'actors': data['Actors'].split(','),
+            'director': data['Director'].split(','),
+            'writer': data['Writer'].split(','),
+            'genre': data['Genre'].split(','),
+            'plot': data['Plot'].split(','),
+            'runtime': data['Runtime'].split(','),
+            'vote_count': data['imdbVotes'].replace(',', '')
         }
         return (result, True)
 

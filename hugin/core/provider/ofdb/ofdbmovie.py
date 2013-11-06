@@ -9,7 +9,7 @@ import json
 
 class OFDBMovie(provider.IMovieProvider):
     def __init__(self):
-        self._base_url = 'http://ofdbgw.org/{path}/{query}'
+        self._base_url = 'http://ofdbgw.home-of-root.de/{path}/{query}'
         self._attrs = ['title', 'year', 'imdbid', 'genre', 'plot']
 
     def search(self, search_params):
@@ -123,19 +123,30 @@ class OFDBMovie(provider.IMovieProvider):
             'director': [r['name'] for r in result['regie']],
             'countries': result['produktionsland'],
             'rating': result['bewertung']['note'],
-            'writer': result['drehbuch'],
+            'writer': self._extract_writer(result['drehbuch']),
             'actors': self._get_actor_list(result['besetzung']),
             'imdbid':  'tt{0}'.format(result['imdbid'])
 
         }
         return (result, True)
 
+    def _extract_writer(self, writer):
+        person_list = []
+        try:
+            for person in writer:
+                item = {
+                    'name': person.get('name')
+                }
+                person_list.append(item)
+        except (AttributeError, TypeError):
+            return []
+        return person_list
+
     def _get_actor_list(self, actors):
         actor_list = []
         try:
             for actor in actors:
                 item = {
-                    'id': actor.get('id'),
                     'name': actor.get('name'),
                     'role': actor.get('rolle')
                 }

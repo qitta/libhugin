@@ -7,7 +7,8 @@ def get_movie_result_dict():
         'title', 'original_title', 'alternative_titles', 'collection',
         'tagline', 'rating', 'year', 'runtime', 'director', 'writer',
         'certification', 'trailer', 'plot', 'poster', 'fanart', 'countries',
-        'actors', 'genres', 'studios', 'imdbid', 'provideridi', ' vote_count'
+        'actors', 'genres', 'studios', 'imdbid', 'providerid', ' vote_count',
+        'type'
     ]
     return ({key: None for key in attrs}, 'movie')
 
@@ -16,6 +17,6 @@ def get_person_result_dict():
     attrs = [
         'name', 'photo', 'movies_as_actor', 'movies_as_director',
         'movies_as_writer', 'biography', 'birthday', 'placeofbirth',
-        'deathday', 'imdbid', 'providerid', 'role', 'homepage'
+        'deathday', 'imdbid', 'providerid', 'role', 'homepage', 'type'
     ]
     return ({key: None for key in attrs}, 'person')
