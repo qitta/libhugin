@@ -6,7 +6,7 @@ from collections import UserDict
 #query attrs for testing purposes, Session itself contains query attrs
 QUERY_ATTRS = [
     'title', 'year', 'name', 'imdbid', 'type', 'search_text',
-    'language', 'seach_picture', 'items'
+    'language', 'seach_picture', 'items', 'use_cache'
 ]
 
 
@@ -18,6 +18,7 @@ class Query(UserDict):
         self._query_attrs = query_attrs
         self.data = {k: None for k in self._query_attrs}
         self._set_query_values(data)
+        self._set_required_defaults()
 
     def _set_query_values(self, data):
         '''
@@ -26,8 +27,13 @@ class Query(UserDict):
         for key, value in data.items():
             if key in self.data:
                 self.data[key] = value
+
+    def _set_required_defaults(self):
         if self.data['items'] is None:
             self.data['items'] = 1
+        if self.data['use_cache'] is None:
+            self.data['use_cache'] = True
+
 
 if __name__ == '__main__':
     def create_query(**kwargs):
