@@ -17,7 +17,7 @@ LOGGER = logging.getLogger('hugin.downloader')
 
 class DownloadQueue:
 
-    def __init__(self, num_threads=25, user_agent=USER_AGENT, timeout_sec=5):
+    def __init__(self, num_threads=25, user_agent=USER_AGENT, timeout_sec=5, local_cache=None):
         '''
         A simple multithreaded queue wrapper for simultanous downloading using
         standard queue and futures ThreadPoolExecutor. Provider data
@@ -34,6 +34,9 @@ class DownloadQueue:
         self._request_queue = Queue()
         self._url_to_provider_data = {}
         self._timeout_sec = timeout_sec
+        self._local_cache = None
+        if local_cache is not None:
+            self._local_cache = local_cache
 
     def _fetch_url(self, url, timeout):
         """
@@ -45,9 +48,19 @@ class DownloadQueue:
 
         :returns: Request code and request itself as tuple => (r code, r)
         """
-        http = httplib2.Http(timeout=timeout)
-        resp, content = http.request(url)
-        return (resp.status, content)
+        resp, content = None, None
+
+        if self._local_cache is not None:
+            content = self._local_cache.read(url)
+            resp = 'local'
+        if content is None:
+            print('NOT CACHED:', url)
+            http = httplib2.Http(timeout=timeout)
+            resp, content = http.request(url)
+            return (resp.status, content)
+
+        print('CACHED:', url)
+        return (resp, content)
         #with urllib.request.urlopen(url, timeout=timeout) as request:
         #    return (request.code, request.readall())
 
@@ -63,7 +76,9 @@ class DownloadQueue:
             provider_data = self._url_to_provider_data.pop(url)
             try:
                 return_code, result = future.result()
-                if result and return_code:
+                if return_code == 'local':
+                    provider_data['response'] = result
+                else:
                     provider_data['response'] = self._encode_to_utf8(result)
                     provider_data['return_code'] = return_code
             except socket.timeout as st:
@@ -97,6 +112,11 @@ class DownloadQueue:
         information url, response, provider.
         '''
         url = provider_data['url']
+
+        if provider_data['active_retry']:
+            print(url, provider_data['provider'], provider_data['retries_left'])
+            provider_data['active_retry'] = False
+
         if url and url not in self._url_to_provider_data:
             with self._url_to_provider_data_lock:
                 self._url_to_provider_data[url] = provider_data
