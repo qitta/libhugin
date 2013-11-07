@@ -80,7 +80,7 @@ if __name__ == '__main__':
             print(self._value, result)
             return result
 
-        def invoke_search(self, _dummy_search_params):
+        def search(self, _dummy_search_params):
             _ = _dummy_search_params
             len(_)
             result = {
@@ -125,13 +125,11 @@ if __name__ == '__main__':
             self._provider_data.invoke_search()
             self.assertFalse(self._provider_data.is_done)
             self.assertTrue(self._provider_data['url'] == URL)
-            self.assertTrue(self._provider_data.retries_left)
 
             self._provider.set_state('failed')
             self._provider_data.invoke_search()
             self.assertTrue(self._provider_data.is_done)
             self.assertTrue(self._provider_data['url'] is None)
-            self.assertFalse(self._provider_data.retries_left)
 
         def test_provider_parse(self):
             self._provider.set_state('success')
@@ -139,29 +137,24 @@ if __name__ == '__main__':
 
             self.assertFalse(self._provider_data.is_done)
             self.assertTrue(self._provider_data.has_valid_result)
-            self.assertTrue(self._provider_data.retries_left)
 
             self._provider.set_state('success_nothing_found')
             self._provider_data.invoke_parse()
 
             self.assertTrue(self._provider_data.is_done)
             self.assertTrue(self._provider_data.has_valid_result)
-            self.assertTrue(self._provider_data.retries_left)
 
             self._provider.set_state('failed')
             for _ in range(4):
                 self._provider_data.invoke_parse()
                 self.assertFalse(self._provider_data.is_done)
                 self.assertFalse(self._provider_data.has_valid_result)
-                self.assertTrue(self._provider_data.retries_left)
             self._provider_data.invoke_parse()
-            self.assertFalse(self._provider_data.retries_left)
 
             self._provider.set_state('critical')
             self._provider_data.invoke_parse()
 
             self.assertTrue(self._provider_data.is_done)
             self.assertFalse(self._provider_data.has_valid_result)
-            self.assertFalse(self._provider_data.retries_left)
 
     unittest.main()

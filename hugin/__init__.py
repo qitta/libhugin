@@ -7,9 +7,9 @@ from hugin.core.downloader import DownloadQueue
 from hugin.providerdata import ProviderData
 from hugin.query import Query
 from hugin.core.cache import Cache
-import threading
 import sys
 import queue
+import signal
 
 
 class Session:
@@ -17,7 +17,6 @@ class Session:
         self, cache_path='/tmp', parallel_jobs=2,
         timeout_sec=5, user_agent='libhugin/1.0', use_cache='True'
     ):
-        self._shutdown_event = threading.Event()
         self._config = {
             'cache_path': cache_path,
             'parallel_jobs': parallel_jobs,
@@ -172,43 +171,45 @@ class Session:
     def config_list(self):
         return self._config
 
+    def handler(self, signal, frame):
+        self._async_executor.shutdown(wait=False)
+        self._cache.close()
+        print('You pressed Ctrl+C!')
+        sys.exit(1)
+
 if __name__ == '__main__':
-    shutdown_event = threading.Event()
-    try:
-        hs = Session(parallel_jobs=5, timeout_sec=5)
-        f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
-        # print(hs.providers_list())
-        futures = []
-        #f = ['tt0425413']
-        for imdbid in f:
-            q = hs.create_query(
-                type='movie',
-                search_text=True,
-                use_cache=True,
-                title='Sin City',
-                imdbid='{0}'.format(imdbid)
-            )
-            futures.append(hs.submit_async(q))
-        #hs.submit(q)
+    hs = Session(parallel_jobs=5, timeout_sec=5)
+    signal.signal(signal.SIGINT, hs.handler)
+    f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
+    # print(hs.providers_list())
+    futures = []
+    #f = ['tt0425413']
+    for imdbid in f:
+        q = hs.create_query(
+            type='movie',
+            search_text=True,
+            use_cache=True,
+            title='Sin City',
+            imdbid='{0}'.format(imdbid)
+        )
+        futures.append(hs.submit_async(q))
+    #hs.submit(q)
 
-        while len(futures) > 0:
-            for item in futures:
-                if item.done():
-                    for provider_item in item.result():
-                        if provider_item['result']:
-                            pass
-                            #print(provider_item['result']['title'])
-                        else:
-                            pass
-                            #print(provider_item['retries_left'], provider_item['provider'], provider_item['return_code'])
-                    futures.remove(item)
-                else:
-                    pass
+    while len(futures) > 0:
+        for item in futures:
+            if item.done():
+                for provider_item in item.result():
+                    if provider_item['result']:
+                        pass
+                        #print(provider_item['result']['title'])
+                    else:
+                        pass
+                        #print(provider_item['retries_left'], provider_item['provider'], provider_item['return_code'])
+                futures.remove(item)
+            else:
+                pass
 
-        # cache = hs._cache.get_cache_object()
-        # for item in cache.values():
-        #     print(item)
-        hs._cache.close()
-    except (KeyboardInterrupt, SystemExit):
-        shutdown_event.set()
-        sys.exit(s)
+    # cache = hs._cache.get_cache_object()
+    # for item in cache.values():
+    #     print(item)
+    hs._cache.close()
