@@ -5,6 +5,7 @@ from collections import UserDict
 from hugin.query import Query, QUERY_ATTRS
 
 
+
 class ProviderData(UserDict):
     def __init__(self, url=None, provider=None, query=None):
         self.data = {
@@ -16,27 +17,22 @@ class ProviderData(UserDict):
             'result': None,
             'return_code': None,
             'retries_left': 5,
-            'job_id': id(query)
+            'active_retry': False,
+            'previous_action': None
         }
 
-    def search(self):
+    def invoke_search(self):
         self['url'] = self['provider'].search(self['query'])
         if self['url'] is None:
-            self['retries_left'] = 0
             self['is_done'] = True
+        else:
+            self['previous_action'] = 'search'
 
-    def parse(self):
+    def invoke_parse(self):
         self['result'], self['is_done'] = self['provider'].parse(
             self['response'], self['query']
         )
-        if self['is_done'] is False and self['result'] is None:
-            if self['retries_left'] > 0:
-                self['retries_left'] -= 1
-            else:
-                self['is_done'] = True
-                self['result'] = None
-        if self['is_done'] is True and self['result'] is None:
-            self['retries_left'] = 0
+        self['previous_action'] = 'parse'
 
     def __repr__(self):
         return 'Provider: ' + str(self['provider']) + str(self['result'])
@@ -53,24 +49,13 @@ class ProviderData(UserDict):
     def has_valid_result(self):
         return self['result'] is not None
 
-    @property
-    def retries_left(self):
-        return self['retries_left'] > 0
-
-    def dec_retries(self):
-        self['retries_left'] -= 1
-
-    def retry_on_error(self):
-        if self['return_code'] in [408, 500, 502, 503, 504]:
+    def decrement_retries(self):
+        if self['retries_left'] > 0:
             self['retries_left'] -= 1
-            self['done'] = False
-            return True
+            self['active_retry'] = True
         else:
-            return False
-
-
-
-
+            self['retries_left'] = 0
+            self['is_done'] = True
 
 
 if __name__ == '__main__':
@@ -95,7 +80,7 @@ if __name__ == '__main__':
             print(self._value, result)
             return result
 
-        def search(self, _dummy_search_params):
+        def invoke_search(self, _dummy_search_params):
             _ = _dummy_search_params
             len(_)
             result = {
@@ -107,6 +92,13 @@ if __name__ == '__main__':
 
         def set_state(self, state):
             self._value = state
+
+        def retries_left(self):
+            return self['retries_left'] > 0
+
+        def decrement_retries(self):
+            self['retries_left'] -= 1
+            self['active_retry'] = True
 
     def create_query(**kwargs):
         return Query(QUERY_ATTRS, kwargs)
@@ -130,27 +122,27 @@ if __name__ == '__main__':
 
         def test_provider_search(self):
             self._provider.set_state('success')
-            self._provider_data.search()
+            self._provider_data.invoke_search()
             self.assertFalse(self._provider_data.is_done)
             self.assertTrue(self._provider_data['url'] == URL)
             self.assertTrue(self._provider_data.retries_left)
 
             self._provider.set_state('failed')
-            self._provider_data.search()
+            self._provider_data.invoke_search()
             self.assertTrue(self._provider_data.is_done)
             self.assertTrue(self._provider_data['url'] is None)
             self.assertFalse(self._provider_data.retries_left)
 
         def test_provider_parse(self):
             self._provider.set_state('success')
-            self._provider_data.parse()
+            self._provider_data.invoke_parse()
 
             self.assertFalse(self._provider_data.is_done)
             self.assertTrue(self._provider_data.has_valid_result)
             self.assertTrue(self._provider_data.retries_left)
 
             self._provider.set_state('success_nothing_found')
-            self._provider_data.parse()
+            self._provider_data.invoke_parse()
 
             self.assertTrue(self._provider_data.is_done)
             self.assertTrue(self._provider_data.has_valid_result)
@@ -158,15 +150,15 @@ if __name__ == '__main__':
 
             self._provider.set_state('failed')
             for _ in range(4):
-                self._provider_data.parse()
+                self._provider_data.invoke_parse()
                 self.assertFalse(self._provider_data.is_done)
                 self.assertFalse(self._provider_data.has_valid_result)
                 self.assertTrue(self._provider_data.retries_left)
-            self._provider_data.parse()
+            self._provider_data.invoke_parse()
             self.assertFalse(self._provider_data.retries_left)
 
             self._provider.set_state('critical')
-            self._provider_data.parse()
+            self._provider_data.invoke_parse()
 
             self.assertTrue(self._provider_data.is_done)
             self.assertFalse(self._provider_data.has_valid_result)

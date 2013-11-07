@@ -43,7 +43,7 @@ class TMDBMovie(provider.IMovieProvider):
     def parse(self, response, search_params):
         try:
             tmdb_response = json.loads(response)
-        except TypeError:
+        except (ValueError, TypeError):
             return (None, True)
         if 'total_results' in tmdb_response:
             if tmdb_response['total_results'] == 0:

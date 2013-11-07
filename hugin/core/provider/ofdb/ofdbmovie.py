@@ -9,7 +9,8 @@ import json
 
 class OFDBMovie(provider.IMovieProvider):
     def __init__(self):
-        self._base_url = 'http://ofdbgw.home-of-root.de/{path}/{query}'
+        self._base_url = 'http://ofdbgw.org/{path}/{query}'
+        # self._base_url = 'http://ofdbgw.home-of-root.de/{path}/{query}'
         self._attrs = ['title', 'year', 'imdbid', 'genre', 'plot']
 
     def search(self, search_params):
