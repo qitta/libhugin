@@ -2,14 +2,12 @@
 # encoding: utf-8
 
 from concurrent.futures import ThreadPoolExecutor
-from http.client import BadStatusLine
 from queue import Queue, Empty
 from functools import partial
 from threading import Lock
 from hugin.common.utils import logutil
 import logging
 import socket
-import urllib.request
 import charade
 import httplib2
 
@@ -68,14 +66,8 @@ class DownloadQueue:
                 if result and return_code:
                     provider_data['response'] = self._encode_to_utf8(result)
                     provider_data['return_code'] = return_code
-            except (
-                ValueError,
-                socket.timeout,
-                urllib.error.URLError,
-                BadStatusLine
-            ) as e:
-                provider_data['return_code'] = 408
-                LOGGER.warning('timeout')
+            except socket.timeout as st:
+                provider_data['return_code'] = (408, st)
             self._request_queue.put(provider_data)
 
     def _encode_to_utf8(self, byte_data):

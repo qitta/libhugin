@@ -138,9 +138,8 @@ class Session:
         return self._config
 
 if __name__ == '__main__':
-    import pprint
     hs = Session(parallel_jobs=5, timeout_sec=5)
-    f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
+    f = open('./hugin/core/testdata/imdbid_huge.txt').read().splitlines()
     # print(hs.providers_list())
     futures = []
     #f = ['tt0425413']
@@ -152,12 +151,14 @@ if __name__ == '__main__':
         )
         futures.append(hs.submit_async(q))
 
-        while len(futures) > 0:
-            for item in futures:
-                if item.done():
-                    for provider in item.result():
-                        if provider['result']:
-                            pass
-                    futures.remove(item)
-                else:
-                    pass
+    while len(futures) > 0:
+        for item in futures:
+            if item.done():
+                for provider_item in item.result():
+                    if provider_item['result']:
+                        print(provider_item['result']['title'])
+                    else:
+                        print(provider_item['retries_left'], provider_item['provider'], provider_item['return_code'])
+                futures.remove(item)
+            else:
+                pass
