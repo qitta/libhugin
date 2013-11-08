@@ -17,7 +17,7 @@ LOGGER = logging.getLogger('hugin.downloader')
 
 class DownloadQueue:
 
-    def __init__(self, num_threads=25, user_agent=USER_AGENT, timeout_sec=5, local_cache=None):
+    def __init__(self, num_threads=4, user_agent=USER_AGENT, timeout_sec=5, local_cache=None):
         '''
         A simple multithreaded queue wrapper for simultanous downloading using
         standard queue and futures ThreadPoolExecutor. Provider data
@@ -28,62 +28,75 @@ class DownloadQueue:
         :param user_agent: User-Agent to be used.
         :param timeout: Url timeout to be used for each url
         '''
+        self._num_threads = num_threads if num_threads <= 10 else 10
         self._url_to_provider_data_lock = Lock()
-        self._executor = ThreadPoolExecutor(max_workers=num_threads)
+        self._executor = ThreadPoolExecutor(max_workers=1) #self._num_threads)
         self._headers = {'User-Agent': user_agent}
         self._request_queue = Queue()
         self._url_to_provider_data = {}
         self._timeout_sec = timeout_sec
         self._local_cache = None
+        self._shutdown_downloadqueue = False
         if local_cache is not None:
             self._local_cache = local_cache
 
+
+    def _shutdown(self):
+        cancelled_provider_data = []
+        for provider_data in self._url_to_provider_data.values():
+            if provider_data['future'] is not None:
+                if provider_data['future'].running() is False:
+                    if provider_data['future'].done() is False:
+                        provider_data['future'].cancel()
+                        cancelled_provider_data.append(provider_data)
+        self._executor.shutdown(wait=False)
+        for provider_data in cancelled_provider_data:
+            url = provider_data['url']
+            if url in self._url_to_provider_data:
+                self._url_to_provider_data.pop(url)
+
     def _fetch_url(self, url, timeout):
-        """
-        Download method which is triggered by ThreadPoolExecutor for
-        downloading.
-
-        :param url: Url to be downloaded
-        :param timeout: Timeout in seconds
-
-        :returns: Request code and request itself as tuple => (r code, r)
-        """
         resp, content = None, None
 
         if self._local_cache is not None:
             content = self._local_cache.read(url)
             resp = 'local'
         if content is None:
-            print('NOT CACHED:', url)
             http = httplib2.Http(timeout=timeout)
             resp, content = http.request(url)
-            return (resp.status, content)
 
-        print('CACHED:', url)
-        return (resp, content)
-        #with urllib.request.urlopen(url, timeout=timeout) as request:
-        #    return (request.code, request.readall())
-
-    def _future_callback(self, url, future):
-        """
-        Callback that is triggered by a future on sucess or error.
-
-        :param url: The url is used to pop finished/failed provider data
-        elements from url_to_provider_data dictionary and put them into result
-        queue
-        """
         with self._url_to_provider_data_lock:
             provider_data = self._url_to_provider_data.pop(url)
             try:
-                return_code, result = future.result()
-                if return_code == 'local':
-                    provider_data['response'] = result
+                if resp == 'local':
+                    provider_data['response'] = content
                 else:
-                    provider_data['response'] = self._encode_to_utf8(result)
-                    provider_data['return_code'] = return_code
+                    provider_data['response'] = self._encode_to_utf8(content)
+                    provider_data['return_code'] = resp
             except socket.timeout as st:
                 provider_data['return_code'] = (408, st)
             self._request_queue.put(provider_data)
+
+    #def _future_callback(self, url, future):
+    #    """
+    #    Callback that is triggered by a future on sucess or error.
+
+    #    :param url: The url is used to pop finished/failed provider data
+    #    elements from url_to_provider_data dictionary and put them into result
+    #    queue
+    #    """
+    #    with self._url_to_provider_data_lock:
+    #        provider_data = self._url_to_provider_data.pop(url)
+    #        try:
+    #            return_code, result = future.result()
+    #            if return_code == 'local':
+    #                provider_data['response'] = result
+    #            else:
+    #                provider_data['response'] = self._encode_to_utf8(result)
+    #                provider_data['return_code'] = return_code
+    #        except socket.timeout as st:
+    #            provider_data['return_code'] = (408, st)
+    #        self._request_queue.put(provider_data)
 
     def _encode_to_utf8(self, byte_data):
         """
@@ -111,21 +124,20 @@ class DownloadQueue:
         :param provider_data: A dictionary that encapsulates some provider
         information url, response, provider.
         '''
-        url = provider_data['url']
 
-        if provider_data['active_retry']:
-            print(url, provider_data['provider'], provider_data['retries_left'])
-            provider_data['active_retry'] = False
+        if provider_data is None and self._shutdown_downloadqueue is False:
+            self._shutdown_downloadqueue = True
+            self._shutdown()
 
-        if url and url not in self._url_to_provider_data:
-            with self._url_to_provider_data_lock:
-                self._url_to_provider_data[url] = provider_data
-            self._executor.submit(
-                self._fetch_url,
-                url=url,
-                timeout=self._timeout_sec).add_done_callback(
-                    partial(self._future_callback, url)
-                )
+        if self._shutdown_downloadqueue == False and provider_data is not None:
+            url = provider_data['url']
+            if url and url not in self._url_to_provider_data:
+                with self._url_to_provider_data_lock:
+                    self._url_to_provider_data[url] = provider_data
+                provider_data['future'] = self._executor.submit(
+                    self._fetch_url,
+                    url=url,
+                    timeout=self._timeout_sec)
 
     def running_jobs(self):
         print(len(self._url_to_provider_data), self._request_queue.qsize())

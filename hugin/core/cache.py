@@ -20,17 +20,16 @@ class Cache(object):
     def open(self, path='.', cache_name='shelve_cache.db'):
         """ Open a new cache or read existing cache, if cache exists. """
         if self._cache is None:
-            with self._cache_lock:
-                full_path = os.path.join(path, cache_name)
-                if not os.path.exists(path):
-                    os.mkdir(path)
-                self._cache = shelve.open(full_path)
+            full_path = os.path.join(path, cache_name)
+            if not os.path.exists(path):
+                os.mkdir(path)
+            self._cache = shelve.open(full_path)
 
     def read(self, key):
         """ Read data from cache at position of key."""
         with self._cache_lock:
             if self._cache is None:
-                print('Error, no open cache.')
+                print('Error, no open cache. - read')
             else:
                 return self._cache.get(key)
 
@@ -38,7 +37,7 @@ class Cache(object):
         with self._cache_lock:
             """ Write value at key position, overwrite existing items. """
             if self._cache is None:
-                print('Error, no open cache.')
+                print('Error, no open cache. - write')
             else:
                 self._cache[key] = value
 
@@ -46,15 +45,13 @@ class Cache(object):
         return self._cache
 
     def close(self):
-        with self._cache_lock:
-            """ Sync and close the open cache. """
-            if self._cache is None:
-                print('Error, no open cache.')
-            else:
-                self._cache.sync()
-                self._cache.close()
-                self._cache = None
-                print('cache closed.')
+        """ Sync and close the open cache. """
+        if self._cache is None:
+            print('Error, no open cache.')
+        else:
+            self._cache.sync()
+            self._cache.close()
+            self._cache = None
 
 if __name__ == '__main__':
     c = Cache()

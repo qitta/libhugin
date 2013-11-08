@@ -12,6 +12,7 @@ class ProviderData(UserDict):
             'url': url,
             'provider': provider,
             'query': query,
+            'future': None,
             'response': None,
             'is_done': False,
             'result': None,

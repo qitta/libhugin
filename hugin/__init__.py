@@ -7,6 +7,7 @@ from hugin.core.downloader import DownloadQueue
 from hugin.providerdata import ProviderData
 from hugin.query import Query
 from hugin.core.cache import Cache
+from threading import Lock
 import sys
 import queue
 import signal
@@ -14,12 +15,14 @@ import signal
 
 class Session:
     def __init__(
-        self, cache_path='/tmp', parallel_jobs=2,
+        self, cache_path='/tmp', parallel_jobs=1,
         timeout_sec=5, user_agent='libhugin/1.0', use_cache='True'
     ):
         self._config = {
             'cache_path': cache_path,
-            'parallel_jobs': parallel_jobs,
+            # limit parallel jobs to 4, there is no reason for a huge number of
+            # parallel jobs because of the GIL
+            'parallel_jobs': 4 if parallel_jobs <= 4 else 4,
             'timeout_sec': timeout_sec,
             'user_agent': user_agent,
             'profile': {
@@ -55,6 +58,10 @@ class Session:
             'person': [],
             'person_picture': []
         }
+        self._downloadqueues = []
+        self._futures = []
+        self._shutdown_session = False
+        self._global_session_lock = Lock()
         # categorize provider for convinience reasons
         [self._categorize(provider) for provider in self._provider]
 
@@ -66,12 +73,15 @@ class Session:
             query['use_cache'] = None
         else:
             query['use_cache'] = self._cache
-        return DownloadQueue(
+
+        downloadqueue = DownloadQueue(
             num_threads=self._config['parallel_jobs'],
             timeout_sec=self._config['timeout_sec'],
             user_agent=self._config['user_agent'],
             local_cache=query['use_cache']
         )
+        self._downloadqueues.append(downloadqueue)
+        return downloadqueue
 
     def submit(self, query):
         finished_jobs = []
@@ -80,7 +90,7 @@ class Session:
         jobs = self._process_new_query(query)
         [download_queue.push(provider_data) for provider_data in jobs]
 
-        while True:
+        while True: # self._shutdown_session is False:
             # wait for next provider_data
             try:
                 provider_data = download_queue.pop()
@@ -108,6 +118,12 @@ class Session:
                             finished_jobs.append(provider_data)
                         else:
                             download_queue.push(provider_data)
+        with self._global_session_lock:
+            download_queue.push(None)
+            if self._shutdown_session is True:
+                self.clean_up()
+                print('SIZE:', download_queue.running_jobs())
+                self._downloadqueues.remove(download_queue)
         return finished_jobs
 
 
@@ -143,10 +159,13 @@ class Session:
         return new_jobs
 
     def submit_async(self, query):
-        return self._async_executor.submit(
-            self.submit,
-            query
-        )
+        if self._shutdown_session is False:
+            future = self._async_executor.submit(
+                self.submit,
+                query
+            )
+            self._futures.append(future)
+            return future
 
     def providers_list(self, category=None):
         if category and category in self._provider_types:
@@ -171,16 +190,27 @@ class Session:
     def config_list(self):
         return self._config
 
-    def handler(self, signal, frame):
+    def cancel(self):
+        self._shutdown_session = True
+
+    def clean_up(self):
+        futures_cancelled = []
+        # kill all pending futures
+        for future in self._futures:
+            if future.running() is False and future.done() is False:
+                future.cancel()
         self._async_executor.shutdown(wait=False)
         self._cache.close()
-        print('You pressed Ctrl+C!')
         sys.exit(1)
 
+    def handler(self, signal, frame):
+        # print('You pressed Ctrl+C!')
+        self._shutdown_session = True
+
 if __name__ == '__main__':
-    hs = Session(parallel_jobs=5, timeout_sec=5)
+    hs = Session(parallel_jobs=1, timeout_sec=5)
     signal.signal(signal.SIGINT, hs.handler)
-    f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
+    f = open('./hugin/core/testdata/imdbid_huge.txt').read().splitlines()
     # print(hs.providers_list())
     futures = []
     #f = ['tt0425413']
@@ -197,17 +227,21 @@ if __name__ == '__main__':
 
     while len(futures) > 0:
         for item in futures:
-            if item.done():
-                for provider_item in item.result():
-                    if provider_item['result']:
-                        pass
-                        #print(provider_item['result']['title'])
-                    else:
-                        pass
-                        #print(provider_item['retries_left'], provider_item['provider'], provider_item['return_code'])
+            if item and item.done():
                 futures.remove(item)
-            else:
-                pass
+                x = None
+                try:
+                    x = item.result()
+                except:
+                    pass
+                if x:
+                    for provider_item in item.result():
+                        if provider_item['result']:
+                            print(provider_item['result']['title'])
+                        else:
+                            pass
+                            #print(provider_item['retries_left'], provider_item['provider'], provider_item['return_code'])
+        print('item done:', item.done())
 
     # cache = hs._cache.get_cache_object()
     # for item in cache.values():
