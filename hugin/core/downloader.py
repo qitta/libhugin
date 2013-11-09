@@ -1,154 +1,140 @@
 #/usr/bin/env python
 # encoding: utf-8
 
+""" This module encapsulates a thread-based downloadqueue. """
+
 from concurrent.futures import ThreadPoolExecutor
-from queue import Queue, Empty
-from functools import partial
 from threading import Lock
-from hugin.common.utils import logutil
-import logging
-import socket
+from queue import Queue, Empty
+
 import charade
 import httplib2
-
-USER_AGENT = None
-LOGGER = logging.getLogger('hugin.downloader')
 
 
 class DownloadQueue:
 
-    def __init__(self, num_threads=4, user_agent=USER_AGENT, timeout_sec=5, local_cache=None):
-        '''
-        A simple multithreaded queue wrapper for simultanous downloading using
-        standard queue and futures ThreadPoolExecutor. Provider data
-        dictionaries can only be used.
+    """ A simple queue/threadpool wrapper for simultanous downloading using."""
 
-        :param num_threads: Number of threads to be used for simultanous
-        downloading
+    def __init__(
+            self, num_threads=4, user_agent='libhugin/1.0', timeout_sec=5,
+            local_cache=None):
+        """
+        Set custom downlodqueue parameters.
+
+        :param num_threads: Number of threads for simultanous downloading.
         :param user_agent: User-Agent to be used.
-        :param timeout: Url timeout to be used for each url
-        '''
+        :param timeout: Url timeout to be used for each url.
+        :param local_cache: A local cache for lookup before download.
+
+        """
         self._num_threads = num_threads if num_threads <= 10 else 10
-        self._url_to_provider_data_lock = Lock()
-        self._executor = ThreadPoolExecutor(max_workers=1) #self._num_threads)
-        self._headers = {'User-Agent': user_agent}
-        self._request_queue = Queue()
-        self._url_to_provider_data = {}
+        self._headers = {'User-Agent': user_agent, 'Connection': 'close'}
         self._timeout_sec = timeout_sec
         self._local_cache = None
-        self._shutdown_downloadqueue = False
         if local_cache is not None:
             self._local_cache = local_cache
 
+        self._url_to_provider_data_lock = Lock()
+        self._url_to_provider_data = {}
+        self._request_queue = Queue()
+
+        self._executor = ThreadPoolExecutor(max_workers=self._num_threads)
+        self._shutdown_downloadqueue = False
+        self._is_shutdown = False
 
     def _shutdown(self):
-        cancelled_provider_data = []
-        for provider_data in self._url_to_provider_data.values():
-            if provider_data['future'] is not None:
-                if provider_data['future'].running() is False:
-                    if provider_data['future'].done() is False:
-                        provider_data['future'].cancel()
-                        cancelled_provider_data.append(provider_data)
-        self._executor.shutdown(wait=False)
-        for provider_data in cancelled_provider_data:
-            url = provider_data['url']
-            if url in self._url_to_provider_data:
-                self._url_to_provider_data.pop(url)
+        """ Stop the ThreadPool and wait until pending jobs are done. """
+        self._executor.shutdown(wait=True)
+        self._is_shutdown = True
 
-    def _fetch_url(self, url, timeout):
+    def _fetch_url(self, url, timeout_sec):
+        """
+        Get the requested url from cache or web.
+
+        :param url: A absolute URI that starts with http/https.
+        :param timeout_sec: A timeout to be used for each request.
+
+        """
         resp, content = None, None
-
-        if self._local_cache is not None:
-            content = self._local_cache.read(url)
-            resp = 'local'
-        if content is None:
-            http = httplib2.Http(timeout=timeout)
-            resp, content = http.request(url)
+        try:
+            if self._local_cache is not None:
+                # we use 0 as status code for local fetch
+                resp, content = 0, self._local_cache.read(url)
+            # if nothing found in local cache
+            elif content is None:
+                http = httplib2.Http(timeout=timeout_sec)
+                resp, content = http.request(uri=url, headers=self._headers)
+        except httplib2.RelativeURIError:
+            print('RelativeURIError')
+        except Exception as e:
+            print('Something went terribly wrong!', e)
 
         with self._url_to_provider_data_lock:
             provider_data = self._url_to_provider_data.pop(url)
-            try:
-                if resp == 'local':
-                    provider_data['response'] = content
-                else:
-                    provider_data['response'] = self._encode_to_utf8(content)
-                    provider_data['return_code'] = resp
-            except socket.timeout as st:
-                provider_data['return_code'] = (408, st)
+            if resp == 0:
+                provider_data['response'] = content
+                provider_data['return_code'] = resp
+            else:
+                try:
+                    provider_data['return_code'] = resp.status
+                    provider_data['response'] = self._bytes_to_unicode(content)
+                except AttributeError:
+                    print('AttributeError')
+                except Exception as e:
+                    print('Something went terribly wrong!', e)
             self._request_queue.put(provider_data)
 
-    #def _future_callback(self, url, future):
-    #    """
-    #    Callback that is triggered by a future on sucess or error.
-
-    #    :param url: The url is used to pop finished/failed provider data
-    #    elements from url_to_provider_data dictionary and put them into result
-    #    queue
-    #    """
-    #    with self._url_to_provider_data_lock:
-    #        provider_data = self._url_to_provider_data.pop(url)
-    #        try:
-    #            return_code, result = future.result()
-    #            if return_code == 'local':
-    #                provider_data['response'] = result
-    #            else:
-    #                provider_data['response'] = self._encode_to_utf8(result)
-    #                provider_data['return_code'] = return_code
-    #        except socket.timeout as st:
-    #            provider_data['return_code'] = (408, st)
-    #        self._request_queue.put(provider_data)
-
-    def _encode_to_utf8(self, byte_data):
+    def _bytes_to_unicode(self, byte_data):
         """
+        Decode a http byte-response to unicode.
+
         Tries to decode bytestream to utf-8. If this fails, encoding is guessed
         by charade and decoding is repeated with just dedected encoding.
 
-        :param byte_data: A bytestream that will be ecoded to its specific
-        encoding characteristics
+        :param byte_data: A bytestream.
+        :returns: A unicode
 
-        :returns: Decoded byte_data
         """
         try:
             return byte_data.decode('utf-8')
-        except (TypeError) as e:
+        except (TypeError, AttributeError) as e:
             print(e, 'trying to use charade now to quess encoding.')
             encoding = charade.detect(byte_data).get('encoding')
             return byte_data.decode(encoding)
 
     def push(self, provider_data):
-        '''
-        Feeds DownloadQueue with provider_data dictionary. The url to fetch is
-        used as key for url_to_provider_data dictionary. Provider_data with
-        urls that are already being processed, will be ignored.
+        """
+        Execute a asynchronous download job.
 
-        :param provider_data: A dictionary that encapsulates some provider
-        information url, response, provider.
-        '''
+        :param provider_data: A provider_data object.
+
+        """
 
         if provider_data is None and self._shutdown_downloadqueue is False:
             self._shutdown_downloadqueue = True
             self._shutdown()
 
-        if self._shutdown_downloadqueue == False and provider_data is not None:
+        if self._shutdown_downloadqueue is False:
             url = provider_data['url']
             if url and url not in self._url_to_provider_data:
+
                 with self._url_to_provider_data_lock:
                     self._url_to_provider_data[url] = provider_data
+
                 provider_data['future'] = self._executor.submit(
                     self._fetch_url,
                     url=url,
-                    timeout=self._timeout_sec)
-
-    def running_jobs(self):
-        print(len(self._url_to_provider_data), self._request_queue.qsize())
+                    timeout_sec=self._timeout_sec
+                    )
 
     def pop(self):
-        '''
-        Simple DownloadQueue get wrapper
+        """
+        Get the a finished provider_data object.
 
         :returns: Next avaiable provider data object.
         :raises:  Empty exception if queue is empty.
-        '''
+
+        """
         try:
             return self._request_queue.get_nowait()
         except Empty:
@@ -157,50 +143,110 @@ class DownloadQueue:
             else:
                 return self._request_queue.get()
 
+    def running_jobs(self):
+        """
+        Get count of 'jobs' in download queue.
+
+        :returns: Sum of jobs in queue and pending/active jobs
+
+        """
+        return self._request_queue.qsize() + len(self._url_to_provider_data)
+
 
 if __name__ == '__main__':
-    import unittest
+    from hugin.core.cache import Cache
     import json
+    import unittest
 
     class TestDownloadQueue(unittest.TestCase):
 
         def setUp(self):
-            self._dq = DownloadQueue(timeout_sec=2)
-            self._urls = ['http://www.nullcat.de', 'http://httpbin.org/get']
-            logutil.create_logger(None)
+            # download queue with default setting
+            self._dq_default = DownloadQueue(user_agent='katzenbaum/4.2')
+            # cache for custom downlodqueue
+            self._cache = Cache()
+            self._cache.open()
+            self._dq_custom = DownloadQueue(
+                local_cache=self._cache
+            )
+            self._url = 'http://httpbin.org/status/{code}'
+            self._provider_data = {
+                'url': 'http://httpbin.org/get',
+                'response': None,
+                'return_code': None
+            }
 
-        #def _create_dummy_provider(self, url):
-        #    pd = create_provider_data(
-        #        provider='',
-        #        retries=5
-        #    )
-        #    pd['url'] = url
-        #    return pd
+        def test_user_agent(self):
+            self._dq_default.push(self._provider_data)
+            provider_data = self._dq_default.pop()
+            response = json.loads(provider_data['response'])
+            self.assertTrue(
+                response['headers']['User-Agent'] == 'katzenbaum/4.2'
+            )
 
-        #def test_push_pop(self):
-        #    with open('hugin/core/testdata/imdbid_small.txt', 'r') as f:
-        #        imdbid_list = f.read().splitlines()
-        #    for item in imdbid_list:
-        #        #url = 'http://www.omdbapi.com/?i={imdbid}'.format(imdbid=item)
-        #        url = 'http://ofdbgw.org/imdb2ofdb_json/{0}'.format(item)
-        #        p = self._create_dummy_provider(url)
-        #        self._dq.push(p)
+        def test_bad_status_codes(self):
+            test_codes = [404, 408, 503]
+            for status_code in test_codes:
+                self._provider_data['url'] = self._url.format(code=status_code)
+                self._dq_default.push(self._provider_data)
+                provider_data = self._dq_default.pop()
 
-        #    while True:
-        #        rpd = self._dq.pop()
-        #        res = rpd['response']
-        #        try:
-        #            j = json.loads(res)
-        #            rcode = j["ofdbgw"]["status"]["rcode"]
-        #            if rcode == 2 and rpd['retries'] >= 0:
-        #                p = self._create_dummy_provider(rpd['url'])
-        #                p['retries'] -= 1
-        #                self._dq.push(p)
-        #            else:
-        #                print(rpd['retries'], j['ofdbgw']['resultat']['titel'])
-        #        except (TypeError, KeyError) as e:
-        #            print(e)
-        #        except Exception as E:
-        #            print(E)
+                self.assertTrue(provider_data['return_code'] in test_codes)
+                self.assertTrue(provider_data['response'] is '')
+                test_codes.remove(status_code)
+
+        def test_good_status_codes(self):
+            test_codes = [200, 300, 304, 307]
+
+            for status_code in test_codes:
+                self._provider_data['url'] = self._url.format(code=status_code)
+                self._provider_data['response'] = None
+
+                self._dq_default.push(self._provider_data)
+                provider_data = self._dq_default.pop()
+
+                self.assertTrue(provider_data['return_code'] in test_codes)
+                test_codes.remove(status_code)
+                self.assertTrue(provider_data['response'] is not None)
+
+        def test_without_local_cache(self):
+            self._dq_default.push(self._provider_data)
+            provider_data = self._dq_default.pop()
+            self._dq_default.push(self._provider_data)
+            provider_data = self._dq_default.pop()
+
+            self.assertTrue(provider_data['return_code'] != 0)
+            self.assertTrue(provider_data['return_code'] == 200)
+
+        def test_with_local_cache(self):
+            self._dq_default.push(self._provider_data)
+            provider_data = self._dq_default.pop()
+            self.assertTrue(provider_data['return_code'] == 200)
+
+            self._cache.write(provider_data['url'], provider_data['response'])
+
+            self._dq_custom.push(provider_data)
+            provider_data = self._dq_custom.pop()
+            self.assertTrue(provider_data['return_code'] == 0)
+
+        def test_pop_empty(self):
+            with self.assertRaises(Empty):
+                self._dq_default.pop()
+
+        def test_downloadqueue_shutdown(self):
+            self.assertTrue(self._dq_default._is_shutdown is False)
+            self._dq_default.push(None)
+            self.assertTrue(self._dq_default._is_shutdown is True)
+
+            self.assertTrue(self._dq_custom._is_shutdown is False)
+            self._dq_custom.push(self._provider_data)
+            self.assertTrue(self._dq_custom._is_shutdown is False)
+            self._dq_default.push(None)
+            self._dq_default.push(None)
+            self._dq_default.push(None)
+            self.assertTrue(self._dq_default._is_shutdown is True)
+
+        def tearDown(self):
+            self._cache.close()
 
     unittest.main()
