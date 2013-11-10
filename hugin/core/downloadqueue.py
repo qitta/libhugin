@@ -61,7 +61,7 @@ class DownloadQueue:
                 # we use 0 as status code for local fetch
                 resp, content = 0, self._local_cache.read(url)
             # if nothing found in local cache
-            elif content is None:
+            if content is None:
                 http = httplib2.Http(timeout=timeout_sec)
                 resp, content = http.request(uri=url, headers=self._headers)
         except httplib2.RelativeURIError:
@@ -74,6 +74,7 @@ class DownloadQueue:
             if resp == 0:
                 provider_data['response'] = content
                 provider_data['return_code'] = resp
+                provider_data['cache_used'] = True
             else:
                 try:
                     provider_data['return_code'] = resp.status

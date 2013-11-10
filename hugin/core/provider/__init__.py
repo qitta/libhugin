@@ -1,42 +1,44 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+""" Interface definition for provider, converter and postprocessing plugins."""
 
 from yapsy.IPlugin import IPlugin
-import abc
 
 __all__ = ['IMovieProvider', 'IPersonProvider', 'IPictureProvider',
            'IOutputConverter', 'IPostprocessing', 'IProvider']
 
 
 class IProvider(IPlugin):
-    """
-    This abstract interface declares methods to be implemented by all provider
-    plugins.
-    """
 
-    def search(self, search_params):
+    """ This abstract interface to be implemented by all provider plugins. """
+
+    def build_url(self, search_params):
         """
-        The search method builds the url according to the given search
-        parameters.  The search method has to return a tuple containing data
-        and a flag. Data might be the url string on success or None if building
-        the url fails.
+        Build a url out of given search params, entry point of all providers.
+
+
+        The build url method builds a url according to the given search
+        parameters.  The build_url method has to return a URI or None if
+        building a search URI fails.
 
         :param search_params: A dictionary containing query parameters
         :returns: A url on success, else None
 
         """
-
         raise NotImplementedError
 
-    def parse(self, response, search_params):
+    def parse_response(self, response, search_params):
         """
-        The provider itself is responsible for parsing its previously requested
-        data.  Data might be a list of new urls to fetch, a empty list or a
-        finished result object.
+        Parse a response http response.
 
-        The state flag indicates if provider is done. If the flag is True,
-        than there is nothing to do left, otherwise the query is not ready yet.
+        The provider itself is responsible for parsing its previously requested
+        data via the build_url function.  Data might be a list of new urls to
+        fetch, a empty list, a finished result object or None if parsing fails.
+
+        The method returns a  tuple containing a flag that indicates if provider
+        is done. If the flag is True, than there is nothing to do left,
+        otherwise the query is not ready yet.
 
         Possible combinations ::
 
@@ -47,25 +49,17 @@ class IProvider(IPlugin):
 
             invalid response    => (None, True)
 
+        The (None, False) case is for provider that may get a valid response
+        which tells that the database/server had a timeout. In this case just
+        return (None, False) and a retry will be triggered.
+
         :param response: A utf-8 encoded http response.
         :type response: str
         :param search_params: See :func: `core.provider.IProvider.search`.
         :returns: A tuple containing a data and a state flag.
 
-
         """
-
         raise NotImplementedError
-
-    @property
-    def supported_attrs(self):
-        '''
-        Helper function to determinate which result attribues are handled by
-        the provider.
-
-        :returns: A list with result attributes supported by provider.
-        '''
-        return []
 
     def set_name(self, name):
         setattr(self, '_name', name)
@@ -74,6 +68,16 @@ class IProvider(IPlugin):
         return self._name
 
     name = property(fget=get_name, fset=set_name)
+
+    @property
+    def supported_attrs(self):
+        """
+        Get the attributes that are filled in by the provider.
+
+        :returns: A list with result attributes supported by provider.
+
+        """
+        raise NotImplementedError
 
     @property
     def is_picture_provider(self):
@@ -98,10 +102,6 @@ class IProvider(IPlugin):
     def is_person_provider(self):
         return isinstance(self, IPersonProvider)
 
-    def __repr__(self):
-        types = ', '.join(self._type)
-        return '{name} <{type}>'.format(name=self._name, type=types)
-
     @property
     def _type(self):
         provider_types = {
@@ -115,45 +115,43 @@ class IProvider(IPlugin):
                 types.append(string)
         return types
 
+    def __repr__(self):
+        types = ', '.join(self._type)
+        return '{name} <{type}>'.format(name=self._name, type=types)
+
 
 class IMovieProvider(IProvider):
-    """
-    A base class for movie metadata plugins. All metadata plugins should
-    inherit from this class.
-    """
+
+    """ A base class for movie metadata plugins. """
 
     pass
 
 
 class IPersonProvider(IProvider):
-    """
-    A base class for person metadata plugins. All person metadata plugins
-    should inherit from this class.
-    """
+
+    """ A base class for person metadata plugins. """
+
     pass
 
 
 class IPictureProvider(IProvider):
-    """
-    A base class for person metadata plugins. All person metadata plugins
-    should inherit from this class.
-    """
+
+    """ A base class for picture metadata plugins.  """
+
     pass
 
 
 # converter plugins
 class IOutputConverter(IPlugin):
-    """
-    A base class for output converter plugins. All output converter should
-    inherit from this class.
-    """
+
+    """ A base class for output converter plugins.  """
+
     pass
 
 
 #  postprocessing plugins
 class IPostprocessing(IPlugin):
-    """
-    A base class postprocessing plugins. All postprocessing plugins should
-    inherit from this class.
-    """
+
+    """ A base class postprocessing plugins.  """
+
     pass
