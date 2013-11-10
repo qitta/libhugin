@@ -4,6 +4,11 @@
 *.pyc
 *.toc
 *.pdf
+docs/_build
 doc/_build
-
+tmp
 src/core/tmp
+.cache/
+.ropeproject/
+shelve_cache.db
+

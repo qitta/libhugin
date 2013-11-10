@@ -8,6 +8,8 @@ charade
 
 #: yapsy
 #: yapsy.IPlugin
+#: yapsy.IPluginManager
+#: yapsy.PluginManager
 yapsy
 
 #: httplib2
