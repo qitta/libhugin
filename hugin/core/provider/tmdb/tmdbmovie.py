@@ -2,21 +2,25 @@
 # encoding: utf-8
 
 
+from urllib.parse import quote_plus
+import json
+
+from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
+from hugin.utils import get_movie_result_dict
 from hugin.common.utils.stringcompare import string_similarity_ratio
 import hugin.core.provider as provider
-from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
-from urllib.parse import quote_plus
-from hugin.core.provider.utils import get_movie_result_dict
-import json
 
 
 class TMDBMovie(provider.IMovieProvider):
     def __init__(self):
         self._config = TMDBConfig()
         self._path = 'search/movie'
-        self._attrs = ['title', 'original_title', 'imdbid', 'genre', 'plot']
-
-    def search(self, search_params):
+        self._stack = {}
+        self._attrs = ['title', 'original_title', 'plot', 'year', 'imdbid',
+            'poster', 'fanart', 'vote_count', 'rating', 'countries', 'genre',
+            'providerid', 'collection', 'runtime', 'studios'
+        ]
+    def build_url(self, search_params):
         if search_params['imdbid']:
             return ''.join(
                 self._config.build_movie_url(
@@ -40,7 +44,7 @@ class TMDBMovie(provider.IMovieProvider):
         else:
             return None
 
-    def parse(self, response, search_params):
+    def parse_response(self, response, search_params):
         try:
             tmdb_response = json.loads(response)
         except (ValueError, TypeError):
@@ -79,6 +83,9 @@ class TMDBMovie(provider.IMovieProvider):
         return (self._config.build_movie_url(matches, search_params), False)
 
     def _parse_movie_module(self, data, search_params):
+        """
+        .. TODO please use the result dict
+        """
         result = get_movie_result_dict()
         result = {
             'title': data['title'],

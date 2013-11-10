@@ -1,10 +1,13 @@
 #/usr/bin/env python
 # encoding: utf-8
 
-from yapsy.PluginManager import PluginManager
+""" Responsible for loading provider, converter and prostprocessing plugins. """
+
 from hugin.core.provider import IMovieProvider, IPictureProvider
 from hugin.core.provider import IPersonProvider, IProvider
 from hugin.core.provider import IOutputConverter, IPostprocessing
+
+from yapsy.PluginManager import PluginManager
 
 
 class PluginHandler:

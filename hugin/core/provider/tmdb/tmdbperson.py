@@ -12,9 +12,13 @@ import json
 class TMDBPerson(provider.IPersonProvider):
     def __init__(self):
         self._config = TMDBConfig()
+        self._attrs = [
+            'name', 'photo', 'birthday', 'placeofbirth', 'imdbid',
+            'providerid', 'homepage', 'deathday', 'popularity', 'biography'
+        ]
         self._path = 'search/person'
 
-    def search(self, search_params):
+    def build_url(self, search_params):
         if search_params['name']:
             name = quote(search_params['name'])
             query = '{name}'.format(
@@ -28,7 +32,7 @@ class TMDBPerson(provider.IPersonProvider):
         else:
             return None
 
-    def parse(self, response, search_params):
+    def parse_response(self, response, search_params):
         tmdb_response = json.loads(response)
         if 'total_results' in tmdb_response:
             if tmdb_response['total_results'] == 0:
@@ -79,6 +83,10 @@ class TMDBPerson(provider.IPersonProvider):
             'biography': data['biography']
         }
         return (result, True)
+
+    @property
+    def supported_attrs(self):
+        return self._attrs
 
     def activate(self):
         provider.IMovieProvider.activate(self)

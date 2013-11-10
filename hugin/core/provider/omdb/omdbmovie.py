@@ -18,7 +18,7 @@ class OMDBMovie(provider.IMovieProvider):
             'director', 'writer', 'genre', 'plot', 'runtime', 'vote_count'
         ]
 
-    def search(self, search_params):
+    def build_url(self, search_params):
         if search_params['imdbid']:
             params = {
                 'i': search_params['imdbid']
@@ -32,7 +32,7 @@ class OMDBMovie(provider.IMovieProvider):
             return None
         return self._base_url.format(query=urlencode(params))
 
-    def parse(self, response, search_params):
+    def parse_response(self, response, search_params):
         fail_states = ['Incorrect IMDb ID', 'Movie not found!']
         try:
             response = json.loads(response)

@@ -1,19 +1,22 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-from hugin.common.utils.stringcompare import string_similarity_ratio
-import hugin.core.provider as provider
+""" OFDB Movie text provider. """
+
 from urllib.parse import quote
 import json
+
+import hugin.core.provider as provider
+from hugin.utils import get_movie_result_dict
+from hugin.common.utils.stringcompare import string_similarity_ratio
 
 
 class OFDBMovie(provider.IMovieProvider):
     def __init__(self):
-        #self._base_url = 'http://ofdbgw.org/{path}/{query}'
         self._base_url = 'http://ofdbgw.home-of-root.de/{path}/{query}'
         self._attrs = ['title', 'year', 'imdbid', 'genre', 'plot']
 
-    def search(self, search_params):
+    def build_url(self, search_params):
         # not enough search params
         if search_params['title'] is None and search_params['imdbid'] is None:
             return None
@@ -25,8 +28,10 @@ class OFDBMovie(provider.IMovieProvider):
             path, query = 'search_json', quote(search_params['title'])
         return self._base_url.format(path=path, query=query)
 
-    def parse(self, response, search_params):
-        '''
+    def parse_response(self, response, search_params):
+        """
+        Parse ofdb response.
+
         0 = Keine Fehler
         1 = Unbekannter Fehler
         2 = Fehler oder Timeout bei Anfrage an IMDB bzw. OFDB
@@ -34,7 +39,8 @@ class OFDBMovie(provider.IMovieProvider):
         4 = Keine Daten zu angegebener ID oder Query gefunden
         5 = Fehler bei der Datenverarbeitung
         9 = Wartungsmodus, OFDBGW derzeit nicht verfügbar.
-        '''
+
+        """
         try:
             ofdb_response = json.loads(response).get('ofdbgw')
         except (TypeError, ValueError):
@@ -167,11 +173,3 @@ class OFDBMovie(provider.IMovieProvider):
     @property
     def supported_attrs(self):
         return self._attrs
-
-    def activate(self):
-        provider.IMovieProvider.activate(self)
-        print('activating... ', __name__)
-
-    def deactivate(self):
-        provider.IMovieProvider.deactivate(self)
-        print('deactivating... ', __name__)

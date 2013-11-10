@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+""" TMDB Provider config and common  attributes. """
+
 from urllib.request import urlopen
 import json
 
 
 class TMDBConfig:
+
+    """ Singleton config class for all tmdb provider plugins. """
 
     _instance = None
 
@@ -21,11 +25,22 @@ class TMDBConfig:
 
     @staticmethod
     def get_instance():
+        """ Return a instance of tmdb config. """
         if TMDBConfig._instance is None:
             TMDBConfig._instance = TMDBConfig()
         return TMDBConfig._instance
 
     def _image_sizes_from(self, image_type):
+        """
+        Read current available image sizes from tmdb config.
+
+        The tmdb config offers imagesizes currently for the four image tpyes
+        logo, profile, backdrop and poster.
+
+        :param image_type: Type of image you want to get sizes of.
+        :returns: List with available sizes for the given image type.
+
+        """
         types = {
             'logo': self._logo_sizes,
             'profile': self._profile_sizes,
@@ -35,6 +50,14 @@ class TMDBConfig:
         return types[image_type]
 
     def get_image_url(self, image, image_type):
+        """
+        Build a url list for a specific  image type.
+
+        :param image: The image itself
+        :param image_type: The image type to build url for.
+        :returns: List with image urls.
+
+        """
         url = self.image_base_url
         url_list = []
         image_sizes = self._image_sizes_from(image_type)
@@ -46,6 +69,7 @@ class TMDBConfig:
         values = []
         for value in data:
             values.append(value['name'])
+        return values
 
     def build_movie_url(self, matches, search_params):
         url_list = []
