@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-""" Caching valid http responses. """
-
+""" A simple caching implementation for http requests. """
 
 from threading import Lock
 import shelve
@@ -11,54 +10,105 @@ import os
 
 class Cache(object):
 
-    """ Http response cache. """
+    """ Http response cache with a dict key value behavior. """
 
     def __init__(self):
         self._cache = None
         self._cache_lock = Lock()
 
     def open(self, path='.', cache_name='shelve_cache.db'):
-        """ Open a new cache or read existing cache, if cache exists. """
+        """ Open a new cache or read existing cache, if cache exists.
+
+        :param path: Path where cache should be saved.
+        :param cache_name: Name of the cache to write/read from.
+
+        """
         if self._cache is None:
             full_path = os.path.join(path, cache_name)
             if not os.path.exists(path):
                 os.mkdir(path)
             self._cache = shelve.open(full_path)
+            print('cache opened.')
 
     def read(self, key):
-        """ Read data from cache at position of key."""
+        """ Read data from cache at position of key.
+
+        :param key: Key for value you want to lookup.
+
+        """
         with self._cache_lock:
             if self._cache is None:
-                print('Error, no open cache. - read')
+                print('Read error, no open cache.')
             else:
                 return self._cache.get(key)
 
     def write(self, key, value):
         with self._cache_lock:
-            """ Write value at key position, overwrite existing items. """
+            """ Write value at key position, overwrite existing items.
+
+            :param key: See :func: `read`.
+            :param value: Value to be saved.
+
+            """
             if self._cache is None:
-                print('Error, no open cache. - write')
+                print('Write error, no open cache.')
             else:
                 self._cache[key] = value
 
-    def get_cache_object(self):
-        return self._cache
-
     def close(self):
-        """ Sync and close the open cache. """
+        """ Sync all data and close the cache. """
         if self._cache is None:
-            print('Error, no open cache.')
+            print('Close error, no open cache.')
         else:
             self._cache.sync()
             self._cache.close()
+            print('cache closed.')
             self._cache = None
 
 if __name__ == '__main__':
-    c = Cache()
-    c.open()
-    c.open()
-    c.write('3', 4908)
-    c.write('5', 47821)
-    print(c.read('5'))
-    print(c.read('3'))
-    c.close()
+    import unittest
+
+    class TestCache(unittest.TestCase):
+
+        def setUp(self):
+            self._cache = Cache()
+
+        def test_open_read(self):
+            self._cache.open()
+            result = self._cache.read('there_is_no_such_key')
+            self.assertTrue(result is None)
+            self._cache.close()
+
+        def test_read_write(self):
+            self._cache.open()
+            self._cache.write('key1', 'value1')
+            self._cache.write('key2', 'value2')
+            result = self._cache.read('key1')
+            result2 = self._cache.read('key2')
+            self.assertTrue(result == 'value1')
+            self.assertTrue(result2 == 'value2')
+            self._cache.close()
+
+        def test_write_close_read(self):
+            self._cache.open()
+            self._cache.write('key3', 'value3')
+            self._cache.close()
+            self._cache.open()
+            result = self._cache.read('key3')
+            self.assertTrue(result == 'value3')
+            self._cache.close()
+
+        def test_update_value(self):
+            self._cache.open()
+            result = self._cache.read('key3')
+            self.assertTrue(result == 'value3')
+            self._cache.write('key3', 'this_is_a_updated_value')
+            self._cache.close()
+
+            # lets open cache and read the previously updated value
+            self._cache.open()
+            result = self._cache.read('key3')
+            self.assertTrue(result == 'this_is_a_updated_value')
+            self._cache.close()
+
+    unittest.main()
