@@ -72,34 +72,28 @@ if __name__ == '__main__':
 
         def setUp(self):
             self._cache = Cache()
+            self._cache.open()
 
         def test_open_read(self):
-            self._cache.open()
             result = self._cache.read('there_is_no_such_key')
             self.assertTrue(result is None)
-            self._cache.close()
 
         def test_read_write(self):
-            self._cache.open()
             self._cache.write('key1', 'value1')
             self._cache.write('key2', 'value2')
             result = self._cache.read('key1')
             result2 = self._cache.read('key2')
             self.assertTrue(result == 'value1')
             self.assertTrue(result2 == 'value2')
-            self._cache.close()
 
         def test_write_close_read(self):
-            self._cache.open()
             self._cache.write('key3', 'value3')
             self._cache.close()
             self._cache.open()
             result = self._cache.read('key3')
             self.assertTrue(result == 'value3')
-            self._cache.close()
 
         def test_update_value(self):
-            self._cache.open()
             result = self._cache.read('key3')
             self.assertTrue(result == 'value3')
             self._cache.write('key3', 'this_is_a_updated_value')
@@ -109,6 +103,8 @@ if __name__ == '__main__':
             self._cache.open()
             result = self._cache.read('key3')
             self.assertTrue(result == 'this_is_a_updated_value')
+
+        def tearDown(self):
             self._cache.close()
 
     unittest.main()
