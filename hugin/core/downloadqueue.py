@@ -188,11 +188,7 @@ if __name__ == '__main__':
             self._dq_custom = DownloadQueue(
                 local_cache=self._cache
             )
-            self._url = [
-                'http://httpbin.org/status/{code}',
-                'http://httpbin.org/get',
-                'http://httpbin.org'
-            ]
+            self._url = 'http://httpbin.org/status/{code}'
             self._provider_data = {
                 'url': ['http://httpbin.org/get'],
                 'response': None,
@@ -202,75 +198,91 @@ if __name__ == '__main__':
         def test_user_agent(self):
             self._dq_default.push(self._provider_data)
             provider_data = self._dq_default.pop()
-            url, content = provider_data['response'][0]
-            response = json.loads(content)
-            self.assertTrue(
-                response['headers']['User-Agent'] == 'katzenbaum/4.2'
-            )
+            for url, content in provider_data['response']:
+                response = json.loads(content)
+                self.assertTrue(
+                    response['headers']['User-Agent'] == 'katzenbaum/4.2'
+                )
 
-        #def test_bad_status_codes(self):
-        #    test_codes = [404, 408, 503]
-        #    for status_code in test_codes:
-        #        self._provider_data['url'] = self._url.format(code=status_code)
-        #        self._dq_default.push(self._provider_data)
-        #        provider_data = self._dq_default.pop()
+        def test_bad_status_codes(self):
+            test_codes = ['404', '408', '503']
+            self._provider_data['url'] = [
+                self._url.format(code=_code) for _code in test_codes
+            ]
+            self._dq_default.push(self._provider_data)
+            provider_data = self._dq_default.pop()
 
-        #        self.assertTrue(provider_data['return_code'] in test_codes)
-        #        self.assertTrue(provider_data['response'] is '')
-        #        test_codes.remove(status_code)
+            for code in provider_data['return_code']:
+                self.assertTrue(code['status'] in test_codes)
+                test_codes.remove(code['status'])
 
-        #def test_good_status_codes(self):
-        #    test_codes = [200, 300, 304, 307]
+            for response in provider_data['response']:
+                url, content = response
+                self.assertTrue(content is '')
 
-        #    for status_code in test_codes:
-        #        self._provider_data['url'] = self._url.format(code=status_code)
-        #        self._provider_data['response'] = None
+        def test_good_status_codes(self):
+            test_codes = ['200', '300', '304']
 
-        #        self._dq_default.push(self._provider_data)
-        #        provider_data = self._dq_default.pop()
+            self._provider_data['url'] = [
+                self._url.format(code=_code) for _code in test_codes
+            ]
+            self._provider_data['response'] = None
 
-        #        self.assertTrue(provider_data['return_code'] in test_codes)
-        #        test_codes.remove(status_code)
-        #        self.assertTrue(provider_data['response'] is not None)
+            self._dq_default.push(self._provider_data)
+            provider_data = self._dq_default.pop()
 
-        #def test_without_local_cache(self):
-        #    self._dq_default.push(self._provider_data)
-        #    provider_data = self._dq_default.pop()
-        #    self._dq_default.push(self._provider_data)
-        #    provider_data = self._dq_default.pop()
+            for code in provider_data['return_code']:
+                self.assertTrue(code['status'] in test_codes)
+                test_codes.remove(code['status'])
 
-        #    self.assertTrue(provider_data['return_code'] != 0)
-        #    self.assertTrue(provider_data['return_code'] == 200)
+            for response in provider_data['response']:
+                url, content = response
+                self.assertTrue(content is '')
 
-        #def test_with_local_cache(self):
-        #    self._dq_default.push(self._provider_data)
-        #    provider_data = self._dq_default.pop()
-        #    self.assertTrue(provider_data['return_code'] == 200)
 
+        def test_without_local_cache(self):
+            self._dq_default.push(self._provider_data)
+            provider_data = self._dq_default.pop()
+            self._dq_default.push(self._provider_data)
+            provider_data = self._dq_default.pop()
+            for code in provider_data['return_code']:
+                self.assertTrue(code != 'local')
+                self.assertTrue(code['status'] == '200')
+
+        def test_with_local_cache(self):
+            self._dq_default.push(self._provider_data)
+            provider_data = self._dq_default.pop()
+            for code in provider_data['return_code']:
+                self.assertTrue(code['status'] == '200')
+
+            for url, content in provider_data['response']:
+                self._cache.write(url, content)
         #    self._cache.write(provider_data['url'], provider_data['response'])
 
-        #    self._dq_custom.push(provider_data)
-        #    provider_data = self._dq_custom.pop()
-        #    self.assertTrue(provider_data['return_code'] == 0)
+            self._dq_custom.push(provider_data)
+            provider_data = self._dq_custom.pop()
 
-        #def test_pop_empty(self):
-        #    with self.assertRaises(Empty):
-        #        self._dq_default.pop()
+            for code in provider_data['return_code']:
+                self.assertTrue(code == 'local')
 
-        #def test_downloadqueue_shutdown(self):
-        #    self.assertTrue(self._dq_default._is_shutdown is False)
-        #    self._dq_default.push(None)
-        #    self.assertTrue(self._dq_default._is_shutdown is True)
+        def test_pop_empty(self):
+            with self.assertRaises(Empty):
+                self._dq_default.pop()
 
-        #    self.assertTrue(self._dq_custom._is_shutdown is False)
-        #    self._dq_custom.push(self._provider_data)
-        #    self.assertTrue(self._dq_custom._is_shutdown is False)
-        #    self._dq_default.push(None)
-        #    self._dq_default.push(None)
-        #    self._dq_default.push(None)
-        #    self.assertTrue(self._dq_default._is_shutdown is True)
+        def test_downloadqueue_shutdown(self):
+            self.assertTrue(self._dq_default._is_shutdown is False)
+            self._dq_default.push(None)
+            self.assertTrue(self._dq_default._is_shutdown is True)
 
-        #def tearDown(self):
-        #    self._cache.close()
+            self.assertTrue(self._dq_custom._is_shutdown is False)
+            self._dq_custom.push(self._provider_data)
+            self.assertTrue(self._dq_custom._is_shutdown is False)
+            self._dq_default.push(None)
+            self._dq_default.push(None)
+            self._dq_default.push(None)
+            self.assertTrue(self._dq_default._is_shutdown is True)
+
+        def tearDown(self):
+            self._cache.close()
 
     unittest.main()
