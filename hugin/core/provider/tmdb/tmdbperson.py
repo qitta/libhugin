@@ -24,15 +24,17 @@ class TMDBPerson(provider.IPersonProvider):
             query = '{name}'.format(
                 name=name
             )
-            return self._config.baseurl.format(
+            return [self._config.baseurl.format(
                 path=self._path,
                 apikey=self._config.apikey,
                 query=query
-            )
+            )]
         else:
             return None
 
-    def parse_response(self, response, search_params):
+    def parse_response(self, url_response, search_params):
+        first_element, *_ = url_response
+        _,  response= first_element
         tmdb_response = json.loads(response)
         if 'total_results' in tmdb_response:
             if tmdb_response['total_results'] == 0:
@@ -64,7 +66,7 @@ class TMDBPerson(provider.IPersonProvider):
         )
         item_count = min(len(similarity_map), search_params['items'])
         matches = [item['tmdbid'] for item in similarity_map[:item_count]]
-        return (self._config.build_movie_url(matches, search_params), False)
+        return ([self._config.build_movie_url(matches, search_params)], False)
 
     def _parse_movie_module(self, data, search_params):
         result = {

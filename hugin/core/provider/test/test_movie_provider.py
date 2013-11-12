@@ -11,24 +11,24 @@ from hugin.core.provider.omdb.omdbmovie import OMDBMovie
 PROVIDER = {
 
     TMDBMovie(): {
-        'search': 'tmdb_search.json',
-        'movie': 'tmdb_movie.json',
+        'search': 'tmdb_movie_search.json',
+        'movie': 'tmdb_movie_response.json',
         'nothing_found': 'tmdb_nothing_found.json',
         'critical': 'tmdb_critical.json',
         'search_by_imdb': True
     },
 
     OFDBMovie(): {
-        'search': 'ofdb_search.json',
-        'movie': 'ofdb_movie.json',
+        'search': 'ofdb_movie_search.json',
+        'movie': 'ofdb_movie_response.json',
         'nothing_found': 'ofdb_nothing_found.json',
         'critical': 'ofdb_critical.json',
         'search_by_imdb': True
     },
 
     OMDBMovie(): {
-        'search': 'omdb_search.json',
-        'movie': 'omdb_movie.json',
+        'search': 'omdb_movie_search.json',
+        'movie': 'omdb_movie_response.json',
         'nothing_found': 'omdb_nothing_found.json',
         'critical': 'omdb_critical.json',
         'search_by_imdb': True
@@ -63,13 +63,17 @@ if __name__ == '__main__':
             for provider in self._providers:
                 self._params['year'] = self._params['imdbid'] = None
                 result = provider.build_url(self._params)
-                self.assertTrue(result is not None)
+                for item in result:
+                    self.assertTrue(isinstance(item, str))
+                    self.assertTrue(item is not None)
 
         def test_search_title_year(self):
             self._params['imdbid'] = None
             for provider in self._providers:
                 result = provider.build_url(self._params)
-                self.assertTrue(result is not None)
+                for item in result:
+                    self.assertTrue(isinstance(item, str))
+                    self.assertTrue(item is not None)
 
         def test_search_invalid_params(self):
             self._params = {key: None for key in self._params.keys()}
@@ -89,25 +93,41 @@ if __name__ == '__main__':
             for provider in self._providers:
                 result = provider.build_url(self._params)
                 if PROVIDER[provider]['search_by_imdb']:
-                    self.assertTrue(result)
+                    for item in result:
+                        self.assertTrue(isinstance(item, str))
+                        self.assertTrue(item is not None)
                 else:
                     self.assertTrue(result is None)
 
         # static parse tests, see :func: `core.provider.IProvider.parse` specs
         # for further information
-        def test_parse_build_url(self):
+        def test_parse_search_response(self):
+            """
+            We expect a list of lists on a valid parse.
+
+            Provider which needs multiple requests to get a complete result:
+            ([[url_images_movie1, url_cast_movie1], [...movie2...]], False)
+
+            Provider which needs just a single request:
+            ([[url_movie_1], [url_movie_2]], False)
+
+            """
             for provider in self._providers:
                 response = self.read_file(PROVIDER[provider]['search'])
+                response = [('fakeurl', response)]
                 result, finished = provider.parse_response(
                     response,
                     self._params
                 )
-                self.assertTrue(result is not None)
-                self.assertFalse(finished)
+                for item in result:
+                    self.assertTrue(isinstance(item, list))
+                    self.assertTrue(item is not None)
+                    self.assertFalse(finished)
 
         def test_parse_movie(self):
             for provider in self._providers:
                 response = self.read_file(PROVIDER[provider]['movie'])
+                response = [('fakeurl', response)]
                 result, finished = provider.parse_response(
                     response,
                     self._params
@@ -118,6 +138,7 @@ if __name__ == '__main__':
         def test_parse_provider_no_results(self):
             for provider in self._providers:
                 response = self.read_file(PROVIDER[provider]['nothing_found'])
+                response = [('fakeurl', response)]
                 result, finished = provider.parse_response(
                     response,
                     self._params
@@ -128,6 +149,7 @@ if __name__ == '__main__':
         def test_parse_provider_critical(self):
             for provider in self._providers:
                 response = self.read_file(PROVIDER[provider]['critical'])
+                response = [('fakeurl', response)]
                 result, finished = provider.parse_response(
                     response,
                     self._params
@@ -138,7 +160,7 @@ if __name__ == '__main__':
         def test_parse_invalid(self):
             for provider in self._providers:
                 result, finished = provider.parse_response(
-                    None,
+                    [('fakeurl', None)],
                     self._params
                 )
                 self.assertTrue(finished)
