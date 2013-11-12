@@ -26,7 +26,7 @@ class OFDBMovie(provider.IMovieProvider):
             path, query = 'imdb2ofdb_json', search_params['imdbid']
         else:
             path, query = 'search_json', quote(search_params['title'])
-        return [[self._base_url.format(path=path, query=query)]]
+        return [self._base_url.format(path=path, query=query)]
 
     def parse_response(self, url_response, search_params):
         """
@@ -91,7 +91,7 @@ class OFDBMovie(provider.IMovieProvider):
                 return None
 
     def _parse_imdb2ofdb_module(self, result, _):
-        return ([[self._build_movie_url([result['ofdbid']])]], False)
+        return ([self._build_movie_url([result['ofdbid']])], False)
 
     def _parse_search_module(self, result, search_params):
         # create similarity matrix for title, check agains german and original

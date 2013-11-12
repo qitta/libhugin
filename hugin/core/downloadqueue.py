@@ -57,10 +57,10 @@ class DownloadQueue:
             if content is None:
                 http = httplib2.Http(timeout=timeout_sec)
                 source, content = http.request(uri=url, headers=self._headers)
-        except httplib2.RelativeURIError:
-            print('RelativeURIError')
+        except httplib2.RelativeURIError as e:
+            print('RelativeURIError', e, source, content)
         except Exception as e:
-            print('Something went terribly wrong!', e)
+            print('Something went terribly wrong!', e, source, content)
         return source, content
 
 
@@ -74,6 +74,7 @@ class DownloadQueue:
         """
         response = []
         for url in urllist:
+            print(url)
             source, content = self._get_single_url(url, timeout_sec)
             content = (url, content)
             response.append((source, content))
@@ -100,7 +101,7 @@ class DownloadQueue:
                     except AttributeError:
                         print('AttributeError')
                     except Exception as e:
-                        print('Something went terribly wrong!', e)
+                        print('Something went terribly wrong!', e, source, content)
             self._request_queue.put(provider_data)
 
     def _bytes_to_unicode(self, byte_data):
@@ -114,6 +115,8 @@ class DownloadQueue:
         :returns: A unicode
 
         """
+        if byte_data is None:
+            return None
         try:
             return byte_data.decode('utf-8')
         except (TypeError, AttributeError) as e:

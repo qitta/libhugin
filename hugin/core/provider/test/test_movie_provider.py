@@ -65,7 +65,7 @@ if __name__ == '__main__':
                 result_list = provider.build_url(self._params)
                 self.assertTrue(isinstance(result_list, list))
                 for result in result_list:
-                    self.assertTrue(isinstance(result, list))
+                    self.assertTrue(isinstance(result, str))
                     self.assertTrue(result is not None)
 
         def test_search_title_year(self):
@@ -74,7 +74,7 @@ if __name__ == '__main__':
                 result_list = provider.build_url(self._params)
                 self.assertTrue(isinstance(result_list, list))
                 for result in result_list:
-                    self.assertTrue(isinstance(result, list))
+                    self.assertTrue(isinstance(result, str))
                     self.assertTrue(result is not None)
 
         def test_search_invalid_params(self):
@@ -97,7 +97,7 @@ if __name__ == '__main__':
                 self.assertTrue(isinstance(result_list, list))
                 if PROVIDER[provider]['search_by_imdb']:
                     for result in result_list:
-                        self.assertTrue(isinstance(result, list))
+                        self.assertTrue(isinstance(result, str))
                         self.assertTrue(result is not None)
                 else:
                     self.assertTrue(result is None)

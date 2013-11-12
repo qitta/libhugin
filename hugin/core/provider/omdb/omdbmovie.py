@@ -30,7 +30,7 @@ class OMDBMovie(provider.IMovieProvider):
             }
         else:
             return None
-        return [[self._base_url.format(query=urlencode(params))]]
+        return [self._base_url.format(query=urlencode(params))]
 
     def parse_response(self, url_response, search_params):
         fail_states = ['Incorrect IMDb ID', 'Movie not found!']

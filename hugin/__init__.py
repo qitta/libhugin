@@ -109,10 +109,6 @@ class Session:
                 else:
                     provider_data.invoke_parse_response()
                     if provider_data.is_done:
-                        self._cache.write(
-                            provider_data['url'],
-                            provider_data['response']
-                        )
                         finished_jobs.append(provider_data)
                     else:
                         new = self._process(provider_data)
@@ -147,10 +143,6 @@ class Session:
             provider_data.decrement_retries()
             new_jobs.append(provider_data)
         else:
-            self._cache.write(
-                provider_data['url'],
-                provider_data['response']
-            )
             for url in provider_data['result']:
                 provider_data = ProviderData(
                     provider=provider_data['provider'],
@@ -252,8 +244,9 @@ if __name__ == '__main__':
                 use_cache=False,
                 imdbid='{0}'.format(imdbid)
             )
-            print(hs.submit(q)['result']['title'])
+            result_list = hs.submit(q)
+            print(result_list[0])
 
         hs._cache.close()
 
-    read_list_async()
+    read_list_sync()
