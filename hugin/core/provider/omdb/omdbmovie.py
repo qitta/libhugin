@@ -30,7 +30,7 @@ class OMDBMovie(provider.IMovieProvider):
             }
         else:
             return None
-        return [self._base_url.format(query=urlencode(params))]
+        return [[self._base_url.format(query=urlencode(params))]]
 
     def parse_response(self, url_response, search_params):
         fail_states = ['Incorrect IMDb ID', 'Movie not found!']
@@ -66,7 +66,7 @@ class OMDBMovie(provider.IMovieProvider):
         )
         item_count = min(len(similarity_map), search_params['items'])
         matches = [item['imdbid'] for item in similarity_map[:item_count]]
-        return ([self._build_movie_url(matches)], False)
+        return ([[self._build_movie_url(matches)]], False)
 
     def _build_movie_url(self, matches):
         url_list = []
@@ -93,7 +93,7 @@ class OMDBMovie(provider.IMovieProvider):
             'runtime': data['Runtime'].split(','),
             'vote_count': data['imdbVotes'].replace(',', '')
         }
-        return (result, True)
+        return ([result], True)
 
     @property
     def supported_attrs(self):

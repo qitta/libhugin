@@ -22,12 +22,12 @@ class TMDBMovie(provider.IMovieProvider):
         ]
     def build_url(self, search_params):
         if search_params['imdbid']:
-            return [''.join(
+            return [[''.join(
                 self._config.build_movie_url(
                     [search_params['imdbid']],
                     search_params,
                 )
-            )]
+            )]]
 
         if search_params['title']:
             title = quote_plus(search_params['title'])
@@ -36,11 +36,11 @@ class TMDBMovie(provider.IMovieProvider):
                 year=search_params['year'] or '',
                 language=search_params['language'] or ''
             )
-            return [self._config.baseurl.format(
+            return [[self._config.baseurl.format(
                 path=self._path,
                 apikey=self._config.apikey,
                 query=query
-            )]
+            )]]
         else:
             return None
 
@@ -82,7 +82,7 @@ class TMDBMovie(provider.IMovieProvider):
         )
         item_count = min(len(similarity_map), search_params['items'])
         matches = [item['tmdbid'] for item in similarity_map[:item_count]]
-        return ([self._config.build_movie_url(matches, search_params)], False)
+        return ([[self._config.build_movie_url(matches, search_params)]], False)
 
     def _parse_movie_module(self, data, search_params):
         """
@@ -118,7 +118,7 @@ class TMDBMovie(provider.IMovieProvider):
                 data['production_companies']
             )
         }
-        return (result, True)
+        return ([result], True)
 
     @property
     def supported_attrs(self):
