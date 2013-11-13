@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+""" Session and query handling. """
+
+
 from concurrent.futures import ThreadPoolExecutor
 from hugin.core.pluginhandler import PluginHandler
 from hugin.core.downloadqueue import DownloadQueue
-from hugin.providerdata import ProviderData
 from hugin.query import Query
 from hugin.core.cache import Cache
 from threading import Lock
@@ -85,72 +87,104 @@ class Session:
         self._downloadqueues.append(downloadqueue)
         return downloadqueue
 
+    def _add_to_cache(self, job):
+        for url, data in job['response']:
+            print(url, data)
+            self._cache.write(url, data)
+
     def submit(self, query):
         finished_jobs = []
         download_queue = None
+
         if self._shutdown_session is False:
             download_queue = self._init_download_queue(query)
 
             jobs = self._process_new_query(query)
-            [download_queue.push(provider_data) for provider_data in jobs]
+            for job in jobs:
+                if job['is_done']:
+                    finished_jobs.append(job)
+                else:
+                    download_queue.push(job)
 
             while True:
                 try:
-                    provider_data = download_queue.pop()
+                    job = download_queue.pop()
+                    #print(job['response'])
                 except queue.Empty:
                     break
 
-                if provider_data['return_code'] in [408]:
-                    provider_data.decrement_retries()
-                    if provider_data['is_done']:
-                        finished_jobs.append(provider_data)
-                    else:
-                        download_queue.push(provider_data)
+                result, state = job['provider'].parse_response(
+                    job['response'], query
+                )
+                job['result'], job['is_done'] = result, state
+
+                if state is True or result == []:
+                    finished_jobs.append(job)
                 else:
-                    provider_data.invoke_parse_response()
-                    if provider_data.is_done:
-                        finished_jobs.append(provider_data)
+                    if result is None:
+                        job = self._check_for_retry(job)
+                        if job['is_done']:
+                            finished_jobs.append(job)
+                        else:
+                            download_queue.push(job)
                     else:
-                        new = self._process(provider_data)
-                        for provider_data in new:
-                            if provider_data['is_done']:
-                                finished_jobs.append(provider_data)
-                            else:
-                                download_queue.push(provider_data)
+                        self._add_to_cache(job)
+                        new_jobs = self._process(job)
+                        for job in new_jobs:
+                            download_queue.push(job)
             download_queue.push(None)
 
-        if self._shutdown_session is True:
-            if download_queue:
-                self.clean_up()
-                self._downloadqueues.remove(download_queue)
+        else:
+            self.clean_up()
+            self._downloadqueues.remove(download_queue)
         return finished_jobs
 
+    def _check_for_retry(self, job):
+        if job['retries_left'] > 0:
+            job['retries_left'] -= 1
+        else:
+            job['is_done'] = True
+        return job
+
+    def get_provider_struct(self, provider):
+        return {
+            'url': None,
+            'provider': provider,
+            'future': None,
+            'response': None,
+            'is_done': False,
+            'result': None,
+            'return_code': None,
+            'retries_left': 5,
+            'cache_used': False
+        }
 
     def _process_new_query(self, query):
         providers = self._provider_types[query['type']]
-        provider_data_list = []
+        job_list = []
+
         for provider in providers:
             provider = provider['name']
-            provider_data = ProviderData(provider=provider, query=query)
-            provider_data.invoke_build_url()
-            provider_data_list.append(provider_data)
-        return provider_data_list
+            job = self.get_provider_struct(provider=provider)
+            url_list = job['provider'].build_url(query)
 
-    def _process(self, provider_data):
+            # result should be a list with urls
+            if url_list is not None:
+                job['url'] = url_list
+            else:
+                job['is_done'] = True
+            job_list.append(job)
+
+        return job_list
+
+    def _process(self, job):
         new_jobs = []
-
-        if provider_data['result'] is None:
-            provider_data.decrement_retries()
-            new_jobs.append(provider_data)
-        else:
-            for url in provider_data['result']:
-                provider_data = ProviderData(
-                    provider=provider_data['provider'],
-                    url=url,
-                    query=provider_data['query']
-                )
-                new_jobs.append(provider_data)
-            # that provider data object seems to be valid, lets cache it
+        for url_list in job['result']:
+            job = self.get_provider_struct(
+                provider=job['provider']
+            )
+            job['url'] = url_list
+            new_jobs.append(job)
         return new_jobs
 
     def submit_async(self, query):
@@ -202,15 +236,15 @@ class Session:
         """ Cancel the currently running session. """
         self._shutdown_session = True
 
-    def handler(self, signal, frame):
-        self._shutdown_session = True
+    def signal_handler(self, signal, frame):
+        self.cancel()
 
 if __name__ == '__main__':
 
     def read_list_async():
         hs = Session(parallel_jobs=5, timeout_sec=5)
-        signal.signal(signal.SIGINT, hs.handler)
-        f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
+        signal.signal(signal.SIGINT, hs.signal_handler)
+        f = open('./hugin/core/testdata/imdbid_huge.txt').read().splitlines()
         futures = []
         for imdbid in f:
             q = hs.create_query(
@@ -226,8 +260,10 @@ if __name__ == '__main__':
                     if item.done():
                         try:
                             t = item.result()
-                            for i in t:
-                                print(i['result']['title'])
+                            for x in t:
+                                if x['retries_left'] < 0:
+                                    pass
+                                    #print('movie:', x['provider'], x['result'])
                         except:
                             pass
                         futures.remove(item)
@@ -235,7 +271,7 @@ if __name__ == '__main__':
 
     def read_list_sync():
         hs = Session(parallel_jobs=5, timeout_sec=5)
-        signal.signal(signal.SIGINT, hs.handler)
+        signal.signal(signal.SIGINT, hs.signal_handler)
         f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
         for imdbid in f:
             q = hs.create_query(
@@ -249,4 +285,8 @@ if __name__ == '__main__':
 
         hs._cache.close()
 
-    read_list_sync()
+    try:
+        read_list_async()
+    except KeyboardInterrupt:
+        print('Interrupted by user.')
+

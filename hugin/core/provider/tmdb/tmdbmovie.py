@@ -22,6 +22,7 @@ class TMDBMovie(provider.IMovieProvider):
         ]
     def build_url(self, search_params):
         if search_params['imdbid']:
+            url_list = []
             return [''.join(
                 self._config.build_movie_url(
                     [search_params['imdbid']],
