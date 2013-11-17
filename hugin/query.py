@@ -33,6 +33,8 @@ class Query(UserDict):
             self.data['items'] = 1
         if self.data['use_cache'] is None:
             self.data['use_cache'] = True
+        if self.data['language'] is None:
+            self.data['language'] = 'en'
 
 
 if __name__ == '__main__':
