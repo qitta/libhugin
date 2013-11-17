@@ -41,9 +41,10 @@ if __name__ == '__main__':
         def test_search_name(self):
             for provider in self._providers:
                 result_list = provider.build_url(self._params)
+                self.assertTrue(isinstance(result_list, list))
                 for result in result_list:
                     self.assertTrue(result is not None)
-                    self.assertTrue(isinstance(result, list))
+                    self.assertTrue(isinstance(result, str))
 
         def test_search_invalid_params(self):
             self._params = {key: None for key in self._params.keys()}
@@ -56,11 +57,13 @@ if __name__ == '__main__':
         def test_parse_build_url(self):
             for provider in self._providers:
                 response = self.read_file(PROVIDER[provider]['search'])
-                response = [('fakeurl', response)]
+                response = [('fakeurl/search/person?', response)]
                 result_list, finished = provider.parse_response(
                     response,
                     self._params
                 )
+                print(result_list)
+                self.assertTrue(isinstance(result_list, list))
                 for result in result_list:
                     self.assertTrue(isinstance(result, list))
                     self.assertTrue(result is not None)

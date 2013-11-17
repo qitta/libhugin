@@ -47,7 +47,7 @@ if __name__ == '__main__':
                 'title': 'Sin City',
                 'year': '2005',
                 'imdbid': 'tt0401792',
-                'items': 5,
+                'items': 5, # unify!, 1 item should also return list?
                 'type': 'movie',
                 'language':'en'
             }
@@ -117,7 +117,7 @@ if __name__ == '__main__':
             """
             for provider in self._providers:
                 response = self.read_file(PROVIDER[provider]['search'])
-                response = [('fakeurl', response)]
+                response = [('fakeurl/search/movie?', response)]
                 result_list, finished = provider.parse_response(
                     response,
                     self._params
@@ -131,7 +131,7 @@ if __name__ == '__main__':
         def test_parse_movie(self):
             for provider in self._providers:
                 response = self.read_file(PROVIDER[provider]['movie'])
-                response = [('fakeurl', response)]
+                response = [('fakeurl/movie/', response)]
                 result_list, finished = provider.parse_response(
                     response,
                     self._params
@@ -144,7 +144,7 @@ if __name__ == '__main__':
         def test_parse_provider_no_results(self):
             for provider in self._providers:
                 response = self.read_file(PROVIDER[provider]['nothing_found'])
-                response = [('fakeurl', response)]
+                response = [('search/movie?', response)]
                 result_list, finished = provider.parse_response(
                     response,
                     self._params
