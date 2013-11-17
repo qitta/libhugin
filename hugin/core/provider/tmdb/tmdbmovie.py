@@ -13,22 +13,19 @@ import hugin.core.provider as provider
 
 class TMDBMovie(provider.IMovieProvider):
     def __init__(self):
-        self._config = TMDBConfig()
+        self._config = TMDBConfig.get_instance()
         self._path = 'search/movie'
-        self._stack = {}
         self._attrs = ['title', 'original_title', 'plot', 'year', 'imdbid',
             'poster', 'fanart', 'vote_count', 'rating', 'countries', 'genre',
             'providerid', 'collection', 'runtime', 'studios'
         ]
+
     def build_url(self, search_params):
         if search_params['imdbid']:
-            url_list = []
-            return [''.join(
-                self._config.build_movie_url(
+            return self._config.build_movie_url(
                     [search_params['imdbid']],
-                    search_params,
+                    search_params
                 )
-            )]
 
         if search_params['title']:
             title = quote_plus(search_params['title'])
@@ -46,21 +43,75 @@ class TMDBMovie(provider.IMovieProvider):
             return None
 
     def parse_response(self, url_response, search_params):
-        first_element, *_ = url_response
-        _, response = first_element
-        try:
-            tmdb_response = json.loads(response)
-        except (ValueError, TypeError):
-            return (None, True)
-        if 'total_results' in tmdb_response:
-            if tmdb_response['total_results'] == 0:
-                return ([], True)
+        results = {}
+        url_response, flag = self._config.validate_response(url_response)
+        if flag is True:
+            return (None, flag) # what if just one url fails?
+        for url, response in url_response:
+            if 'search/movie?' in url:
+                if response['total_results'] == 0:
+                    return ([], True)
+                else:
+                    return self._parse_search_module(response, search_params)
+            if '/images?' in url:
+                results['images'] = self._parse_images(response)
+            elif '/casts?' in url:
+                results['casts'] = response
+            elif '/movie/' in url:
+                results['movie'] = response
             else:
-                return self._parse_search_module(tmdb_response, search_params)
-        elif 'adult' in tmdb_response:
-            return self._parse_movie_module(tmdb_response, search_params)
-        elif 'status_code' in tmdb_response:
-            return (None, True)
+                return (None, True)
+
+        result = self._concat_result(results)
+        return ([result], True)
+
+    def _parse_images(self, response):
+        result = {'posters': [], 'backdrops': []}
+        for item in response['posters']:
+            result['posters'].append(
+                    self._config.get_image_url(
+                    item['file_path'],
+                    'poster'
+                )
+            )
+        for item in response['backdrops']:
+            result['backdrops'].append(
+                    self._config.get_image_url(
+                    item['file_path'],
+                    'backdrop'
+                )
+            )
+        return result
+
+    def _concat_result(self, results):
+        data = results['movie']
+        if 'images' not in results:
+            results['images'] = {'posters': [], 'backdrops': []}
+
+        result = {
+            'title': data['title'],
+            'original_title': data['title'],
+            'plot': data['overview'],
+            'year': data['release_date'][:4],
+            'imdbid': data['imdb_id'],
+            'poster': results['images']['posters'],
+            'fanart': results['images']['backdrops'],
+            'vote_count': data['vote_count'],
+            'rating': data['vote_average'],
+            'countries': self._config.extract_keyvalue_attrs(
+                data['production_countries']
+            ),
+            'genre': self._config.extract_keyvalue_attrs(
+                data['genres']
+            ),
+            'providerid': data['id'],
+            'collection': data['belongs_to_collection'],
+            'runtime': data['runtime'],
+            'studios': self._config.extract_keyvalue_attrs(
+                data['production_companies']
+            )
+        }
+        return result
 
     def _parse_search_module(self, result, search_params):
         similarity_map = []
@@ -83,7 +134,7 @@ class TMDBMovie(provider.IMovieProvider):
         )
         item_count = min(len(similarity_map), search_params['items'])
         matches = [item['tmdbid'] for item in similarity_map[:item_count]]
-        return ([[self._config.build_movie_url(matches, search_params)]], False)
+        return (self._config.build_movie_url(matches, search_params), False)
 
     def _parse_movie_module(self, data, search_params):
         """

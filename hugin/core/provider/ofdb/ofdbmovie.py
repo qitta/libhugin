@@ -91,7 +91,7 @@ class OFDBMovie(provider.IMovieProvider):
                 return None
 
     def _parse_imdb2ofdb_module(self, result, _):
-        return ([self._build_movie_url([result['ofdbid']])], False)
+        return (self._build_movie_url([result['ofdbid']]), False)
 
     def _parse_search_module(self, result, search_params):
         # create similarity matrix for title, check agains german and original
@@ -118,7 +118,7 @@ class OFDBMovie(provider.IMovieProvider):
         item_count = min(len(similarity_map), search_params['items'])
 
         matches = [item['ofdbid'] for item in similarity_map[:item_count]]
-        return ([[self._build_movie_url(matches)]], False)
+        return (self._build_movie_url(matches), False)
 
     def _parse_movie_module(self, result, _):
         result = {
@@ -167,9 +167,8 @@ class OFDBMovie(provider.IMovieProvider):
     def _build_movie_url(self, ofdbid_list):
         url_list = []
         for ofdbid in ofdbid_list:
-            url_list.append(
-                self._base_url.format(path='movie_json', query=ofdbid)
-            )
+            url = self._base_url.format(path='movie_json', query=ofdbid)
+            url_list.append([url])
         return url_list
 
     @property

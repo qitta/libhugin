@@ -89,8 +89,8 @@ class Session:
 
     def _add_to_cache(self, job):
         for url, data in job['response']:
-            print(url, data)
             self._cache.write(url, data)
+
 
     def submit(self, query):
         finished_jobs = []
@@ -179,6 +179,7 @@ class Session:
 
     def _process(self, job):
         new_jobs = []
+        #print('job_result', job['result'])
         for url_list in job['result']:
             job = self.get_provider_struct(
                 provider=job['provider']
@@ -281,12 +282,16 @@ if __name__ == '__main__':
                 imdbid='{0}'.format(imdbid)
             )
             result_list = hs.submit(q)
-            print(result_list[0])
+            import pprint
+            for item in result_list:
+                print(item['provider'])
+                pprint.pprint(item['result'])
+            #print(result_list[0])
 
         hs._cache.close()
 
     try:
-        read_list_async()
+        read_list_sync()
     except KeyboardInterrupt:
         print('Interrupted by user.')
 

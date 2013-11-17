@@ -6,6 +6,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 from queue import Queue, Empty
+from socket import timeout
 
 import charade
 import httplib2
@@ -60,7 +61,7 @@ class DownloadQueue:
         except httplib2.RelativeURIError as e:
             print('RelativeURIError', e, source, content)
         except Exception as e:
-            print('Something went terribly wrong!', e, source, content)
+            print('Something went terribly wrong!', url, source, content)
         return source, content
 
 
@@ -99,8 +100,8 @@ class DownloadQueue:
                         provider_data['cache_used'].append((url, False))
                     except AttributeError:
                         print('AttributeError')
-                    except Exception as e:
-                        print('Something went terribly wrong!', e, source, content)
+                    #except Exception as e:
+                    #    print('Something went terribly wrong!', e, source, content)
             self._request_queue.put(provider_data)
 
     def _bytes_to_unicode(self, byte_data):
@@ -130,7 +131,8 @@ class DownloadQueue:
         :param provider_data: A provider_data object.
 
         """
-
+        if provider_data is not None:
+            print(provider_data['url'])
         if provider_data is None and self._shutdown_downloadqueue is False:
             self._shutdown_downloadqueue = True
             self._shutdown()

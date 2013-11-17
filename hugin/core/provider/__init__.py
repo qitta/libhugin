@@ -19,8 +19,8 @@ class IProvider(IPlugin):
 
 
         The build url method builds a url according to the given search
-        parameters.  The build_url method has to return a URI or None if
-        building a search URI fails.
+        parameters.  The build_url method has to return a list with URI or None
+        if building a search URI fails.
 
         :param search_params: A dictionary containing query parameters
         :returns: A url on success, else None
@@ -43,7 +43,7 @@ class IProvider(IPlugin):
 
         Possible combinations ::
 
-            valid response      =>  ([url,...],...], False)
+            valid response      =>  ([[url,...],...], False)
                                     (None, False)
                                     ([], True)
                                     (result, True)

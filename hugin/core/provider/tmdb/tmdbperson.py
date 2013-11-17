@@ -11,7 +11,7 @@ import json
 
 class TMDBPerson(provider.IPersonProvider):
     def __init__(self):
-        self._config = TMDBConfig()
+        self._config = TMDBConfig.get_instance()
         self._attrs = [
             'name', 'photo', 'birthday', 'placeofbirth', 'imdbid',
             'providerid', 'homepage', 'deathday', 'popularity', 'biography'
@@ -24,30 +24,59 @@ class TMDBPerson(provider.IPersonProvider):
             query = '{name}'.format(
                 name=name
             )
-            return [[self._config.baseurl.format(
+            return [self._config.baseurl.format(
                 path=self._path,
                 apikey=self._config.apikey,
                 query=query
-            )]]
+            )]
         else:
             return None
 
     def parse_response(self, url_response, search_params):
-        first_element, *_ = url_response
-        _,  response = first_element
-        try:
-            tmdb_response = json.loads(response)
-        except (ValueError, TypeError):
-            return (None, True)
-        if 'total_results' in tmdb_response:
-            if tmdb_response['total_results'] == 0:
-                return ([], True)
-            else:
-                return self._parse_search_module(tmdb_response, search_params)
-        elif 'name' in tmdb_response:
-            return self._parse_movie_module(tmdb_response, search_params)
-        else:
-            return (None, True)
+        results = {}
+        url_response, flag = self._config.validate_response(url_response)
+        if flag is True:
+            return url_response, flag
+        for url, response in url_response:
+            if 'search/person?' in url:
+                if response['total_results'] == 0:
+                    return ([], True)
+                else:
+                    return self._parse_search_module(response, search_params)
+            if '/images?' in url:
+                results['images'] = self._parse_images(response)
+            elif '/person/' in url:
+                results['person'] = response
+
+        result = self._concat_result(results)
+        return (result, True)
+
+    def _concat_result(self, results):
+        data = results['person']
+        result = {
+            'name': data['name'],
+            'photo': results['images'],
+            'birthday': data['birthday'],
+            'placeofbirth': data['place_of_birth'],
+            'imdbid': data['imdb_id'],
+            'providerid': data['id'],
+            'homepage': data['homepage'],
+            'deathday': data['deathday'],
+            'popularity': data['popularity'],
+            'biography': data['biography']
+        }
+        return (result, True)
+
+    def _parse_images(self, response):
+        images = []
+        for item in response['profiles']:
+            images.append(
+                    self._config.get_image_url(
+                    item['file_path'],
+                    'profile'
+                )
+            )
+        return images
 
     def _parse_search_module(self, result, search_params):
         similarity_map = []
@@ -69,9 +98,9 @@ class TMDBPerson(provider.IPersonProvider):
         )
         item_count = min(len(similarity_map), search_params['items'])
         matches = [item['tmdbid'] for item in similarity_map[:item_count]]
-        return ([self._config.build_movie_url(matches, search_params)], False)
+        return (self._config.build_person_url(matches, search_params), False)
 
-    def _parse_movie_module(self, data, search_params):
+    def _parse_person_module(self, data, search_params):
         result = {
             'name': data['name'],
             'photo': self._config.get_image_url(
@@ -95,7 +124,6 @@ class TMDBPerson(provider.IPersonProvider):
 
     def activate(self):
         provider.IMovieProvider.activate(self)
-        self._config = TMDBConfig.get_instance()
         print('activating... ', __name__)
 
     def deactivate(self):

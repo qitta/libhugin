@@ -66,15 +66,14 @@ class OMDBMovie(provider.IMovieProvider):
         )
         item_count = min(len(similarity_map), search_params['items'])
         matches = [item['imdbid'] for item in similarity_map[:item_count]]
-        return ([[self._build_movie_url(matches)]], False)
+        return (self._build_movie_url(matches), False)
 
     def _build_movie_url(self, matches):
         url_list = []
         for item in matches:
             query = 'i={imdb_id}'.format(imdb_id=item)
-            url_list.append(
-                self._base_url.format(query=query)
-            )
+            url = self._base_url.format(query=query)
+            url_list.append([url])
         return url_list
 
     def _parse_movie_module(self, data, search_params):

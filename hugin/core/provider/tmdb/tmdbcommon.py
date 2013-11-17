@@ -30,6 +30,18 @@ class TMDBConfig:
             TMDBConfig._instance = TMDBConfig()
         return TMDBConfig._instance
 
+    def validate_response(self, url_response):
+        responses = []
+        flag = False
+        for url, response in url_response:
+            try:
+                response = json.loads(response)
+                responses.append((url, response))
+            except (ValueError, TypeError):
+                responses.append((url, None))
+                flag = True
+        return (responses, flag)
+
     def _image_sizes_from(self, image_type):
         """
         Read current available image sizes from tmdb config.
@@ -46,8 +58,9 @@ class TMDBConfig:
             'profile': self._profile_sizes,
             'backdrop': self._backdrop_sizes,
             'poster': self._poster_sizes
-        }
-        return types[image_type]
+        }.get(image_type)
+
+        return types
 
     def get_image_url(self, image, image_type):
         """
@@ -72,23 +85,46 @@ class TMDBConfig:
         return values
 
     def build_movie_url(self, matches, search_params):
+        return self._build_url(matches, search_params, 'movie')
+
+    def build_person_url(self, matches, search_params):
+        return self._build_url(matches, search_params, 'person')
+
+    def _build_url(self, matches, search_params, metatype):
+        urlpaths = {
+            'person': ['', 'images'],
+            'movie': ['', 'casts', 'images']
+        }.get(metatype)
+
         url_list = []
-        language = search_params['language'] or 'en'
+        language = search_params['language'] or ''
+
         for tmdbid in matches:
-            path = '{url_type}/{tmdbid}'.format(
-                tmdbid=tmdbid,
-                url_type=search_params['type']
-            )
-            url_list.append(
-                self.baseurl.format(
-                    path=path,
-                    apikey=self.apikey,
-                    query='&language={language}'.format(
-                        language=language
-                    )
+            moviepaths = []
+            for urlpath in urlpaths:
+                if urlpath == '':
+                    path = '{url_type}/{tmdbid}{url_path}'
+                else:
+                    path = '{url_type}/{tmdbid}/{url_path}'
+
+                fullpath = path.format(
+                    tmdbid=tmdbid,
+                    url_type=search_params['type'],
+                    url_path=urlpath
                 )
-            )
+                url = self.baseurl.format(
+                        path=fullpath,
+                        apikey=self.apikey,
+                        query='&language={language}'.format(
+                            language=language
+                        )
+                    )
+                moviepaths.append(url)
+            url_list.append(moviepaths)
+        if len(url_list) == 1:
+            return url_list.pop()
         return url_list
+
 
     def _load_api_config(self):
         '''
@@ -107,10 +143,10 @@ class TMDBConfig:
             self.image_base_url = '{url}{{size}}{{image}}'.format(
                 url=response['base_url']
             )
-            self.poster_sizes = [size for size in response['poster_sizes']]
-            self.backdrop_sizes = [size for size in response['backdrop_sizes']]
-            self.profile_sizes = [size for size in response['profile_sizes']]
-            self.logo_sizes = [size for size in response['logo_sizes']]
+            self._poster_sizes = response['poster_sizes']
+            self._backdrop_sizes = response['backdrop_sizes']
+            self._profile_sizes = response['profile_sizes']
+            self._logo_sizes = response['logo_sizes']
             response_bytes.close()
         except UnicodeDecodeError as e:
             print(e)
@@ -120,3 +156,4 @@ if __name__ == '__main__':
     print(t.baseurl)
     print(t.apikey)
     print(t.image_base_url)
+    print(t._profile_sizes)
