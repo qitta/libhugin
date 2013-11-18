@@ -76,6 +76,7 @@ class Session:
         if query['use_cache'] is False:
             query['use_cache'] = None
         else:
+            print('cache enabled.')
             query['use_cache'] = self._cache
 
         downloadqueue = DownloadQueue(
@@ -90,7 +91,6 @@ class Session:
     def _add_to_cache(self, job):
         for url, data in job['response']:
             self._cache.write(url, data)
-
 
     def submit(self, query):
         finished_jobs = []
@@ -109,7 +109,6 @@ class Session:
             while True:
                 try:
                     job = download_queue.pop()
-                    #print(job['response'])
                 except queue.Empty:
                     break
 
@@ -119,6 +118,8 @@ class Session:
                 job['result'], job['is_done'] = result, state
 
                 if state is True or result == []:
+                    if result is not None:
+                        self._add_to_cache(job)
                     finished_jobs.append(job)
                 else:
                     if result is None:
@@ -262,9 +263,9 @@ if __name__ == '__main__':
                         try:
                             t = item.result()
                             for x in t:
-                                if x['retries_left'] < 0:
-                                    pass
-                                    #print('movie:', x['provider'], x['result'])
+                                if x['retries_left'] > 0:
+                                    #pass
+                                    print('movie:', x['provider'], x['result'][0]['title'])
                         except:
                             pass
                         futures.remove(item)
@@ -274,16 +275,20 @@ if __name__ == '__main__':
         hs = Session(parallel_jobs=5, timeout_sec=5)
         signal.signal(signal.SIGINT, hs.signal_handler)
         f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
+        f = ['s']
         for imdbid in f:
             q = hs.create_query(
                 type='movie',
                 search_text=True,
                 use_cache=False,
-                imdbid='{0}'.format(imdbid)
+                language='de',
+                retries=50,
+                title='Watchmen'
             )
             result_list = hs.submit(q)
             import pprint
             for item in result_list:
+                print(20 * '#######')
                 print(item['provider'])
                 pprint.pprint(item['result'])
             #print(result_list[0])

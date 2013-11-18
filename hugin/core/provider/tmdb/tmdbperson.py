@@ -6,7 +6,6 @@ from hugin.common.utils.stringcompare import string_similarity_ratio
 import hugin.core.provider as provider
 from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
 from urllib.parse import quote
-import json
 
 
 class TMDBPerson(provider.IPersonProvider):
@@ -36,7 +35,7 @@ class TMDBPerson(provider.IPersonProvider):
         results = {}
         url_response, flag = self._config.validate_response(url_response)
         if flag is True:
-            return url_response, flag
+            return (None, flag)
         for url, response in url_response:
             if 'search/person?' in url:
                 if response['total_results'] == 0:
@@ -47,12 +46,16 @@ class TMDBPerson(provider.IPersonProvider):
                 results['images'] = self._parse_images(response)
             elif '/person/' in url:
                 results['person'] = response
+            else:
+                return (None, True)
 
         result = self._concat_result(results)
-        return (result, True)
+        return ([result], True)
 
     def _concat_result(self, results):
         data = results['person']
+        if 'images' not in results:
+            results['images'] = {'posters': [], 'backdrops': []}
         result = {
             'name': data['name'],
             'photo': results['images'],
@@ -65,7 +68,7 @@ class TMDBPerson(provider.IPersonProvider):
             'popularity': data['popularity'],
             'biography': data['biography']
         }
-        return (result, True)
+        return result
 
     def _parse_images(self, response):
         images = []

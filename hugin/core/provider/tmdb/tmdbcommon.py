@@ -84,6 +84,18 @@ class TMDBConfig:
             values.append(value['name'])
         return values
 
+    def build_movie_search_url(self, matches, search_params):
+        url_list = self._build_url(matches, search_params, 'movie')
+        if len(url_list) == 1:
+            return url_list.pop()
+        return url_list
+
+    def build_person_search_url(self, matches, search_params):
+        url_list = self._build_url(matches, search_params, 'person')
+        if len(url_list) == 1:
+            return url_list.pop()
+        return url_list
+
     def build_movie_url(self, matches, search_params):
         return self._build_url(matches, search_params, 'movie')
 
@@ -121,8 +133,6 @@ class TMDBConfig:
                     )
                 moviepaths.append(url)
             url_list.append(moviepaths)
-        if len(url_list) == 1:
-            return url_list.pop()
         return url_list
 
 

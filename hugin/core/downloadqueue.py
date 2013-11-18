@@ -33,6 +33,7 @@ class DownloadQueue:
         self._timeout_sec = timeout_sec
         self._local_cache = None
         if local_cache is not None:
+            print('setting cache')
             self._local_cache = local_cache
 
         self._url_to_provider_data_lock = Lock()
@@ -60,6 +61,8 @@ class DownloadQueue:
                 source, content = http.request(uri=url, headers=self._headers)
         except httplib2.RelativeURIError as e:
             print('RelativeURIError', e, source, content)
+        except timeout as e:
+            print('Something went terribly wrong! TIMEOUT', url)
         except Exception as e:
             print('Something went terribly wrong!', url, source, content)
         return source, content
@@ -92,16 +95,17 @@ class DownloadQueue:
                     provider_data['return_code'].append(source)
                     provider_data['cache_used'].append((url, True))
                 else:
-                    try:
-                        provider_data['response'].append(
-                            (url, self._bytes_to_unicode(content))
-                        )
-                        provider_data['return_code'].append(source)
-                        provider_data['cache_used'].append((url, False))
-                    except AttributeError:
-                        print('AttributeError')
-                    #except Exception as e:
-                    #    print('Something went terribly wrong!', e, source, content)
+                    if provider_data['response'] is not None:
+                        try:
+                            provider_data['response'].append(
+                                (url, self._bytes_to_unicode(content))
+                            )
+                            provider_data['return_code'].append(source)
+                            provider_data['cache_used'].append((url, False))
+                        except AttributeError:
+                            print('AttributeError')
+                        except Exception as e:
+                            print('Something went terribly wrong!', e, source, content)
             self._request_queue.put(provider_data)
 
     def _bytes_to_unicode(self, byte_data):
@@ -131,8 +135,8 @@ class DownloadQueue:
         :param provider_data: A provider_data object.
 
         """
-        if provider_data is not None:
-            print(provider_data['url'])
+        #if provider_data is not None:
+        #    print(provider_data['url'])
         if provider_data is None and self._shutdown_downloadqueue is False:
             self._shutdown_downloadqueue = True
             self._shutdown()

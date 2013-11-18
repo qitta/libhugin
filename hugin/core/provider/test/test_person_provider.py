@@ -28,7 +28,8 @@ if __name__ == '__main__':
                 'name': 'Emma Stone',
                 'items': 5,
                 'type': 'person',
-                'language': 'en'
+                'language': 'en',
+                'items': 3
             }
 
         def read_file(self, file_name):
@@ -62,17 +63,19 @@ if __name__ == '__main__':
                     response,
                     self._params
                 )
-                print(result_list)
                 self.assertTrue(isinstance(result_list, list))
                 for result in result_list:
                     self.assertTrue(isinstance(result, list))
                     self.assertTrue(result is not None)
+                    for item in result:
+                        self.assertTrue(isinstance(item, str))
+                        self.assertTrue(item is not None)
                     self.assertFalse(finished)
 
         def test_parse_person(self):
             for provider in self._providers:
                 response = self.read_file(PROVIDER[provider]['person'])
-                response = [('fakeurl', response)]
+                response = [('fakeurl/person/', response)]
                 result_list, finished = provider.parse_response(
                     response,
                     self._params
@@ -85,7 +88,7 @@ if __name__ == '__main__':
         def test_parse_provider_no_results(self):
             for provider in self._providers:
                 response = self.read_file(PROVIDER[provider]['nothing_found'])
-                response = [('fakeurl', response)]
+                response = [('fakeurl/search/person?', response)]
                 result_list, finished = provider.parse_response(
                     response,
                     self._params
@@ -97,7 +100,7 @@ if __name__ == '__main__':
         def test_parse_provider_critical(self):
             for provider in self._providers:
                 response = self.read_file(PROVIDER[provider]['critical'])
-                response = [('fakeurl', response)]
+                response = [('fakeurl/person?88', response)]
                 result_list, finished = provider.parse_response(
                     response,
                     self._params

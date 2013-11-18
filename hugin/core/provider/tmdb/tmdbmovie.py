@@ -3,7 +3,6 @@
 
 
 from urllib.parse import quote_plus
-import json
 
 from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
 from hugin.utils import get_movie_result_dict
@@ -22,7 +21,7 @@ class TMDBMovie(provider.IMovieProvider):
 
     def build_url(self, search_params):
         if search_params['imdbid']:
-            return self._config.build_movie_url(
+            return self._config.build_movie_search_url(
                     [search_params['imdbid']],
                     search_params
                 )

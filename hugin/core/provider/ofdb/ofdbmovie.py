@@ -13,7 +13,7 @@ from hugin.common.utils.stringcompare import string_similarity_ratio
 
 class OFDBMovie(provider.IMovieProvider):
     def __init__(self):
-        self._base_url = 'http://ofdbgw.home-of-root.de/{path}/{query}'
+        self._base_url = 'http://ofdbgw.org/{path}/{query}'
         self._attrs = ['title', 'year', 'imdbid', 'genre', 'plot']
 
     def build_url(self, search_params):
@@ -100,15 +100,16 @@ class OFDBMovie(provider.IMovieProvider):
         for result in result['eintrag']:
             # Get the title with the highest similarity ratio:
             ratio = 0.0
-            for title_key in ['titel_de', 'titel_orig']:
-                ratio = max(
-                    ratio,
-                    string_similarity_ratio(
-                        result[title_key],
-                        search_params['title']
+            if 'TV-Mini-Serie' not in result['titel_de'] and 'TV-Serie' not in result['titel_de']:
+                for title_key in ['titel_de', 'titel_orig']:
+                    ratio = max(
+                        ratio,
+                        string_similarity_ratio(
+                            result[title_key],
+                            search_params['title']
+                        )
                     )
-                )
-            similarity_map.append({'ofdbid': result['id'], 'ratio': ratio})
+                similarity_map.append({'ofdbid': result['id'], 'ratio': ratio})
 
         # sort by ratio, generate ofdbid list with requestet item count
         similarity_map.sort(

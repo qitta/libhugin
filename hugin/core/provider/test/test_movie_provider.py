@@ -47,7 +47,7 @@ if __name__ == '__main__':
                 'title': 'Sin City',
                 'year': '2005',
                 'imdbid': 'tt0401792',
-                'items': 5, # unify!, 1 item should also return list?
+                'items': 1,
                 'type': 'movie',
                 'language':'en'
             }
@@ -95,6 +95,7 @@ if __name__ == '__main__':
             for provider in self._providers:
                 result_list = provider.build_url(self._params)
                 self.assertTrue(isinstance(result_list, list))
+                print(result_list)
                 if PROVIDER[provider]['search_by_imdb']:
                     for result in result_list:
                         self.assertTrue(isinstance(result, str))
@@ -125,6 +126,9 @@ if __name__ == '__main__':
                 self.assertTrue(isinstance(result_list, list))
                 for result in result_list:
                     self.assertTrue(isinstance(result, list))
+                    for item in result:
+                        self.assertTrue(isinstance(item, str))
+                        self.assertTrue(item is not None)
                     self.assertTrue(result is not None)
                     self.assertFalse(finished)
 

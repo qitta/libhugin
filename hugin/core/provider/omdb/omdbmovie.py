@@ -54,11 +54,12 @@ class OMDBMovie(provider.IMovieProvider):
     def _parse_search_module(self, result, search_params):
         similarity_map = []
         for result in result['Search']:
-            ratio = string_similarity_ratio(
-                result['Title'],
-                search_params['title']
-            )
-            similarity_map.append({'imdbid': result['imdbID'], 'ratio': ratio})
+            if result['Type'] == 'movie':
+                ratio = string_similarity_ratio(
+                    result['Title'],
+                    search_params['title']
+                )
+                similarity_map.append({'imdbid': result['imdbID'], 'ratio': ratio})
 
         similarity_map.sort(
             key=lambda value: value['ratio'],
