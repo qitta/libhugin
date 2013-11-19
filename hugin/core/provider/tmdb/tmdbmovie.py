@@ -10,7 +10,7 @@ from hugin.common.utils.stringcompare import string_similarity_ratio
 import hugin.core.provider as provider
 
 
-class TMDBMovie(provider.IMovieProvider):
+class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
     def __init__(self):
         self._config = TMDBConfig.get_instance()
         self._path = 'search/movie'
@@ -62,7 +62,7 @@ class TMDBMovie(provider.IMovieProvider):
                 return (None, True)
 
         result = self._concat_result(results)
-        return ([result], True)
+        return (result, True)
 
     def _parse_images(self, response):
         result = {'posters': [], 'backdrops': []}
@@ -139,7 +139,6 @@ class TMDBMovie(provider.IMovieProvider):
         """
         .. TODO please use the result dict
         """
-        result = get_movie_result_dict()
         result = {
             'title': data['title'],
             'original_title': data['title'],
@@ -169,7 +168,7 @@ class TMDBMovie(provider.IMovieProvider):
                 data['production_companies']
             )
         }
-        return ([result], True)
+        return (result, True)
 
     @property
     def supported_attrs(self):

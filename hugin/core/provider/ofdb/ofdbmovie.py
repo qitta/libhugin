@@ -41,9 +41,10 @@ class OFDBMovie(provider.IMovieProvider):
         9 = Wartungsmodus, OFDBGW derzeit nicht verfügbar.
 
         """
-        first_element, *_ = url_response
-        _, response = first_element
+
         try:
+            first_element, *_ = url_response
+            _, response = first_element
             ofdb_response = json.loads(response).get('ofdbgw')
         except (TypeError, ValueError):
             ofdb_response = self._try_sanitize(response)
@@ -138,7 +139,7 @@ class OFDBMovie(provider.IMovieProvider):
             'imdbid':  'tt{0}'.format(result['imdbid'])
 
         }
-        return ([result], True)
+        return (result, True)
 
     def _extract_writer(self, writer):
         person_list = []

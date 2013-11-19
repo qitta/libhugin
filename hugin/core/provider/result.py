@@ -8,7 +8,7 @@ class Result:
     def __init__(self, result=[]):
         self._provider = None
         self._search_params = None
-        self._retries = 0
+        self.retries = None
         self._result_dict = result
 
     def set_provider(self):
@@ -28,9 +28,15 @@ class Result:
     searchparams = property(fget=set_searchparams, fset=get_searchparams)
 
     def __repr__(self):
-        result = 'Provider: {0}\nResult: {1}'.format(
-            self._provider, self._result_dict
-        )
+        if self._result_dict is not None and self._result_dict != []:
+            result = 'provider: {0}\nresult: {1}\ntitel:{2}\n{3}'.format(
+                self._provider, 'complete.', self._result_dict[0]['title'],
+                self.retries
+            )
+        else:
+            result = 'provider: {0}\nresult: {1}\ntitel:{2}\n{3}'.format(
+                self._provider, self._result_dict, '', self.retries
+            )
         return result
 
 if __name__ == '__main__':

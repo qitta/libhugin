@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from hugin.core.pluginhandler import PluginHandler
 from hugin.core.downloadqueue import DownloadQueue
 from hugin.query import Query
+from hugin.core.provider.result import Result
 from hugin.core.cache import Cache
 from threading import Lock
 import sys
@@ -36,7 +37,7 @@ class Session:
 
         self._query_attrs = [
             'title', 'year', 'name', 'imdbid', 'type', 'search_text',
-            'language', 'seach_picture', 'items', 'use_cache'
+            'language', 'seach_picture', 'items', 'use_cache', 'retries'
         ]
         self._plugin_handler = PluginHandler()
         self._plugin_handler.activate_plugins_by_category('Provider')
@@ -102,7 +103,7 @@ class Session:
             jobs = self._process_new_query(query)
             for job in jobs:
                 if job['is_done']:
-                    finished_jobs.append(job)
+                    finished_jobs.append(self._make_result(job, query))
                 else:
                     download_queue.push(job)
 
@@ -120,17 +121,17 @@ class Session:
                 if state is True or result == []:
                     if result is not None:
                         self._add_to_cache(job)
-                    finished_jobs.append(job)
+                    finished_jobs.append(self._make_result(job, query))
                 else:
                     if result is None:
                         job = self._check_for_retry(job)
                         if job['is_done']:
-                            finished_jobs.append(job)
+                            finished_jobs.append(self._make_result(job, query))
                         else:
                             download_queue.push(job)
                     else:
                         self._add_to_cache(job)
-                        new_jobs = self._process(job)
+                        new_jobs = self._process(job, query)
                         for job in new_jobs:
                             download_queue.push(job)
             download_queue.push(None)
@@ -140,14 +141,22 @@ class Session:
             self._downloadqueues.remove(download_queue)
         return finished_jobs
 
+    def _make_result(self, job, query):
+        result = Result(result=job['result'])
+        result.provider = job['provider']
+        result.retries = query['retries'] - job['retries_left']
+        result.seachparams = query
+        return result
+
     def _check_for_retry(self, job):
         if job['retries_left'] > 0:
+            print('decrementing', job['url'])
             job['retries_left'] -= 1
         else:
             job['is_done'] = True
         return job
 
-    def get_provider_struct(self, provider):
+    def get_job_struct(self, provider, query):
         return {
             'url': None,
             'provider': provider,
@@ -156,7 +165,7 @@ class Session:
             'is_done': False,
             'result': None,
             'return_code': None,
-            'retries_left': 5,
+            'retries_left': query.get('retries'),
             'cache_used': False
         }
 
@@ -166,7 +175,7 @@ class Session:
 
         for provider in providers:
             provider = provider['name']
-            job = self.get_provider_struct(provider=provider)
+            job = self.get_job_struct(provider=provider, query=query)
             url_list = job['provider'].build_url(query)
 
             # result should be a list with urls
@@ -178,12 +187,12 @@ class Session:
 
         return job_list
 
-    def _process(self, job):
+    def _process(self, job, query):
         new_jobs = []
-        #print('job_result', job['result'])
         for url_list in job['result']:
-            job = self.get_provider_struct(
-                provider=job['provider']
+            job = self.get_job_struct(
+                provider=job['provider'],
+                query=query
             )
             job['url'] = url_list
             new_jobs.append(job)
@@ -275,23 +284,19 @@ if __name__ == '__main__':
         hs = Session(parallel_jobs=5, timeout_sec=5)
         signal.signal(signal.SIGINT, hs.signal_handler)
         f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
-        f = ['s']
+        #f = ['s']
         for imdbid in f:
             q = hs.create_query(
                 type='movie',
                 search_text=True,
                 use_cache=False,
                 language='de',
-                retries=50,
-                title='Watchmen'
+                retries=2,
+                imdbid='{0}'.format(imdbid)
             )
             result_list = hs.submit(q)
-            import pprint
-            for item in result_list:
-                print(20 * '#######')
-                print(item['provider'])
-                pprint.pprint(item['result'])
-            #print(result_list[0])
+            print(100 * '-')
+            print(result_list)
 
         hs._cache.close()
 

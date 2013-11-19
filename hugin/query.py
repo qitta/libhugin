@@ -6,7 +6,7 @@ from collections import UserDict
 #query attrs for testing purposes, Session itself contains query attrs
 QUERY_ATTRS = [
     'title', 'year', 'name', 'imdbid', 'type', 'search_text',
-    'language', 'seach_picture', 'items', 'use_cache'
+    'language', 'seach_picture', 'items', 'use_cache', 'retries'
 ]
 
 
@@ -35,6 +35,8 @@ class Query(UserDict):
             self.data['use_cache'] = True
         if self.data['language'] is None:
             self.data['language'] = 'en'
+        if self.data['retries'] is None:
+            self.data['retries'] = 5
 
 
 if __name__ == '__main__':

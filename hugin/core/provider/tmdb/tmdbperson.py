@@ -50,7 +50,7 @@ class TMDBPerson(provider.IPersonProvider):
                 return (None, True)
 
         result = self._concat_result(results)
-        return ([result], True)
+        return (result, True)
 
     def _concat_result(self, results):
         data = results['person']

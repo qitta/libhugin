@@ -33,7 +33,6 @@ class DownloadQueue:
         self._timeout_sec = timeout_sec
         self._local_cache = None
         if local_cache is not None:
-            print('setting cache')
             self._local_cache = local_cache
 
         self._url_to_job_lock = Lock()
@@ -53,7 +52,7 @@ class DownloadQueue:
         source, content = None, None
         try:
             if self._local_cache is not None:
-                # we use 0 as status code for local fetch
+            # we use 0 as status code for local fetch
                 source, content = 'local', self._local_cache.read(url)
             # if nothing found in local cache
             if content is None:
@@ -66,7 +65,6 @@ class DownloadQueue:
         except Exception as e:
             print('Something went terribly wrong!', url, source, content)
         return source, content
-
 
     def _fetch_url(self, urllist, timeout_sec):
         """
@@ -87,11 +85,11 @@ class DownloadQueue:
             job['response'] = []
             job['return_code'] = []
             job['cache_used'] = []
-            for item in response:
-                source, content = item
-                url, content = content
+            for response_item in response:
+                source, url_content = response_item
+                url, content = url_content
                 if source == 'local':
-                    job['response'].append((url, content))
+                    job['response'].append(url_content)
                     job['return_code'].append(source)
                     job['cache_used'].append((url, True))
                 else:
@@ -119,8 +117,6 @@ class DownloadQueue:
         :returns: A unicode
 
         """
-        if byte_data is None:
-            return None
         try:
             return byte_data.decode('utf-8')
         except (TypeError, AttributeError) as e:
@@ -135,8 +131,7 @@ class DownloadQueue:
         :param job: A job object.
 
         """
-        #if job is not None:
-        #    print(job['url'])
+
         if job is None and self._shutdown_downloadqueue is False:
             self._shutdown_downloadqueue = True
             self._shutdown()

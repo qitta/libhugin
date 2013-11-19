@@ -93,7 +93,7 @@ class OMDBMovie(provider.IMovieProvider):
             'runtime': data['Runtime'].split(','),
             'vote_count': data['imdbVotes'].replace(',', '')
         }
-        return ([result], True)
+        return (result, True)
 
     @property
     def supported_attrs(self):
