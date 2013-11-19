@@ -94,9 +94,12 @@ if __name__ == '__main__':
             self.assertTrue(result == 'value3')
 
         def test_update_value(self):
+            self._cache.write('key3', 'value3')
             result = self._cache.read('key3')
             self.assertTrue(result == 'value3')
             self._cache.write('key3', 'this_is_a_updated_value')
+            result = self._cache.read('key3')
+            self.assertTrue(result == 'this_is_a_updated_value')
             self._cache.close()
 
             # lets open cache and read the previously updated value
