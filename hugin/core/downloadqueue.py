@@ -29,7 +29,11 @@ class DownloadQueue:
 
         """
         self._num_threads = num_threads if num_threads <= 10 else 10
-        self._headers = {'User-Agent': user_agent, 'Connection': 'close'}
+        self._headers = {
+            'User-Agent': user_agent,
+            'Connection': 'close',
+            'cache-control':'no-cache',
+        }
         self._timeout_sec = timeout_sec
         self._local_cache = None
         if local_cache is not None:
@@ -76,7 +80,6 @@ class DownloadQueue:
         """
         response = []
         for url in urllist:
-            print(url)
             source, content = self._get_single_url(url, timeout_sec)
             content = (url, content)
             response.append((source, content))

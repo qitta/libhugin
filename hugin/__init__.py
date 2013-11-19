@@ -150,7 +150,6 @@ class Session:
 
     def _check_for_retry(self, job):
         if job['retries_left'] > 0:
-            print('decrementing', job['url'])
             job['retries_left'] -= 1
         else:
             job['is_done'] = True
@@ -170,7 +169,12 @@ class Session:
         }
 
     def _process_new_query(self, query):
-        providers = self._provider_types[query['type']]
+        provider_types = self._provider_types.keys()
+        providers = []
+        for key, value in self._provider_types.items():
+            if query['type'] in key:
+                providers += self._provider_types[key]
+        #providers = self._provider_types[query['type']]
         job_list = []
 
         for provider in providers:
@@ -290,14 +294,14 @@ if __name__ == '__main__':
                 type='movie',
                 search_text=True,
                 use_cache=False,
-                language='de',
-                retries=2,
+                retries=1,
                 items=1,
-                title='The East'
+                title='Sin City'
             )
             result_list = hs.submit(q)
             print(100 * '-')
-            print(result_list)
+            for item in result_list:
+                print(item)
 
         hs._cache.close()
 
