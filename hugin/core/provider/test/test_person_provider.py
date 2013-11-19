@@ -76,13 +76,11 @@ if __name__ == '__main__':
             for provider in self._providers:
                 response = self.read_file(PROVIDER[provider]['person'])
                 response = [('fakeurl/person/', response)]
-                result_list, finished = provider.parse_response(
+                result, finished = provider.parse_response(
                     response,
                     self._params
                 )
-                self.assertTrue(isinstance(result_list, list))
-                for result in result_list:
-                    self.assertTrue(isinstance(result, dict))
+                self.assertTrue(isinstance(result, dict))
                 self.assertTrue(finished)
 
         def test_parse_provider_no_results(self):

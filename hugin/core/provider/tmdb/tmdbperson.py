@@ -8,7 +8,7 @@ from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
 from urllib.parse import quote
 
 
-class TMDBPerson(provider.IPersonProvider):
+class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
     def __init__(self):
         self._config = TMDBConfig.get_instance()
         self._attrs = [

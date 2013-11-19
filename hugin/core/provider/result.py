@@ -30,7 +30,7 @@ class Result:
     def __repr__(self):
         if self._result_dict is not None and self._result_dict != []:
             result = 'provider: {0}\nresult: {1}\ntitel:{2}\n{3}'.format(
-                self._provider, 'complete.', self._result_dict[0]['title'],
+                self._provider, 'complete.', self._result_dict['title'],
                 self.retries
             )
         else:

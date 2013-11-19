@@ -95,7 +95,6 @@ if __name__ == '__main__':
             for provider in self._providers:
                 result_list = provider.build_url(self._params)
                 self.assertTrue(isinstance(result_list, list))
-                print(result_list)
                 if PROVIDER[provider]['search_by_imdb']:
                     for result in result_list:
                         self.assertTrue(isinstance(result, str))
@@ -136,13 +135,11 @@ if __name__ == '__main__':
             for provider in self._providers:
                 response = self.read_file(PROVIDER[provider]['movie'])
                 response = [('fakeurl/movie/', response)]
-                result_list, finished = provider.parse_response(
+                result, finished = provider.parse_response(
                     response,
                     self._params
                 )
-                self.assertTrue(isinstance(result_list, list))
-                for result in result_list:
-                    self.assertTrue(isinstance(result, dict))
+                self.assertTrue(isinstance(result, dict))
                 self.assertTrue(finished)
 
         def test_parse_provider_no_results(self):

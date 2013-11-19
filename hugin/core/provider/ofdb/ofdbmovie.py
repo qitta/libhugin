@@ -42,9 +42,13 @@ class OFDBMovie(provider.IMovieProvider):
 
         """
 
+        if url_response is None:
+            return (None, False)
+
+        first_element, *_ = url_response
+        _, response = first_element
+
         try:
-            first_element, *_ = url_response
-            _, response = first_element
             ofdb_response = json.loads(response).get('ofdbgw')
         except (TypeError, ValueError):
             ofdb_response = self._try_sanitize(response)
@@ -110,7 +114,7 @@ class OFDBMovie(provider.IMovieProvider):
                             search_params['title']
                         )
                     )
-                similarity_map.append({'ofdbid': result['id'], 'ratio': ratio})
+                    similarity_map.append({'ofdbid': result['id'], 'ratio': ratio})
 
         # sort by ratio, generate ofdbid list with requestet item count
         similarity_map.sort(

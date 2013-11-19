@@ -284,7 +284,7 @@ if __name__ == '__main__':
         hs = Session(parallel_jobs=5, timeout_sec=5)
         signal.signal(signal.SIGINT, hs.signal_handler)
         f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
-        #f = ['s']
+        f = ['s']
         for imdbid in f:
             q = hs.create_query(
                 type='movie',
@@ -292,7 +292,8 @@ if __name__ == '__main__':
                 use_cache=False,
                 language='de',
                 retries=2,
-                imdbid='{0}'.format(imdbid)
+                items=1,
+                title='The East'
             )
             result_list = hs.submit(q)
             print(100 * '-')

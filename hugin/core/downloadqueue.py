@@ -76,6 +76,7 @@ class DownloadQueue:
         """
         response = []
         for url in urllist:
+            print(url)
             source, content = self._get_single_url(url, timeout_sec)
             content = (url, content)
             response.append((source, content))
