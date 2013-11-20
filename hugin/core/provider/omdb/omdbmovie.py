@@ -13,6 +13,7 @@ class OMDBMovie(provider.IMovieProvider):
 
     def __init__(self):
         self._base_url = 'http://www.omdbapi.com/?{query}&plot=full'
+        self._priority = 80
         self._attrs = [
             'title', 'year', 'poster', 'imdbid', 'rating', 'actors',
             'director', 'writer', 'genre', 'plot', 'runtime', 'vote_count'

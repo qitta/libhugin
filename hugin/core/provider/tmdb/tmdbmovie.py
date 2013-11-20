@@ -5,14 +5,15 @@
 from urllib.parse import quote_plus
 
 from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
-from hugin.utils import get_movie_result_dict
 from hugin.common.utils.stringcompare import string_similarity_ratio
+from collections import defaultdict
 import hugin.core.provider as provider
 
 
 class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
     def __init__(self):
         self._config = TMDBConfig.get_instance()
+        self._priority = 100
         self._path = 'search/movie'
         self._attrs = ['title', 'original_title', 'plot', 'year', 'imdbid',
             'poster', 'fanart', 'vote_count', 'rating', 'countries', 'genre',
@@ -54,8 +55,14 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
                     return self._parse_search_module(response, search_params)
             if '/images?' in url:
                 results['images'] = self._parse_images(response)
-            elif '/casts?' in url:
-                results['casts'] = response
+            elif '/credits?' in url:
+                results['credits'] = response
+            elif '/alternative_titles?' in url:
+                results['alternative_titles'] = response
+            elif '/trailers?' in url:
+                results['trailers'] = response
+            elif '/keywords?' in url:
+                results['keywords'] = response
             elif '/movie/' in url:
                 results['movie'] = response
             else:
@@ -68,14 +75,14 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
         result = {'posters': [], 'backdrops': []}
         for item in response['posters']:
             result['posters'].append(
-                    self._config.get_image_url(
+                self._config.get_image_url(
                     item['file_path'],
                     'poster'
                 )
             )
         for item in response['backdrops']:
             result['backdrops'].append(
-                    self._config.get_image_url(
+                self._config.get_image_url(
                     item['file_path'],
                     'backdrop'
                 )
@@ -84,13 +91,21 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
 
     def _concat_result(self, results):
         data = results['movie']
+
         if 'images' not in results:
             results['images'] = {'posters': [], 'backdrops': []}
 
+        credits = self._extract_credits(results['credits'])
+
+        alt_titles = self._extract_alternative_titles(results['alternative_titles'])
+        trailers = self._extract_trailers(results['trailers'])
         result = {
             'title': data['title'],
             'original_title': data['title'],
             'plot': data['overview'],
+            'directors': credits.pop('Directing', []), # [director, ]
+            'writer': credits.pop('Writing', []),
+            'crew' : credits,
             'year': data['release_date'][:4],
             'imdbid': data['imdb_id'],
             'poster': results['images']['posters'],
@@ -104,12 +119,49 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
                 data['genres']
             ),
             'providerid': data['id'],
-            'collection': data['belongs_to_collection'],
+            'collection': not data['belongs_to_collection'] or data['belongs_to_collection']['name'],
             'runtime': data['runtime'],
             'studios': self._config.extract_keyvalue_attrs(
                 data['production_companies']
-            )
+            ),
+            'trailers': trailers, # (HQ, SQ, None, trailer)
+            'actors': credits.pop('cast', []),
+            'keywords': self._config.extract_keyvalue_attrs(
+                results['keywords']['keywords']
+            ),
+            'similar_movies': [], # [keywords,]
+            'alternative_titles': alt_titles
         }
+        return result
+
+    def _extract_trailers(self, response):
+        print(response)
+        yt_url = 'http://www.youtube.com/watch\\?v\\={path}'
+        result = []
+        for path in response['youtube']:
+            trailer_url = yt_url.format(path=path['source'])
+            result.append(trailer_url)
+        for source in response['quicktime']:
+            for path in source['sources']:
+                trailer_url = path['source']
+                result.append(trailer_url)
+        return result
+
+
+    def _extract_alternative_titles(self, response):
+        titles = []
+        for title in response['titles']:
+            title = (title['iso_3166_1'], title['title'])
+            titles.append(title)
+        return titles
+
+    def _extract_credits(self, credits):
+        result = defaultdict(set)
+        for person in credits['cast']:
+            actor = (person['character'], person['name'])
+            result['cast'].add(actor)
+        for person in credits['crew']:
+            result[person['department']].add(person['name'])
         return result
 
     def _parse_search_module(self, result, search_params):
@@ -134,41 +186,6 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
         item_count = min(len(similarity_map), search_params['items'])
         matches = [item['tmdbid'] for item in similarity_map[:item_count]]
         return (self._config.build_movie_url(matches, search_params), False)
-
-    def _parse_movie_module(self, data, search_params):
-        """
-        .. TODO please use the result dict
-        """
-        result = {
-            'title': data['title'],
-            'original_title': data['title'],
-            'plot': data['overview'],
-            'year': data['release_date'][:4],
-            'imdbid': data['imdb_id'],
-            'poster': self._config.get_image_url(
-                data['poster_path'],
-                'poster'
-            ),
-            'fanart': self._config.get_image_url(
-                data['backdrop_path'],
-                'backdrop'
-            ),
-            'vote_count': data['vote_count'],
-            'rating': data['vote_average'],
-            'countries': self._config.extract_keyvalue_attrs(
-                data['production_countries']
-            ),
-            'genre': self._config.extract_keyvalue_attrs(
-                data['genres']
-            ),
-            'providerid': data['id'],
-            'collection': data['belongs_to_collection'],
-            'runtime': data['runtime'],
-            'studios': self._config.extract_keyvalue_attrs(
-                data['production_companies']
-            )
-        }
-        return (result, True)
 
     @property
     def supported_attrs(self):

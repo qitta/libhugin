@@ -13,7 +13,7 @@ from hugin.common.utils.stringcompare import string_similarity_ratio
 
 class OFDBMovie(provider.IMovieProvider):
     def __init__(self):
-        #self._base_url = 'http://ofdbgw.org/{path}/{query}'
+        self._priority = 90
         self._base_url = 'http://ofdbgw.home-of-root.de/{path}/{query}'
         self._attrs = ['title', 'year', 'imdbid', 'genre', 'plot']
 
@@ -46,8 +46,11 @@ class OFDBMovie(provider.IMovieProvider):
         if url_response is None:
             return (None, False)
 
-        first_element, *_ = url_response
-        _, response = first_element
+        try:
+            first_element, *_ = url_response
+            _, response = first_element
+        except ValueError:
+            return (None, False)
 
         try:
             ofdb_response = json.loads(response).get('ofdbgw')

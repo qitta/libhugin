@@ -28,13 +28,31 @@ class Result:
     searchparams = property(fget=set_searchparams, fset=get_searchparams)
 
     def __repr__(self):
+        if self._search_params['type'] == 'person':
+            return self._repr_person()
+        else:
+            return self._repr_movie()
+
+    def _repr_person(self):
         if self._result_dict is not None and self._result_dict != []:
-            result = 'provider: {0}\nresult: {1}\ntitel:{2}\n{3}'.format(
+            result = 'provider: {0}\nresult: {1}\nname: {2}\nRetries: {3}'.format(
+                self._provider, 'complete.', self._result_dict['name'],
+                self.retries
+            )
+        else:
+            result = 'provider: {0}\nresult: {1}\nname: {2}\nRetries: {3}'.format(
+                self._provider, self._result_dict, '', self.retries
+            )
+        return result
+
+    def _repr_movie(self):
+        if self._result_dict is not None and self._result_dict != []:
+            result = 'provider: {0}\nresult: {1}\ntitel: {2}\nRetries: {3}'.format(
                 self._provider, 'complete.', self._result_dict['title'],
                 self.retries
             )
         else:
-            result = 'provider: {0}\nresult: {1}\ntitel:{2}\n{3}'.format(
+            result = 'provider: {0}\nresult: {1}\ntitel:{2}\nRetries: {3}'.format(
                 self._provider, self._result_dict, '', self.retries
             )
         return result

@@ -5,12 +5,14 @@
 from hugin.common.utils.stringcompare import string_similarity_ratio
 import hugin.core.provider as provider
 from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
+from collections import defaultdict
 from urllib.parse import quote
 
 
 class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
     def __init__(self):
         self._config = TMDBConfig.get_instance()
+        self._priority = 100
         self._attrs = [
             'name', 'photo', 'birthday', 'placeofbirth', 'imdbid',
             'providerid', 'homepage', 'deathday', 'popularity', 'biography'
@@ -44,11 +46,12 @@ class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
                     return self._parse_search_module(response, search_params)
             if '/images?' in url:
                 results['images'] = self._parse_images(response)
+            elif '/movie_credits?' in url:
+                results['movie_credits'] = response
             elif '/person/' in url:
                 results['person'] = response
             else:
                 return (None, True)
-
         result = self._concat_result(results)
         return (result, True)
 
@@ -56,6 +59,8 @@ class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
         data = results['person']
         if 'images' not in results:
             results['images'] = {'posters': [], 'backdrops': []}
+
+        credits = self._extract_movie_credits(results['movie_credits'])
         result = {
             'name': data['name'],
             'photo': results['images'],
@@ -66,9 +71,18 @@ class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
             'homepage': data['homepage'],
             'deathday': data['deathday'],
             'popularity': data['popularity'],
-            'biography': data['biography']
+            'biography': data['biography'],
+            'known_for': credits['cast']
         }
         return result
+
+    def _extract_movie_credits(self, response):
+        result = defaultdict(set)
+        for person in response['cast']:
+            actor = (person['character'], person['original_title'])
+            result['cast'].add(actor)
+        return result
+
 
     def _parse_images(self, response):
         images = []

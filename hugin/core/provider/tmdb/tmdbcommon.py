@@ -103,9 +103,13 @@ class TMDBConfig:
         return self._build_url(matches, search_params, 'person')
 
     def _build_url(self, matches, search_params, metatype):
+        additions = []
+        if search_params['search_pictures'] == True:
+            additions = ['images']
+
         urlpaths = {
-            'person': ['', 'images'],
-            'movie': ['', 'casts', 'images']
+            'person': ['', 'images', 'movie_credits'],
+            'movie': ['', 'keywords', 'credits', 'alternative_titles', 'trailers'] + additions
         }.get(metatype)
 
         url_list = []

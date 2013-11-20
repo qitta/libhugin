@@ -25,7 +25,7 @@ class Session:
             'cache_path': cache_path,
             # limit parallel jobs to 4, there is no reason for a huge number of
             # parallel jobs because of the GIL
-            'parallel_jobs': 4 if parallel_jobs > 4 else parallel_jobs,
+            'parallel_jobs': min(4, parallel_jobs),
             'timeout_sec': timeout_sec,
             'user_agent': user_agent,
             'profile': {
@@ -35,12 +35,9 @@ class Session:
             }
         }
 
-        self._query_attrs = [
-            'title', 'year', 'name', 'imdbid', 'type', 'search_text',
-            'language', 'seach_picture', 'items', 'use_cache', 'retries'
-        ]
         self._plugin_handler = PluginHandler()
         self._plugin_handler.activate_plugins_by_category('Provider')
+        self._plugin_handler.activate_plugins_by_category('Postprocessing')
         self._provider = self._plugin_handler.get_plugins_from_category(
             'Provider'
         )
@@ -67,11 +64,13 @@ class Session:
         self._futures = []
         self._shutdown_session = False
         self._global_session_lock = Lock()
+
         # categorize provider for convinience reasons
-        [self._categorize(provider) for provider in self._provider]
+        for provider in self._provider:
+            self._categorize(provider)
 
     def create_query(self, **kwargs):
-        return Query(self._query_attrs, kwargs)
+        return Query(kwargs)
 
     def _init_download_queue(self, query):
         if query['use_cache'] is False:
@@ -135,17 +134,23 @@ class Session:
                         for job in new_jobs:
                             download_queue.push(job)
             download_queue.push(None)
+            if query['imdbid'] is None:
+                finished_jobs = self._filter_finished(finished_jobs, query)
 
         else:
             self.clean_up()
             self._downloadqueues.remove(download_queue)
         return finished_jobs
 
+    def _filter_finished(self, jobs, query):
+        jobs.sort(key=lambda x: x.provider._priority, reverse=True)
+        return jobs[0:query['items']]
+
     def _make_result(self, job, query):
         result = Result(result=job['result'])
         result.provider = job['provider']
         result.retries = query['retries'] - job['retries_left']
-        result.seachparams = query
+        result.searchparams = query
         return result
 
     def _check_for_retry(self, job):
@@ -260,7 +265,7 @@ if __name__ == '__main__':
         hs = Session(parallel_jobs=5, timeout_sec=5)
         signal.signal(signal.SIGINT, hs.signal_handler)
         f = open('./hugin/core/testdata/imdbid_huge.txt').read().splitlines()
-        futures = []
+        futures = ['tt0401792']
         for imdbid in f:
             q = hs.create_query(
                 type='movie',
@@ -288,25 +293,23 @@ if __name__ == '__main__':
         hs = Session(parallel_jobs=5, timeout_sec=5)
         signal.signal(signal.SIGINT, hs.signal_handler)
         f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
-        f = ['s']
+        f = ['tt1254207']
         for imdbid in f:
             q = hs.create_query(
                 type='movie',
                 search_text=True,
                 use_cache=False,
-                retries=1,
+                retries=5,
                 items=1,
-                title='Sin City'
+                title='Watchmen'
             )
             result_list = hs.submit(q)
             print(100 * '-')
             for item in result_list:
-                print(item)
-
+                import pprint
+                pprint.pprint(item._result_dict)
         hs._cache.close()
-
     try:
         read_list_sync()
     except KeyboardInterrupt:
         print('Interrupted by user.')
-
