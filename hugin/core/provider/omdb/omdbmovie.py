@@ -5,6 +5,7 @@
 from hugin.common.utils.stringcompare import string_similarity_ratio
 from urllib.parse import urlencode
 from urllib.parse import quote_plus
+from parse import parse
 import hugin.core.provider as provider
 import json
 
@@ -14,10 +15,32 @@ class OMDBMovie(provider.IMovieProvider):
     def __init__(self):
         self._base_url = 'http://www.omdbapi.com/?{query}&plot=full'
         self._priority = 80
-        self._attrs = [
-            'title', 'year', 'poster', 'imdbid', 'rating', 'actors',
-            'director', 'writer', 'genre', 'plot', 'runtime', 'vote_count'
-        ]
+        self._attrs = {
+            'title': 'Title',
+            'original_title': None,
+            'plot': '__Plot',
+            'runtime': '__Runtime',
+            'imdbid': 'imdbID',
+            'vote_count': '__imdbVotes',
+            'rating': 'imdbRating',
+            'providerid': None,
+            'alternative_titles': None,
+            'directors': '__Director',
+            'writers': '__Writer',
+            'crew': None,
+            'year': 'Year',
+            'poster': '__Poster',
+            'fanart': None,
+            'countries': None,
+            'genre': '__Genre',
+            'collection': None,
+            'studios': None,
+            'trailers': None,
+            'actors': '__Actors',
+            'keywords': None,
+            'tagline': None,
+            'outline' : None
+        }
 
     def build_url(self, search_params):
         if search_params['imdbid']:
@@ -80,25 +103,40 @@ class OMDBMovie(provider.IMovieProvider):
 
     def _parse_movie_module(self, data, search_params):
 
-        result = {
-            'title': data['Title'],
-            'year': data['Year'],
-            'poster': (None, data['Poster']),
-            'imdbid': data['imdbID'],
-            'rating': data['imdbRating'],
-            'actors': data['Actors'].split(','),
-            'director': data['Director'].split(','),
-            'writer': data['Writer'].split(','),
-            'genre': data['Genre'].split(','),
-            'plot': data['Plot'].split(','),
-            'runtime': data['Runtime'].split(','),
-            'vote_count': data['imdbVotes'].replace(',', '')
-        }
-        return (result, True)
+        result_map = {}
+        result_map['Poster'] = [(None, data['Poster'])]
+        result_map['Actors'] = data['Actors'].split(',')
+        result_map['Director'] = data['Director'].split(',')
+        result_map['Writer'] = data['Writer'].split(',')
+        result_map['Genre'] = data['Genre'].split(',')
+        result_map['Plot'] = data['Plot'].split(',')
+        result_map['imdbVotes'] = data['imdbVotes'].replace(',', '')
+        result_map['Runtime'] = self._format_runtime(data['Runtime'])
+
+        result_dict = {}
+        for key, value in self._attrs.items():
+            if value is not None:
+                if value.startswith('__'):
+                    result_dict[key] = result_map[value[2:]] or []
+                else:
+                    result_dict[key] = data[value] or []
+
+        return (result_dict, True)
+
+    def _format_runtime(self, runtime):
+        result = []
+        if runtime and 'h' in runtime and 'min' in runtime:
+            h, m = parse('{:d} h {:d} min', runtime)
+            result = (h * 60) + m
+        elif 'min' in runtime:
+            result, = parse('{:d} min', runtime)
+        elif 'h' in runtime:
+            result, = parse('{:d} h', runtime)
+        return result
 
     @property
     def supported_attrs(self):
-        return self._attrs
+        return [k for k, v in self._attrs.items() if v is not None]
 
     def activate(self):
         provider.IMovieProvider.activate(self)
