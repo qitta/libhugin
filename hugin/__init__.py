@@ -271,7 +271,7 @@ if __name__ == '__main__':
                 type='movie',
                 search_text=True,
                 use_cache=False,
-                imdbid='{0}'.format(imdbid)
+                title='Sin City'
             )
             futures.append(hs.submit_async(q))
 
@@ -299,6 +299,7 @@ if __name__ == '__main__':
                 type='movie',
                 search_text=True,
                 use_cache=False,
+                search_pictures=True,
                 retries=5,
                 items=1,
                 title='Watchmen'

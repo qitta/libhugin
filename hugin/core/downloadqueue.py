@@ -28,7 +28,7 @@ class DownloadQueue:
         :param local_cache: A local cache for lookup before download.
 
         """
-        self._num_threads = num_threads if num_threads <= 10 else 10
+        self._num_threads = min(num_threads, 10)
         self._headers = {
             'User-Agent': user_agent,
             'Connection': 'close',

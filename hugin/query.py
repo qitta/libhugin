@@ -3,12 +3,6 @@
 
 from collections import UserDict
 
-#query attrs for testing purposes, Session itself contains query attrs
-QUERY_ATTRS = [
-    'title', 'year', 'name', 'imdbid', 'type', 'search_text',
-    'language', 'search_picture', 'items', 'use_cache', 'retries'
-]
-
 
 class Query(UserDict):
     '''
@@ -44,6 +38,6 @@ class Query(UserDict):
 
 if __name__ == '__main__':
     def create_query(**kwargs):
-        return Query(QUERY_ATTRS, kwargs)
+        return Query(kwargs)
     q = create_query(wolfgang=223, title='Sin City', name='444')
     print(q)
