@@ -7,7 +7,6 @@ from urllib.parse import quote
 import json
 
 import hugin.core.provider as provider
-from hugin.utils import get_movie_result_dict
 from hugin.common.utils.stringcompare import string_similarity_ratio
 
 
