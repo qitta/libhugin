@@ -4,6 +4,7 @@
 """ Provider test module. """
 
 from hugin.core.provider.tmdb.tmdbperson import TMDBPerson
+from hugin.core.provider.ofdb.ofdbperson import OFDBPerson
 
 
 PROVIDER = {
@@ -13,6 +14,14 @@ PROVIDER = {
         'person': 'tmdb_person_response.json',
         'nothing_found': 'tmdb_nothing_found.json',
         'critical': 'tmdb_critical.json',
+        'search_by_imdb': False
+    },
+
+    OFDBPerson(): {
+        'search': 'ofdb_person_search.json',
+        'person': 'ofdb_person_response.json',
+        'nothing_found': 'ofdb_nothing_found.json',
+        'critical': 'ofdb_critical.json',
         'search_by_imdb': False
     }
 }
@@ -26,10 +35,10 @@ if __name__ == '__main__':
             self._providers = [p for p in PROVIDER.keys()]
             self._params = {
                 'name': 'Emma Stone',
-                'items': 5,
+                'items': 1,
                 'type': 'person',
+                'search_pictures': True,
                 'language': 'en',
-                'items': 3
             }
 
         def read_file(self, file_name):
@@ -58,7 +67,7 @@ if __name__ == '__main__':
         def test_parse_build_url(self):
             for provider in self._providers:
                 response = self.read_file(PROVIDER[provider]['search'])
-                response = [('fakeurl/search/person?', response)]
+                response = [('/search/person?', response)]
                 result_list, finished = provider.parse_response(
                     response,
                     self._params
