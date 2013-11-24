@@ -19,8 +19,8 @@ class IProvider(IPlugin):
 
 
         The build url method builds a url according to the given search
-        parameters.  The build_url method has to return a URI or None if
-        building a search URI fails.
+        parameters.  The build_url method has to return a list with URI or None
+        if building a search URI fails.
 
         :param search_params: A dictionary containing query parameters
         :returns: A url on success, else None
@@ -30,11 +30,12 @@ class IProvider(IPlugin):
 
     def parse_response(self, response, search_params):
         """
-        Parse a response http response.
+        Parse a response url, http response tupe.
 
         The provider itself is responsible for parsing its previously requested
-        data via the build_url function.  Data might be a list of new urls to
-        fetch, a empty list, a finished result object or None if parsing fails.
+        data via the build_url function.  The result might be a list of new url
+        lists to fetch, a empty list, a finished result object or None if
+        parsing fails.
 
         The method returns a  tuple containing a flag that indicates if provider
         is done. If the flag is True, than there is nothing to do left,
@@ -42,7 +43,7 @@ class IProvider(IPlugin):
 
         Possible combinations ::
 
-            valid response      =>  ([url,...], False)
+            valid response      =>  ([[url,...],...], False)
                                     (None, False)
                                     ([], True)
                                     (result, True)

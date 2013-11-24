@@ -6,6 +6,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 from queue import Queue, Empty
+from socket import timeout
 
 import charade
 import httplib2
@@ -27,15 +28,19 @@ class DownloadQueue:
         :param local_cache: A local cache for lookup before download.
 
         """
-        self._num_threads = num_threads if num_threads <= 10 else 10
-        self._headers = {'User-Agent': user_agent, 'Connection': 'close'}
+        self._num_threads = min(num_threads, 10)
+        self._headers = {
+            'User-Agent': user_agent,
+            'Connection': 'close',
+            'cache-control': 'no-cache'
+        }
         self._timeout_sec = timeout_sec
         self._local_cache = None
         if local_cache is not None:
             self._local_cache = local_cache
 
-        self._url_to_provider_data_lock = Lock()
-        self._url_to_provider_data = {}
+        self._url_to_job_lock = Lock()
+        self._url_to_job = {}
         self._request_queue = Queue()
 
         self._executor = ThreadPoolExecutor(max_workers=self._num_threads)
@@ -47,7 +52,25 @@ class DownloadQueue:
         self._executor.shutdown(wait=True)
         self._is_shutdown = True
 
-    def _fetch_url(self, url, timeout_sec):
+    def _get_single_url(self, url, timeout_sec):
+        source, content = None, None
+        try:
+            if self._local_cache is not None:
+            # we use 0 as status code for local fetch
+                source, content = 'local', self._local_cache.read(url)
+            # if nothing found in local cache
+            if content is None:
+                http = httplib2.Http(timeout=timeout_sec)
+                source, content = http.request(uri=url, headers=self._headers)
+        except httplib2.RelativeURIError as e:
+            print('RelativeURIError', e, source, content)
+        except timeout as e:
+            print('Something went terribly wrong! TIMEOUT', url)
+        except Exception as e:
+            print('Something went terribly wrong!', url, source, content)
+        return source, content
+
+    def _fetch_url(self, urllist, timeout_sec):
         """
         Get the requested url from cache or web.
 
@@ -55,35 +78,37 @@ class DownloadQueue:
         :param timeout_sec: A timeout to be used for each request.
 
         """
-        resp, content = None, None
-        try:
-            if self._local_cache is not None:
-                # we use 0 as status code for local fetch
-                resp, content = 0, self._local_cache.read(url)
-            # if nothing found in local cache
-            if content is None:
-                http = httplib2.Http(timeout=timeout_sec)
-                resp, content = http.request(uri=url, headers=self._headers)
-        except httplib2.RelativeURIError:
-            print('RelativeURIError')
-        except Exception as e:
-            print('Something went terribly wrong!', e)
+        response = []
+        for url in urllist:
+            source, content = self._get_single_url(url, timeout_sec)
+            content = (url, content)
+            response.append((source, content))
 
-        with self._url_to_provider_data_lock:
-            provider_data = self._url_to_provider_data.pop(url)
-            if resp == 0:
-                provider_data['response'] = content
-                provider_data['return_code'] = resp
-                provider_data['cache_used'] = True
-            else:
-                try:
-                    provider_data['return_code'] = resp.status
-                    provider_data['response'] = self._bytes_to_unicode(content)
-                except AttributeError:
-                    print('AttributeError')
-                except Exception as e:
-                    print('Something went terribly wrong!', e)
-            self._request_queue.put(provider_data)
+        with self._url_to_job_lock:
+            job = self._url_to_job.pop(id(urllist))
+            job['response'] = []
+            job['return_code'] = []
+            job['cache_used'] = []
+            for response_item in response:
+                source, url_content = response_item
+                url, content = url_content
+                if source == 'local':
+                    job['response'].append(url_content)
+                    job['return_code'].append(source)
+                    job['cache_used'].append((url, True))
+                else:
+                    if job['response'] is not None:
+                        try:
+                            job['response'].append(
+                                (url, self._bytes_to_unicode(content))
+                            )
+                            job['return_code'].append(source)
+                            job['cache_used'].append((url, False))
+                        except AttributeError:
+                            print('AttributeError')
+                        except Exception as e:
+                            print('Something went terribly wrong!', e, source, content)
+            self._request_queue.put(job)
 
     def _bytes_to_unicode(self, byte_data):
         """
@@ -103,34 +128,33 @@ class DownloadQueue:
             encoding = charade.detect(byte_data).get('encoding')
             return byte_data.decode(encoding)
 
-    def push(self, provider_data):
+    def push(self, job):
         """
         Execute a asynchronous download job.
 
-        :param provider_data: A provider_data object.
+        :param job: A job object.
 
         """
-
-        if provider_data is None and self._shutdown_downloadqueue is False:
+        if job is None and self._shutdown_downloadqueue is False:
             self._shutdown_downloadqueue = True
             self._shutdown()
 
         if self._shutdown_downloadqueue is False:
-            url = provider_data['url']
-            if url and url not in self._url_to_provider_data:
+            urllist = job['url']
+            id_urllist = id(urllist)
+            if urllist and id_urllist not in self._url_to_job:
 
-                with self._url_to_provider_data_lock:
-                    self._url_to_provider_data[url] = provider_data
-
-                provider_data['future'] = self._executor.submit(
+                with self._url_to_job_lock:
+                    self._url_to_job[id_urllist] = job
+                job['future'] = self._executor.submit(
                     self._fetch_url,
-                    url=url,
+                    urllist=urllist,
                     timeout_sec=self._timeout_sec
-                    )
+                )
 
     def pop(self):
         """
-        Get the a finished provider_data object.
+        Get the a finished job object.
 
         :returns: Next avaiable provider data object.
         :raises:  Empty exception if queue is empty.
@@ -139,7 +163,7 @@ class DownloadQueue:
         try:
             return self._request_queue.get_nowait()
         except Empty:
-            if len(self._url_to_provider_data) == 0:
+            if len(self._url_to_job) == 0:
                 raise Empty
             else:
                 return self._request_queue.get()
@@ -151,7 +175,7 @@ class DownloadQueue:
         :returns: Sum of jobs in queue and pending/active jobs
 
         """
-        return self._request_queue.qsize() + len(self._url_to_provider_data)
+        return self._request_queue.qsize() + len(self._url_to_job)
 
 
 if __name__ == '__main__':
@@ -171,64 +195,81 @@ if __name__ == '__main__':
                 local_cache=self._cache
             )
             self._url = 'http://httpbin.org/status/{code}'
-            self._provider_data = {
-                'url': 'http://httpbin.org/get',
+            self._job = {
+                'url': ['http://httpbin.org/get'],
                 'response': None,
                 'return_code': None
             }
 
         def test_user_agent(self):
-            self._dq_default.push(self._provider_data)
-            provider_data = self._dq_default.pop()
-            response = json.loads(provider_data['response'])
-            self.assertTrue(
-                response['headers']['User-Agent'] == 'katzenbaum/4.2'
-            )
+            self._dq_default.push(self._job)
+            job = self._dq_default.pop()
+            for url, content in job['response']:
+                response = json.loads(content)
+                self.assertTrue(
+                    response['headers']['User-Agent'] == 'katzenbaum/4.2'
+                )
 
         def test_bad_status_codes(self):
-            test_codes = [404, 408, 503]
-            for status_code in test_codes:
-                self._provider_data['url'] = self._url.format(code=status_code)
-                self._dq_default.push(self._provider_data)
-                provider_data = self._dq_default.pop()
+            test_codes = ['404', '408', '503']
+            self._job['url'] = [
+                self._url.format(code=_code) for _code in test_codes
+            ]
+            self._dq_default.push(self._job)
+            job = self._dq_default.pop()
 
-                self.assertTrue(provider_data['return_code'] in test_codes)
-                self.assertTrue(provider_data['response'] is '')
-                test_codes.remove(status_code)
+            for code in job['return_code']:
+                self.assertTrue(code['status'] in test_codes)
+                test_codes.remove(code['status'])
+
+            for response in job['response']:
+                url, content = response
+                self.assertTrue(content is '')
 
         def test_good_status_codes(self):
-            test_codes = [200, 300, 304, 307]
+            test_codes = ['200', '300', '304']
 
-            for status_code in test_codes:
-                self._provider_data['url'] = self._url.format(code=status_code)
-                self._provider_data['response'] = None
+            self._job['url'] = [
+                self._url.format(code=_code) for _code in test_codes
+            ]
+            self._job['response'] = None
 
-                self._dq_default.push(self._provider_data)
-                provider_data = self._dq_default.pop()
+            self._dq_default.push(self._job)
+            job = self._dq_default.pop()
 
-                self.assertTrue(provider_data['return_code'] in test_codes)
-                test_codes.remove(status_code)
-                self.assertTrue(provider_data['response'] is not None)
+            for code in job['return_code']:
+                self.assertTrue(code['status'] in test_codes)
+                test_codes.remove(code['status'])
+
+            for response in job['response']:
+                url, content = response
+                self.assertTrue(content is '')
+
 
         def test_without_local_cache(self):
-            self._dq_default.push(self._provider_data)
-            provider_data = self._dq_default.pop()
-            self._dq_default.push(self._provider_data)
-            provider_data = self._dq_default.pop()
-
-            self.assertTrue(provider_data['return_code'] != 0)
-            self.assertTrue(provider_data['return_code'] == 200)
+            self._dq_default.push(self._job)
+            job = self._dq_default.pop()
+            self._dq_default.push(self._job)
+            job = self._dq_default.pop()
+            for code in job['return_code']:
+                self.assertTrue(code != 'local')
+                self.assertTrue(code['status'] == '200')
 
         def test_with_local_cache(self):
-            self._dq_default.push(self._provider_data)
-            provider_data = self._dq_default.pop()
-            self.assertTrue(provider_data['return_code'] == 200)
+            self._dq_default.push(self._job)
+            job = self._dq_default.pop()
+            for code in job['return_code']:
+                self.assertTrue(code['status'] == '200')
 
-            self._cache.write(provider_data['url'], provider_data['response'])
+            for url, content in job['response']:
+                self._cache.write(url, content)
+        #    self._cache.write(job['url'], job['response'])
 
-            self._dq_custom.push(provider_data)
-            provider_data = self._dq_custom.pop()
-            self.assertTrue(provider_data['return_code'] == 0)
+            self._dq_custom.push(job)
+            job = self._dq_custom.pop()
+
+            for code in job['return_code']:
+                self.assertTrue(code == 'local')
 
         def test_pop_empty(self):
             with self.assertRaises(Empty):
@@ -240,7 +281,7 @@ if __name__ == '__main__':
             self.assertTrue(self._dq_default._is_shutdown is True)
 
             self.assertTrue(self._dq_custom._is_shutdown is False)
-            self._dq_custom.push(self._provider_data)
+            self._dq_custom.push(self._job)
             self.assertTrue(self._dq_custom._is_shutdown is False)
             self._dq_default.push(None)
             self._dq_default.push(None)

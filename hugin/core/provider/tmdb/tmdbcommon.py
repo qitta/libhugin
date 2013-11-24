@@ -30,6 +30,24 @@ class TMDBConfig:
             TMDBConfig._instance = TMDBConfig()
         return TMDBConfig._instance
 
+    def validate_url_response(self, response):
+        try:
+            return json.loads(response)
+        except (ValueError, TypeError):
+            return None
+
+    def validate_response(self, url_response):
+        responses = []
+        flag = False
+        for url, response in url_response:
+            try:
+                response = json.loads(response)
+                responses.append((url, response))
+            except (ValueError, TypeError):
+                responses.append((url, None))
+                flag = True
+        return (responses, flag)
+
     def _image_sizes_from(self, image_type):
         """
         Read current available image sizes from tmdb config.
@@ -46,8 +64,9 @@ class TMDBConfig:
             'profile': self._profile_sizes,
             'backdrop': self._backdrop_sizes,
             'poster': self._poster_sizes
-        }
-        return types[image_type]
+        }.get(image_type)
+
+        return types
 
     def get_image_url(self, image, image_type):
         """
@@ -71,23 +90,45 @@ class TMDBConfig:
             values.append(value['name'])
         return values
 
+    def build_movie_search_url(self, matches, search_params):
+        return self._build_url(matches, search_params, 'movie').pop()
+
+    def build_person_search_url(self, matches, search_params):
+        return self._build_url(matches, search_params, 'person').pop()
+
     def build_movie_url(self, matches, search_params):
+        return self._build_url(matches, search_params, 'movie')
+
+    def build_person_url(self, matches, search_params):
+        return self._build_url(matches, search_params, 'person')
+
+    def _build_url(self, matches, search_params, metatype):
+        attrs = {
+            'person': ['movie_credits'],
+            'movie': ['keywords', 'credits', 'alternative_titles', 'trailers']
+        }.get(metatype)
+
+        if search_params['search_pictures'] is True:
+            attrs += ['images']
+
+        append_to_response = ','.join(attrs)
+        language = search_params['language'] or ''
+
         url_list = []
-        language = search_params['language'] or 'en'
         for tmdbid in matches:
-            path = '{url_type}/{tmdbid}'.format(
+            fullpath = '{url_type}/{tmdbid}'.format(
                 tmdbid=tmdbid,
                 url_type=search_params['type']
             )
-            url_list.append(
-                self.baseurl.format(
-                    path=path,
-                    apikey=self.apikey,
-                    query='&language={language}'.format(
-                        language=language
-                    )
+            url = self.baseurl.format(
+                path=fullpath,
+                apikey=self.apikey,
+                query='&append_to_response={attrs}&language={language}'.format(
+                    attrs=append_to_response,
+                    language=language
                 )
             )
+            url_list.append([url])
         return url_list
 
     def _load_api_config(self):
@@ -107,10 +148,10 @@ class TMDBConfig:
             self.image_base_url = '{url}{{size}}{{image}}'.format(
                 url=response['base_url']
             )
-            self.poster_sizes = [size for size in response['poster_sizes']]
-            self.backdrop_sizes = [size for size in response['backdrop_sizes']]
-            self.profile_sizes = [size for size in response['profile_sizes']]
-            self.logo_sizes = [size for size in response['logo_sizes']]
+            self._poster_sizes = response['poster_sizes']
+            self._backdrop_sizes = response['backdrop_sizes']
+            self._profile_sizes = response['profile_sizes']
+            self._logo_sizes = response['logo_sizes']
             response_bytes.close()
         except UnicodeDecodeError as e:
             print(e)
@@ -120,3 +161,4 @@ if __name__ == '__main__':
     print(t.baseurl)
     print(t.apikey)
     print(t.image_base_url)
+    print(t._profile_sizes)

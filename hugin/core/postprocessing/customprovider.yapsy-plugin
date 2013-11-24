@@ -1,0 +1,9 @@
+[Core]
+Name = CUSTOMPROVIDER
+Module = customprovider
+
+[Documentation]
+Description = Postprocessing plugin to generate a custom result
+Author = Christoph Piechula
+Version = 1.0
+Website = n/a

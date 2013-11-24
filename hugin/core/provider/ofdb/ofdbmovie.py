@@ -7,14 +7,40 @@ from urllib.parse import quote
 import json
 
 import hugin.core.provider as provider
-from hugin.utils import get_movie_result_dict
 from hugin.common.utils.stringcompare import string_similarity_ratio
 
 
 class OFDBMovie(provider.IMovieProvider):
     def __init__(self):
+        self._priority = 90
         self._base_url = 'http://ofdbgw.home-of-root.de/{path}/{query}'
-        self._attrs = ['title', 'year', 'imdbid', 'genre', 'plot']
+        self._attrs = {
+            'title': 'titel',
+            'original_title': 'alternativ',
+            'plot': 'beschreibung',
+            'runtime': None,
+            'imdbid': '__imdbid',
+            'vote_count': '__stimmen',
+            'rating': '__note',
+            'providerid': None,
+            'alternative_titles': None,
+            'directors': '__regie',
+            'writers': '__drehbuch',
+            'outline': 'kurzbeschreibung',
+            'tagline': None,
+            'crew': None,
+            'year': 'jahr',
+            'poster': 'bild',
+            'fanart': None,
+            'countries': 'produktionsland',
+            'genre': 'genre',
+            'collection': None,
+            'studios': None,
+            'trailers': None,
+            'actors': '__besetzung',
+            'keywords': None
+        }
+        #self._attrs = ['title', 'year', 'imdbid', 'genre', 'plot']
 
     def build_url(self, search_params):
         # not enough search params
@@ -26,9 +52,9 @@ class OFDBMovie(provider.IMovieProvider):
             path, query = 'imdb2ofdb_json', search_params['imdbid']
         else:
             path, query = 'search_json', quote(search_params['title'])
-        return self._base_url.format(path=path, query=query)
+        return [self._base_url.format(path=path, query=query)]
 
-    def parse_response(self, response, search_params):
+    def parse_response(self, url_response, search_params):
         """
         Parse ofdb response.
 
@@ -41,6 +67,16 @@ class OFDBMovie(provider.IMovieProvider):
         9 = Wartungsmodus, OFDBGW derzeit nicht verfügbar.
 
         """
+
+        if url_response is None:
+            return (None, False)
+
+        try:
+            first_element, *_ = url_response
+            _, response = first_element
+        except ValueError:
+            return (None, False)
+
         try:
             ofdb_response = json.loads(response).get('ofdbgw')
         except (TypeError, ValueError):
@@ -98,15 +134,16 @@ class OFDBMovie(provider.IMovieProvider):
         for result in result['eintrag']:
             # Get the title with the highest similarity ratio:
             ratio = 0.0
-            for title_key in ['titel_de', 'titel_orig']:
-                ratio = max(
-                    ratio,
-                    string_similarity_ratio(
-                        result[title_key],
-                        search_params['title']
+            if 'TV-Mini-Serie' not in result['titel_de'] and 'TV-Serie' not in result['titel_de']:
+                for title_key in ['titel_de', 'titel_orig']:
+                    ratio = max(
+                        ratio,
+                        string_similarity_ratio(
+                            result[title_key],
+                            search_params['title']
+                        )
                     )
-                )
-            similarity_map.append({'ofdbid': result['id'], 'ratio': ratio})
+                similarity_map.append({'ofdbid': result['id'], 'ratio': ratio})
 
         # sort by ratio, generate ofdbid list with requestet item count
         similarity_map.sort(
@@ -119,23 +156,22 @@ class OFDBMovie(provider.IMovieProvider):
         return (self._build_movie_url(matches), False)
 
     def _parse_movie_module(self, result, _):
-        result = {
-            'original_title': result['alternativ'],
-            'title': result['titel'],
-            'plot': result['beschreibung'],
-            'year': result['jahr'],
-            'poster': result['bild'],
-            'tagline': result['kurzbeschreibung'],
-            'genre': result['genre'],
-            'director': [r['name'] for r in result['regie']],
-            'countries': result['produktionsland'],
-            'rating': result['bewertung']['note'],
-            'writer': self._extract_writer(result['drehbuch']),
-            'actors': self._get_actor_list(result['besetzung']),
-            'imdbid':  'tt{0}'.format(result['imdbid'])
+        result_map = {}
+        result_map['imdbid'] = 'tt{0}'.format(result['imdbid'])
+        result_map['besetzung'] = self._extract_actor(result['besetzung'])
+        result_map['regie'] = [r['name'] for r in result['regie']]
+        result_map['drehbuch'] = self._extract_writer(result['drehbuch'])
+        result_map['note'] = result['bewertung']['note']
+        result_map['stimmen'] = result['bewertung']['stimmen']
 
-        }
-        return (result, True)
+        result_dict = {}
+        for key, value in self._attrs.items():
+            if value is not None:
+                if value.startswith('__'):
+                    result_dict[key] = result_map[value[2:]] or []
+                else:
+                    result_dict[key] = result[value] or []
+        return (result_dict, True)
 
     def _extract_writer(self, writer):
         person_list = []
@@ -149,7 +185,7 @@ class OFDBMovie(provider.IMovieProvider):
             return []
         return person_list
 
-    def _get_actor_list(self, actors):
+    def _extract_actor(self, actors):
         actor_list = []
         try:
             for actor in actors:
@@ -165,11 +201,10 @@ class OFDBMovie(provider.IMovieProvider):
     def _build_movie_url(self, ofdbid_list):
         url_list = []
         for ofdbid in ofdbid_list:
-            url_list.append(
-                self._base_url.format(path='movie_json', query=ofdbid)
-            )
+            url = self._base_url.format(path='movie_json', query=ofdbid)
+            url_list.append([url])
         return url_list
 
     @property
     def supported_attrs(self):
-        return self._attrs
+        return [k for k, v in self._attrs.items() if v is not None]
