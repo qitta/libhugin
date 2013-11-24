@@ -13,10 +13,20 @@ class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
     def __init__(self):
         self._config = TMDBConfig.get_instance()
         self._priority = 100
-        self._attrs = [
-            'name', 'photo', 'birthday', 'placeofbirth', 'imdbid',
-            'providerid', 'homepage', 'deathday', 'popularity', 'biography'
-        ]
+        self._attrs = {
+            'name': 'name',
+            'alternative_name': None,
+            'photo': '__images',
+            'birthday': 'birthday',
+            'placeofbirth': 'place_of_birth',
+            'imdbid': 'imdb_id',
+            'providerid': 'id',
+            'homepage': 'homepage',
+            'deathday': 'deathday',
+            'popularity': 'popularity',
+            'biography': 'biography',
+            'known_for': '__cast'
+        }
         self._path = 'search/person'
 
     def build_url(self, search_params):
@@ -34,64 +44,54 @@ class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
             return None
 
     def parse_response(self, url_response, search_params):
-        results = {}
-        url_response, flag = self._config.validate_response(url_response)
-        if flag is True:
-            return (None, flag)
-        for url, response in url_response:
-            if 'search/person?' in url:
-                if response['total_results'] == 0:
-                    return ([], True)
-                else:
-                    return self._parse_search_module(response, search_params)
-            if '/images?' in url:
-                results['images'] = self._parse_images(response)
-            elif '/movie_credits?' in url:
-                results['movie_credits'] = response
-            elif '/person/' in url:
-                results['person'] = response
+        fr, *_ = url_response
+        url, response = fr
+        response = self._config.validate_url_response(response)
+        if response is None:
+            return (None, True)
+        elif 'status_code' in response:
+            return (None, True)
+
+        if 'search/person?' in url:
+            if response['total_results'] == 0:
+                return ([], True)
             else:
-                return (None, True)
-        result = self._concat_result(results)
-        return (result, True)
+                return self._parse_search_module(response, search_params)
+        else:
+            return (self._concat_result(response), True)
 
     def _concat_result(self, results):
-        data = results['person']
+        result_map = {}
         if 'images' not in results:
-            results['images'] = {'posters': [], 'backdrops': []}
+            result_map['images'] = []
+        else:
+            result_map['images'] = self._parse_images(results['images'])
+        result_map['photo'] = result_map['images']
+        result_map['known_for'] = result_map['cast'] = self._extract_movie_credits(
+            results['movie_credits']
+        )
 
-        credits = self._extract_movie_credits(results['movie_credits'])
-        result = {
-            'name': data['name'],
-            'photo': results['images'],
-            'birthday': data['birthday'],
-            'placeofbirth': data['place_of_birth'],
-            'imdbid': data['imdb_id'],
-            'providerid': data['id'],
-            'homepage': data['homepage'],
-            'deathday': data['deathday'],
-            'popularity': data['popularity'],
-            'biography': data['biography'],
-            'known_for': credits['cast']
-        }
-        return result
+        result_dict = {}
+        for key, value in self._attrs.items():
+            if value is not None:
+                if value.startswith('__'):
+                    result_dict[key] = result_map[value[2:]] or []
+                else:
+                    result_dict[key] = results[value] or []
+        return result_dict
 
     def _extract_movie_credits(self, response):
         result = defaultdict(set)
         for person in response['cast']:
             actor = (person['character'], person['original_title'])
             result['cast'].add(actor)
-        return result
-
+        return result['cast']
 
     def _parse_images(self, response):
         images = []
         for item in response['profiles']:
-            images.append(
-                    self._config.get_image_url(
-                    item['file_path'],
-                    'profile'
-                )
+            images += self._config.get_image_url(
+                item['file_path'], 'profile'
             )
         return images
 

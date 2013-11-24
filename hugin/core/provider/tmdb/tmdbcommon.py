@@ -30,6 +30,12 @@ class TMDBConfig:
             TMDBConfig._instance = TMDBConfig()
         return TMDBConfig._instance
 
+    def validate_url_response(self, response):
+        try:
+            return json.loads(response)
+        except (ValueError, TypeError):
+            return None
+
     def validate_response(self, url_response):
         responses = []
         flag = False
@@ -85,16 +91,10 @@ class TMDBConfig:
         return values
 
     def build_movie_search_url(self, matches, search_params):
-        url_list = self._build_url(matches, search_params, 'movie')
-        if len(url_list) == 1:
-            return url_list.pop()
-        return url_list
+        return self._build_url(matches, search_params, 'movie').pop()
 
     def build_person_search_url(self, matches, search_params):
-        url_list = self._build_url(matches, search_params, 'person')
-        if len(url_list) == 1:
-            return url_list.pop()
-        return url_list
+        return self._build_url(matches, search_params, 'person').pop()
 
     def build_movie_url(self, matches, search_params):
         return self._build_url(matches, search_params, 'movie')
@@ -103,42 +103,33 @@ class TMDBConfig:
         return self._build_url(matches, search_params, 'person')
 
     def _build_url(self, matches, search_params, metatype):
-        additions = []
-        if search_params['search_pictures'] == True:
-            additions = ['images']
-
-        urlpaths = {
-            'person': ['', 'images', 'movie_credits'],
-            'movie': ['', 'keywords', 'credits', 'alternative_titles', 'trailers'] + additions
+        attrs = {
+            'person': ['movie_credits'],
+            'movie': ['keywords', 'credits', 'alternative_titles', 'trailers']
         }.get(metatype)
 
-        url_list = []
+        if search_params['search_pictures'] is True:
+            attrs += ['images']
+
+        append_to_response = ','.join(attrs)
         language = search_params['language'] or ''
 
+        url_list = []
         for tmdbid in matches:
-            moviepaths = []
-            for urlpath in urlpaths:
-                if urlpath == '':
-                    path = '{url_type}/{tmdbid}{url_path}'
-                else:
-                    path = '{url_type}/{tmdbid}/{url_path}'
-
-                fullpath = path.format(
-                    tmdbid=tmdbid,
-                    url_type=search_params['type'],
-                    url_path=urlpath
+            fullpath = '{url_type}/{tmdbid}'.format(
+                tmdbid=tmdbid,
+                url_type=search_params['type']
+            )
+            url = self.baseurl.format(
+                path=fullpath,
+                apikey=self.apikey,
+                query='&append_to_response={attrs}&language={language}'.format(
+                    attrs=append_to_response,
+                    language=language
                 )
-                url = self.baseurl.format(
-                        path=fullpath,
-                        apikey=self.apikey,
-                        query='&language={language}'.format(
-                            language=language
-                        )
-                    )
-                moviepaths.append(url)
-            url_list.append(moviepaths)
+            )
+            url_list.append([url])
         return url_list
-
 
     def _load_api_config(self):
         '''

@@ -46,12 +46,14 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
             'studios': '__production_companies',
             'trailers': '__trailers',
             'actors': '__actors',
-            'keywords': '__keywords'
+            'keywords': '__keywords',
+            'tagline': 'tagline',
+            'outline': None
         }
 
     def build_url(self, search_params):
         if search_params['imdbid']:
-            return self._config.build_movie_search_url(
+            return self._config.build_movie_url(
                 [search_params['imdbid']],
                 search_params
             )
@@ -72,82 +74,62 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
             return None
 
     def parse_response(self, url_response, search_params):
-        url_response, flag = self._config.validate_response(url_response)
-        if flag is True:
-            return (None, flag)  # what if just one url fails?
+        fr, *_ = url_response
+        url, response = fr
+        response = self._config.validate_url_response(response)
+        if response is None:
+            return (None, True)
+        elif 'status_code' in response:
+            return (None, True)
 
-        results = {}
-        for url, response in url_response:
-            if 'search/movie?' in url:
-                if response['total_results'] == 0:
-                    return ([], True)
-                else:
-                    return self._parse_search_module(response, search_params)
-
-            key = self._get_key_for_url(url)
-            if key is not None:
-                results[key] = response
+        if 'search/movie?' in url:
+            if response['total_results'] == 0:
+                return ([], True)
             else:
-                return (None, True)
-
-        return (self._concat_result(results), True)
-
-    def _get_key_for_url(self, url):
-        for part in [
-            '/images?', '/credits?', '/alternative_titles?', '/trailers?',
-            '/keywords?', '3/movie/'
-        ]:
-            if part in url:
-                if part == '3/movie/':
-                    return part[2:-1]
-                else:
-                    return part[1:-1]
+                return self._parse_search_module(response, search_params)
+        else:
+            return (self._concat_result(response), True)
 
     def _concat_result(self, results):
         if 'images' not in results:
             results['images'] = {'posters': [], 'backdrops': []}
 
         result_map = {}
-        result_map.setdefault('year', results['movie']['release_date'][0:4])
+        result_map['year'] = results['release_date'][0:4]
 
-        directors, writers, actors, crew = self._extract_credits(results['credits'])
-        result_map.setdefault('directors', directors)
-        result_map.setdefault('writers', writers)
-        result_map.setdefault('actors', actors)
-        result_map.setdefault('crew', crew)
+        directors, writers, actors, crew = self._extract_credits(
+            results['credits']
+        )
+        result_map['directors'] = directors
+        result_map['writers'] = writers
+        result_map['actors'] = actors
+        result_map['crew'] = crew
 
-        result_map.setdefault('keywords', self._config.extract_keyvalue_attrs(
-            results['keywords']['keywords'])
+        result_map['keywords'] = self._config.extract_keyvalue_attrs(
+            results['keywords']['keywords']
         )
         posters, backdrops = self._extract_images(results['images'])
-        result_map.setdefault('posters', posters)
-        result_map.setdefault('backdrops', backdrops)
+        result_map['posters'] = posters
+        result_map['backdrops'] = backdrops
 
-        result_map.setdefault(
-            'belongs_to_collection',
-            results['movie']['belongs_to_collection'] or []
+        result_map['belongs_to_collection'] = results['belongs_to_collection']
+        result_map['alternative_titles'] = self._extract_alternative_titles(
+            results['alternative_titles']
         )
-        result_map.setdefault('alternative_titles',
-            self._extract_alternative_titles(
-                results['alternative_titles']
-            )
-        )
-        result_map.setdefault(
-            'trailers', self._extract_trailers(results['trailers'])
-        )
+        result_map['trailers'] = self._extract_trailers(results['trailers'])
         for item in ['genres', 'production_companies', 'production_countries']:
-            result_map.setdefault(
-                item,
-                self._config.extract_keyvalue_attrs(results['movie'][item])
+            result_map[item] = self._config.extract_keyvalue_attrs(
+                results[item]
             )
 
         # filling the result dictionary
         result_dict = {}
         for key, value in self._attrs.items():
-            if value.startswith('__'):
-                result_dict.setdefault(key, result_map[value[2:]])
-            else:
-                result_dict.setdefault(key, results['movie'][value] or [])
+            if value is not None:
+                if value.startswith('__'):
+                    result_dict[key] = result_map[value[2:]] or []
+                else:
+                    result_dict[key] = results[value] or []
         return result_dict
 
     def _extract_images(self, response):
@@ -155,11 +137,9 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
         backdrops = []
 
         for item in response['posters']:
-            posters.append(
-                self._config.get_image_url(
-                    item['file_path'],
-                    'poster'
-                )
+            posters += self._config.get_image_url(
+                item['file_path'],
+                'poster'
             )
         for item in response['backdrops']:
             backdrops.append(
@@ -228,7 +208,7 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
 
     @property
     def supported_attrs(self):
-        return self._attrs.keys()
+        return [k for k, v in self._attrs.items() if v is not None]
 
     def activate(self):
         provider.IMovieProvider.activate(self)
