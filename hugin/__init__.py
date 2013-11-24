@@ -174,12 +174,10 @@ class Session:
         }
 
     def _process_new_query(self, query):
-        provider_types = self._provider_types.keys()
         providers = []
         for key, value in self._provider_types.items():
             if query['type'] in key:
                 providers += self._provider_types[key]
-        #providers = self._provider_types[query['type']]
         job_list = []
 
         for provider in providers:
@@ -264,29 +262,28 @@ if __name__ == '__main__':
     def read_list_async():
         hs = Session(parallel_jobs=5, timeout_sec=5)
         signal.signal(signal.SIGINT, hs.signal_handler)
-        f = open('./hugin/core/testdata/imdbid_huge.txt').read().splitlines()
-        futures = ['tt0401792']
+        f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
+        futures = []
+        f = [2]
         for imdbid in f:
             q = hs.create_query(
                 type='movie',
                 search_text=True,
                 use_cache=False,
-                title='Sin City'
+                name='Sin City'
             )
             futures.append(hs.submit_async(q))
 
         while len(futures) > 0:
             for item in futures:
-                    if item.done():
-                        try:
-                            t = item.result()
-                            for x in t:
-                                if x['retries_left'] > 0:
-                                    #pass
-                                    print('movie:', x['provider'], x['result'][0]['title'])
-                        except:
-                            pass
-                        futures.remove(item)
+                if item.done():
+                    try:
+                        t = item.result()
+                        print(100 * '-')
+                        print(t)
+                    except:
+                        pass
+                    futures.remove(item)
         hs._cache.close()
 
     def read_list_sync():
@@ -296,19 +293,19 @@ if __name__ == '__main__':
         f = ['tt1254207']
         for imdbid in f:
             q = hs.create_query(
-                type='movie',
+                type='person',
                 search_text=True,
                 use_cache=False,
                 search_pictures=True,
                 retries=5,
-                items=1,
-                title='Watchmen'
+                items=6,
+                imdbid=None,
+                name='Quentin Tarantino'
             )
             result_list = hs.submit(q)
             print(100 * '-')
             for item in result_list:
-                import pprint
-                pprint.pprint(item._result_dict)
+                print(item)
         hs._cache.close()
     try:
         read_list_sync()

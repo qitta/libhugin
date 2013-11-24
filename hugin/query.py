@@ -31,7 +31,7 @@ class Query(UserDict):
         if self.data['use_cache'] is None:
             self.data['use_cache'] = True
         if self.data['language'] is None:
-            self.data['language'] = 'en'
+            self.data['language'] = ''
         if self.data['retries'] is None:
             self.data['retries'] = 5
 

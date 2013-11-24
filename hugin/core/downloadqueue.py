@@ -32,7 +32,7 @@ class DownloadQueue:
         self._headers = {
             'User-Agent': user_agent,
             'Connection': 'close',
-            'cache-control':'no-cache',
+            'cache-control': 'no-cache'
         }
         self._timeout_sec = timeout_sec
         self._local_cache = None
@@ -135,7 +135,6 @@ class DownloadQueue:
         :param job: A job object.
 
         """
-
         if job is None and self._shutdown_downloadqueue is False:
             self._shutdown_downloadqueue = True
             self._shutdown()
