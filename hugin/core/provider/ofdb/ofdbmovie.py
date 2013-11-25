@@ -5,15 +5,20 @@
 
 from urllib.parse import quote
 import json
+import os
 
 import hugin.core.provider as provider
 from hugin.common.utils.stringcompare import string_similarity_ratio
+from hugin.core.provider.genrenorm import GenreNormalize
 
 
 class OFDBMovie(provider.IMovieProvider):
     def __init__(self):
         self._priority = 90
         self._base_url = 'http://ofdbgw.home-of-root.de/{path}/{query}'
+        self._genrenorm = GenreNormalize(
+            os.path.abspath('hugin/core/provider/ofdb.genre')
+        )
         self._attrs = {
             'title': 'titel',
             'original_title': 'alternativ',
@@ -34,6 +39,7 @@ class OFDBMovie(provider.IMovieProvider):
             'fanart': None,
             'countries': 'produktionsland',
             'genre': 'genre',
+            'genre_norm': '__genre_norm',
             'collection': None,
             'studios': None,
             'trailers': None,
@@ -163,6 +169,9 @@ class OFDBMovie(provider.IMovieProvider):
         result_map['drehbuch'] = self._extract_writer(result['drehbuch'])
         result_map['note'] = result['bewertung']['note']
         result_map['stimmen'] = result['bewertung']['stimmen']
+        result_map['genre_norm'] = self._genrenorm.normalize_genre_list(
+            result['genre']
+        )
 
         result_dict = {}
         for key, value in self._attrs.items():

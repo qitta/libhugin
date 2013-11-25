@@ -2,13 +2,17 @@
 # encoding: utf-8
 
 
+import os
+
+GLOBAL_GENRE = 'hugin/core/provider/normalized_genre.dat'
+
 class GenreNormalize:
 
-    def __init__(self, global_file='normalized_genre.dat', provider_file=None):
+    def __init__(self, provider_file=None):
         self._global_genre_map = []
         self._provider_genre_map = {}
         self._provider_genre_file = provider_file
-        self._global_genre_file = global_file
+        self._global_genre_file = os.path.abspath(GLOBAL_GENRE)
         self._init_mapping()
 
     def _init_mapping(self):
@@ -19,7 +23,17 @@ class GenreNormalize:
             self.read_genre(self._provider_genre_file)
         )
 
+
+    def print_mapping(self):
+        for idx_genre in self._provider_genre_map:
+            idx, genres = idx_genre
+            for genre in genres:
+                genre = genre.strip()
+                print(genre, '-->', self.normalize_genre(genre, 'de'))
+
+
     def read_genre(self, genre_file):
+        print('reading:', genre_file)
         with open(genre_file, 'r') as f:
             return f.read()
 
@@ -52,7 +66,7 @@ class GenreNormalize:
         for idx, *provider_genre_list in self._provider_genre_map:
             provider_genre_list = provider_genre_list.pop()
             for provider_genre in provider_genre_list:
-                if genre.upper() == provider_genre.upper():
+                if genre.strip().upper() == provider_genre.upper():
                     idx, de, en = self._global_genre_map[int(idx)]
                     if lang == 'de':
                         return de.strip()
@@ -70,7 +84,7 @@ class GenreNormalize:
 if __name__ == '__main__':
     import glob
     for provider_genre in glob.glob('*.genre'):
-        print(provider_genre, 20 * '==')
+        print('\n', provider_genre, 20 * '==')
         gn = GenreNormalize(provider_file=provider_genre)
         f = open(provider_genre, 'r').read().splitlines()
         for item in f:

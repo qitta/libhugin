@@ -12,9 +12,11 @@
 '''
 
 from urllib.parse import quote_plus
+import os
 
 from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
 from hugin.common.utils.stringcompare import string_similarity_ratio
+from hugin.core.provider.genrenorm import GenreNormalize
 from collections import defaultdict
 import hugin.core.provider as provider
 
@@ -24,6 +26,9 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
         self._config = TMDBConfig.get_instance()
         self._priority = 100
         self._path = 'search/movie'
+        self._genrenorm = GenreNormalize(
+            os.path.abspath('hugin/core/provider/tmdb.genre')
+        )
         self._attrs = {
             'title': 'title',
             'original_title': 'original_title',
@@ -42,6 +47,7 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
             'fanart': '__backdrops',
             'countries': '__production_countries',
             'genre': '__genres',
+            'genre_norm': '__genre_norm',
             'collection': '__belongs_to_collection',
             'studios': '__production_companies',
             'trailers': '__trailers',
@@ -56,7 +62,7 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
             return self._config.build_movie_url(
                 [search_params['imdbid']],
                 search_params
-            )
+            ).pop()
 
         if search_params['title']:
             title = quote_plus(search_params['title'])
@@ -121,6 +127,9 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
             result_map[item] = self._config.extract_keyvalue_attrs(
                 results[item]
             )
+        result_map['genre_norm'] = self._genrenorm.normalize_genre_list(
+            result_map['genres']
+        )
 
         # filling the result dictionary
         result_dict = {}

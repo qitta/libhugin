@@ -3,17 +3,22 @@
 
 
 from hugin.common.utils.stringcompare import string_similarity_ratio
+from hugin.core.provider.genrenorm import GenreNormalize
 from urllib.parse import urlencode
 from urllib.parse import quote_plus
 from parse import parse
 import hugin.core.provider as provider
 import json
+import os
 
 
 class OMDBMovie(provider.IMovieProvider):
 
     def __init__(self):
         self._base_url = 'http://www.omdbapi.com/?{query}&plot=full'
+        self._genrenorm = GenreNormalize(
+            os.path.abspath('hugin/core/provider/omdb.genre')
+        )
         self._priority = 80
         self._attrs = {
             'title': 'Title',
@@ -33,6 +38,7 @@ class OMDBMovie(provider.IMovieProvider):
             'fanart': None,
             'countries': None,
             'genre': '__Genre',
+            'genre_norm': '__genre_norm',
             'collection': None,
             'studios': None,
             'trailers': None,
@@ -112,6 +118,9 @@ class OMDBMovie(provider.IMovieProvider):
         result_map['Plot'] = data['Plot'].split(',')
         result_map['imdbVotes'] = data['imdbVotes'].replace(',', '')
         result_map['Runtime'] = self._format_runtime(data['Runtime'])
+        result_map['genre_norm'] = self._genrenorm.normalize_genre_list(
+            result_map['Genre']
+        )
 
         result_dict = {}
         for key, value in self._attrs.items():

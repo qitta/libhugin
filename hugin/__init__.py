@@ -290,22 +290,24 @@ if __name__ == '__main__':
         hs = Session(parallel_jobs=5, timeout_sec=5)
         signal.signal(signal.SIGINT, hs.signal_handler)
         f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
-        f = ['tt1254207']
+        #f = ['tt1254207', 'tt2524674', 'tt0401792']
         for imdbid in f:
             q = hs.create_query(
-                type='person',
+                type='movie',
                 search_text=True,
                 use_cache=False,
                 search_pictures=True,
                 retries=5,
                 items=6,
-                imdbid=None,
-                name='Quentin Tarantino'
+                imdbid='{0}'.format(imdbid)
             )
             result_list = hs.submit(q)
             print(100 * '-')
             for item in result_list:
                 print(item)
+                if item._result_dict:
+                    print('genre', item._result_dict['genre'])
+                    print('genre normalized', item._result_dict['genre_norm'])
         hs._cache.close()
     try:
         read_list_sync()
