@@ -125,7 +125,9 @@ class Session:
                     if result is None:
                         job = self._check_for_retry(job)
                         if job['is_done']:
-                            finished_jobs.append(self._job_to_result(job, query))
+                            finished_jobs.append(
+                                self._job_to_result(job, query)
+                            )
                         else:
                             download_queue.push(job)
                     else:
@@ -302,29 +304,31 @@ if __name__ == '__main__':
     def read_list_sync():
         hs = Session(parallel_jobs=5, timeout_sec=5)
         signal.signal(signal.SIGINT, hs.signal_handler)
-        f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
-        f = ['tt0401792']
+        f = open('./hugin/core/testdata/imdbid_huge.txt').read().splitlines()
+        f = ['tt2524674']
         for imdbid in f:
             q = hs.create_query(
                 type='movie',
                 search_text=True,
                 use_cache=False,
                 search_pictures=True,
-                language='en',
+                language='de',
                 retries=5,
-                items=6,
-                imdbid='{0}'.format(imdbid)
+                title='Feuchtgebiete',
+                items=3
             )
             result_list = hs.submit(q)
             print(100 * '-')
-            pp = hs.get_postprocessing()[0]
+            pp, *other = hs.get_postprocessing()
             custom = pp.create_custom(result_list)
             result_list += custom
             for item in result_list:
                 if item.is_valid():
                     print(item)
-                    print(item._result_dict['title'], item._result_dict['genre'], item._result_dict['genre_norm'])
+                    print('title:', item._result_dict['title'], item._result_dict['genre_norm'], item._result_dict['imdbid'])
+                    print(item._result_dict['plot'])
                     print()
+                    print(100 * '-')
         hs._cache.close()
     try:
         read_list_sync()

@@ -46,7 +46,6 @@ class OFDBMovie(provider.IMovieProvider):
             'actors': '__besetzung',
             'keywords': None
         }
-        #self._attrs = ['title', 'year', 'imdbid', 'genre', 'plot']
 
     def build_url(self, search_params):
         # not enough search params

@@ -33,7 +33,6 @@ class GenreNormalize:
 
 
     def read_genre(self, genre_file):
-        print('reading:', genre_file)
         with open(genre_file, 'r') as f:
             return f.read()
 
@@ -62,13 +61,12 @@ class GenreNormalize:
             genre_map.append(item)
         return genre_map
 
-    def normalize_genre(self, genre, lang='de'):
-        for idx, *provider_genre_list in self._provider_genre_map:
-            provider_genre_list = provider_genre_list.pop()
+    def normalize_genre(self, genre, output_lang='de'):
+        for idx, provider_genre_list in self._provider_genre_map:
             for provider_genre in provider_genre_list:
                 if genre.strip().upper() == provider_genre.upper():
                     idx, de, en = self._global_genre_map[int(idx)]
-                    if lang == 'de':
+                    if output_lang == 'de':
                         return de.strip()
                     else:
                         return en.strip()
@@ -83,12 +81,15 @@ class GenreNormalize:
 
 if __name__ == '__main__':
     import glob
-    for provider_genre in glob.glob('*.genre'):
-        print('\n', provider_genre, 20 * '==')
+    print('genre normalization.')
+    for provider_genre in glob.glob('hugin/core/provider/*.genre'):
+        print('===> ', provider_genre)
         gn = GenreNormalize(provider_file=provider_genre)
         f = open(provider_genre, 'r').read().splitlines()
         for item in f:
             idx, *genre = item.split(',')
             genres = [g.strip() for g in genre]
             for genre in genres:
-                print(genre, '-->', gn.normalize_genre(genre, 'de'))
+                print('Provider:', genre, 'DE --> Global:', gn.normalize_genre(genre, 'de'))
+                print('Provider:', genre, 'EN --> Global:', gn.normalize_genre(genre, 'en'))
+        print()
