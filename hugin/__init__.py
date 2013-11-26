@@ -102,7 +102,7 @@ class Session:
             jobs = self._process_new_query(query)
             for job in jobs:
                 if job['is_done']:
-                    finished_jobs.append(self._make_result(job, query))
+                    finished_jobs.append(self._job_to_result(job, query))
                 else:
                     download_queue.push(job)
 
@@ -120,12 +120,12 @@ class Session:
                 if state is True or result == []:
                     if result is not None:
                         self._add_to_cache(job)
-                    finished_jobs.append(self._make_result(job, query))
+                    finished_jobs.append(self._job_to_result(job, query))
                 else:
                     if result is None:
                         job = self._check_for_retry(job)
                         if job['is_done']:
-                            finished_jobs.append(self._make_result(job, query))
+                            finished_jobs.append(self._job_to_result(job, query))
                         else:
                             download_queue.push(job)
                     else:
@@ -146,11 +146,14 @@ class Session:
         jobs.sort(key=lambda x: x.provider._priority, reverse=True)
         return jobs[0:query['items']]
 
-    def _make_result(self, job, query):
-        result = Result(result=job['result'])
-        result.provider = job['provider']
-        result.retries = query['retries'] - job['retries_left']
-        result.searchparams = query
+    def _job_to_result(self, job, query):
+        retries = query['retries'] - job['retries_left']
+        result = Result(
+            provider=job['provider'],
+            query=query,
+            result=job['result'],
+            retries=retries
+        )
         return result
 
     def _check_for_retry(self, job):
@@ -169,8 +172,7 @@ class Session:
             'is_done': False,
             'result': None,
             'return_code': None,
-            'retries_left': query.get('retries'),
-            'cache_used': False
+            'retries_left': query.get('retries')
         }
 
     def _process_new_query(self, query):
@@ -226,6 +228,17 @@ class Session:
         self._provider_types[provider.identify_type()].append(
             {'name': provider, 'supported_attrs': provider.supported_attrs}
         )
+
+    def get_providers(self):
+        return self._provider_types
+
+    def get_provider(self, name):
+        extract_provider += [y for z, y in self._provider_types.items()]
+        for item in extract_provider:
+            print(item['name'])
+
+    def get_postprocessing(self):
+        return self._postprocessing
 
     def converter_list(self):
         pass
@@ -290,24 +303,28 @@ if __name__ == '__main__':
         hs = Session(parallel_jobs=5, timeout_sec=5)
         signal.signal(signal.SIGINT, hs.signal_handler)
         f = open('./hugin/core/testdata/imdbid_small.txt').read().splitlines()
-        #f = ['tt1254207', 'tt2524674', 'tt0401792']
+        f = ['tt0401792']
         for imdbid in f:
             q = hs.create_query(
                 type='movie',
                 search_text=True,
                 use_cache=False,
                 search_pictures=True,
+                language='en',
                 retries=5,
                 items=6,
                 imdbid='{0}'.format(imdbid)
             )
             result_list = hs.submit(q)
             print(100 * '-')
+            pp = hs.get_postprocessing()[0]
+            custom = pp.create_custom(result_list)
+            result_list += custom
             for item in result_list:
-                print(item)
-                if item._result_dict:
-                    print('genre', item._result_dict['genre'])
-                    print('genre normalized', item._result_dict['genre_norm'])
+                if item.is_valid():
+                    print(item)
+                    print(item._result_dict['title'], item._result_dict['genre'], item._result_dict['genre_norm'])
+                    print()
         hs._cache.close()
     try:
         read_list_sync()

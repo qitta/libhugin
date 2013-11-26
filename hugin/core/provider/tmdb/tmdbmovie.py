@@ -132,7 +132,7 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
         )
 
         # filling the result dictionary
-        result_dict = {}
+        result_dict = {key: None for key in self._attrs}
         for key, value in self._attrs.items():
             if value is not None:
                 if value.startswith('__'):

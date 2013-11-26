@@ -28,14 +28,14 @@ def search():
         metatype = 'movie'
 
     query = session.create_query(
-                type=metatype,
-                search_text=True,
-                use_cache=arguments['--use-cache'],
-                name=arguments['<name>'],
-                title=arguments['<title>'],
-                imdbid=arguments['<imdbid>'],
-                language='de'
-            )
+        type=metatype,
+        search_text=True,
+        use_cache=arguments['--use-cache'],
+        name=arguments['<name>'],
+        title=arguments['<title>'],
+        imdbid=arguments['<imdbid>'],
+        language='de'
+    )
     result = session.submit_async(query)
     while result.done() is False:
         pass

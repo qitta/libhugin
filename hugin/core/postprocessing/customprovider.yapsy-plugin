@@ -1,9 +1,9 @@
 [Core]
-Name = CUSTOMPROVIDER
+Name = PROFILER
 Module = customprovider
 
 [Documentation]
-Description = Postprocessing plugin to generate a custom result
+Description = Postprocessing plugin to generate a custom defined by a user profile result
 Author = Christoph Piechula
 Version = 1.0
 Website = n/a

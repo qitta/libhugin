@@ -122,15 +122,23 @@ class OMDBMovie(provider.IMovieProvider):
             result_map['Genre']
         )
 
-        result_dict = {}
+        result_dict = {key: None for key in self._attrs}
         for key, value in self._attrs.items():
             if value is not None:
                 if value.startswith('__'):
-                    result_dict[key] = result_map[value[2:]] or []
+                    result_dict[key] = self._filter_na(result_map[value[2:]])
                 else:
-                    result_dict[key] = data[value] or []
+                    result_dict[key] = self._filter_na(data[value])
 
         return (result_dict, True)
+
+    def _filter_na(self, result):
+        if result == 'N/A':
+            return ''
+        elif result == ['N/A']:
+            return []
+        else:
+            return result
 
     def _format_runtime(self, runtime):
         result = []
