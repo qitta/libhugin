@@ -26,7 +26,7 @@ class CustomProvider(provider.IPostprocessing):
         :returns: A list with custom results.
         """
         custom_results = []
-        valid_results = self._remove_invalid_results(results)
+        valid_results = [result for result in results if result.result_dict]
         grouped_results = self._group_by_imdbid(valid_results)
         for results in grouped_results.values():
             if len(results) > 1:
@@ -37,7 +37,6 @@ class CustomProvider(provider.IPostprocessing):
                 normalized_multi_genre = self._create_multi_provider_genre(
                     results, 'genre_norm'
                 )
-                print(normalized_multi_genre)
                 new_result._result_dict['genre_norm'] = normalized_multi_genre
                 custom_results.append(new_result)
         return custom_results
@@ -103,7 +102,7 @@ class CustomProvider(provider.IPostprocessing):
         for left_result in left_results:
             for key, value in new_result._result_dict.items():
                 if key in self._mergable_attrs:
-                    if value is None or value in [[], '']:
+                    if not value:
                         new_result._result_dict[key] = value or left_result._result_dict[key]
 
     def _merge_results_by_profile(self, results, profile):
@@ -127,7 +126,7 @@ class CustomProvider(provider.IPostprocessing):
                     provider_result = self._get_result_by_providername(
                         results, provider_name
                     )
-                    if provider_result and key not in [[], '']:
+                    if provider_result:
                         custom_result._result_dict[key] = provider_result._result_dict[key]
                         break
         return custom_result
@@ -157,17 +156,6 @@ class CustomProvider(provider.IPostprocessing):
             if imdbid is not None:
                 grouped_results[imdbid].append(result)
         return grouped_results
-
-    def _remove_invalid_results(self, results):
-        """
-        Removes results with invalid/missing result_dict.
-
-        :param results: A list with results.
-        """
-        valid_result = lambda x: x is not None and x != []
-        valid_imdbid =  lambda x: isinstance(x._result_dict['imdbid'], str)
-        valid_result_filter = lambda x: valid_result(x) and valid_imdbid(x)
-        return filter(valid_result_filter, results)
 
     def __repr__(self):
         return 'custom result postprocessing filter.'
