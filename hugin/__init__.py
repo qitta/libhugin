@@ -11,6 +11,10 @@ from hugin.query import Query
 from hugin.core.provider.result import Result
 from hugin.core.cache import Cache
 from threading import Lock
+from collections import defaultdict
+from functools import reduce
+from operator import add
+from itertools import zip_longest
 import sys
 import queue
 import signal
@@ -93,7 +97,7 @@ class Session:
             self._cache.write(url, data)
 
     def submit(self, query):
-        finished_jobs = []
+        finished_results = []
         download_queue = None
 
         if self._shutdown_session is False:
@@ -102,7 +106,7 @@ class Session:
             jobs = self._process_new_query(query)
             for job in jobs:
                 if job['is_done']:
-                    finished_jobs.append(self._job_to_result(job, query))
+                    finished_results.append(self._job_to_result(job, query))
                 else:
                     download_queue.push(job)
 
@@ -120,12 +124,12 @@ class Session:
                 if state is True or result == []:
                     if result is not None:
                         self._add_to_cache(job)
-                    finished_jobs.append(self._job_to_result(job, query))
+                    finished_results.append(self._job_to_result(job, query))
                 else:
                     if result is None:
                         job = self._check_for_retry(job)
                         if job['is_done']:
-                            finished_jobs.append(
+                            finished_results.append(
                                 self._job_to_result(job, query)
                             )
                         else:
@@ -137,16 +141,26 @@ class Session:
                             download_queue.push(job)
             download_queue.push(None)
             if query['imdbid'] is None:
-                finished_jobs = self._filter_finished(finished_jobs, query)
+                finished_results = self._filter_finished(finished_results, query)
 
         else:
             self.clean_up()
             self._downloadqueues.remove(download_queue)
-        return finished_jobs
+        return finished_results
 
-    def _filter_finished(self, jobs, query):
-        jobs.sort(key=lambda x: x.provider._priority, reverse=True)
-        return jobs[0:query['items']]
+    def _filter_finished(self, results, query):
+        if query['strategy'] == 'deep':
+            results.sort(key=lambda x: x.provider._priority, reverse=True)
+            return results[0:query['items']]
+        else:
+            return self._get_flat_results(results, query)
+
+    def _get_flat_results(self, results, query):
+        result_map = defaultdict(list)
+        for result in results:
+            result_map[result.provider].append(result)
+        results = list(filter(None, reduce(add, zip_longest(*result_map.values()))))
+        return results[0:query['items']]
 
     def _job_to_result(self, job, query):
         retries = query['retries'] - job['retries_left']
@@ -314,18 +328,21 @@ if __name__ == '__main__':
                 search_pictures=True,
                 language='de',
                 retries=5,
-                title='Feuchtgebiete',
-                items=3
+                title='sin',
+                strategy='flat',  # or flat
+                items=20
             )
             result_list = hs.submit(q)
             print(100 * '-')
             pp, *other = hs.get_postprocessing()
-            custom = pp.create_custom(result_list)
+            custom = pp.create_custom_result(result_list, profile={'default':['TMDB'], 'plot':['OFDB']})
             result_list += custom
             for item in result_list:
-                if item.is_valid():
+                if item.result_dict:
                     print(item)
+                    print()
                     print('title:', item._result_dict['title'], item._result_dict['genre_norm'], item._result_dict['imdbid'])
+                    print()
                     print(item._result_dict['plot'])
                     print()
                     print(100 * '-')

@@ -11,7 +11,8 @@ class Query(UserDict):
     def __init__(self, data):
         self._query_attrs = [
             'title', 'year', 'name', 'imdbid', 'type', 'search_text',
-            'language', 'search_pictures', 'items', 'use_cache', 'retries'
+            'language', 'search_pictures', 'items', 'use_cache', 'retries',
+            'strategy'
         ]
         self.data = {k: None for k in self._query_attrs}
         self._set_query_values(data)
@@ -34,6 +35,8 @@ class Query(UserDict):
             self.data['language'] = ''
         if self.data['retries'] is None:
             self.data['retries'] = 5
+        if self.data['strategy'] is None:
+            self.data['strategy'] = 'deep'
 
 
 if __name__ == '__main__':

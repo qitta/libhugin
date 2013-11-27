@@ -136,9 +136,9 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
         for key, value in self._attrs.items():
             if value is not None:
                 if value.startswith('__'):
-                    result_dict[key] = result_map[value[2:]] or []
+                    result_dict[key] = result_map[value[2:]]
                 else:
-                    result_dict[key] = results[value] or []
+                    result_dict[key] = results[value]
         return result_dict
 
     def _extract_images(self, response):

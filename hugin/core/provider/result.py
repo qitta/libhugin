@@ -20,8 +20,9 @@ class Result:
 
     provider = property(fget=set_provider, fset=get_provider)
 
-    def is_valid(self):
-        return self._result_dict is not None and self._result_dict != []
+    @property
+    def result_dict(self):
+        return self._result_dict
 
     def __repr__(self):
         result = self._result_dict is not None and self._result_dict != []
