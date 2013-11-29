@@ -10,6 +10,7 @@ from hugin.core.provider.ofdb.ofdbperson import OFDBPerson
 PROVIDER = {
 
     TMDBPerson(): {
+        'name': 'tmdb',
         'search': 'tmdb_person_search.json',
         'person': 'tmdb_person_response.json',
         'nothing_found': 'tmdb_nothing_found.json',
@@ -18,6 +19,7 @@ PROVIDER = {
     },
 
     OFDBPerson(): {
+        'name': 'ofdofdbb',
         'search': 'ofdb_person_search.json',
         'person': 'ofdb_person_response.json',
         'nothing_found': 'ofdb_nothing_found.json',
@@ -39,6 +41,21 @@ if __name__ == '__main__':
                 'type': 'person',
                 'search_pictures': True,
                 'language': 'en',
+            }
+
+            self._key_types = {
+                'name': str,
+                'alternative_names': list,
+                'photo': list,
+                'birthday': str,
+                'placeofbirth': str,
+                'imdbid': str,
+                'providerid': str,
+                'homepage': list,
+                'deathday': str,
+                'popularity': str,
+                'biography': str,
+                'known_for': list
             }
 
         def read_file(self, file_name):
@@ -91,6 +108,20 @@ if __name__ == '__main__':
                 )
                 self.assertTrue(isinstance(result, dict))
                 self.assertTrue(finished)
+
+        def test_parse_person_result_dict(self):
+            for provider in self._providers:
+                response = self.read_file(PROVIDER[provider]['person'])
+                response = [('fakeurl/person/', response)]
+                result_dict, finished = provider.parse_response(
+                    response,
+                    self._params
+                )
+                self.assertTrue(isinstance(result_dict, dict))
+                for key, value in result_dict.items():
+                    if value:
+                        self.assertTrue(isinstance(value, self._key_types[key]))
+
 
         def test_parse_provider_no_results(self):
             for provider in self._providers:

@@ -11,6 +11,7 @@ from hugin.core.provider.omdb.omdbmovie import OMDBMovie
 PROVIDER = {
 
     TMDBMovie(): {
+        'name': 'tmdb',
         'search': 'tmdb_movie_search.json',
         'movie': 'tmdb_movie_response.json',
         'nothing_found': 'tmdb_nothing_found.json',
@@ -19,6 +20,7 @@ PROVIDER = {
     },
 
     OFDBMovie(): {
+        'name': 'ofdb',
         'search': 'ofdb_movie_search.json',
         'movie': 'ofdb_movie_response.json',
         'nothing_found': 'ofdb_nothing_found.json',
@@ -27,6 +29,7 @@ PROVIDER = {
     },
 
     OMDBMovie(): {
+        'name': 'omdb',
         'search': 'omdb_movie_search.json',
         'movie': 'omdb_movie_response.json',
         'nothing_found': 'omdb_nothing_found.json',
@@ -50,7 +53,35 @@ if __name__ == '__main__':
                 'items': 2,
                 'type': 'movie',
                 'search_pictures': True,
-                'language':'en'
+                'language': 'en'
+            }
+
+            self._key_types = {
+                'title': str,
+                'original_title': str,
+                'plot': str,
+                'runtime': int,
+                'imdbid': str,
+                'vote_count': int,
+                'rating': str,
+                'providerid': str,
+                'alternative_titles': list,
+                'directors': list,
+                'writers': list,
+                'crew': list,
+                'year': int,
+                'poster': list,
+                'fanart': list,
+                'countries': list,
+                'genre': list,
+                'genre_norm': list,
+                'collection': list,
+                'studios': list,
+                'trailers': list,
+                'actors': list,
+                'keywords': list,
+                'tagline': str,
+                'outline': str
             }
 
         def read_file(self, file_name):
@@ -142,6 +173,20 @@ if __name__ == '__main__':
                 )
                 self.assertTrue(isinstance(result, dict))
                 self.assertTrue(finished)
+
+        def test_parse_movie_result_dict(self):
+            for provider in self._providers:
+                response = self.read_file(PROVIDER[provider]['movie'])
+                response = [('fakeurl/movie/', response)]
+                result_dict, finished = provider.parse_response(
+                    response,
+                    self._params
+                )
+                self.assertTrue(isinstance(result_dict, dict))
+                for key, value in result_dict.items():
+                    if value:
+                        self.assertTrue(isinstance(value, self._key_types[key]))
+
 
         def test_parse_provider_no_results(self):
             for provider in self._providers:
