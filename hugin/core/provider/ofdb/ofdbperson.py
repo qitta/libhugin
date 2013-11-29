@@ -14,20 +14,10 @@ class OFDBPerson(provider.IPersonProvider):
     def __init__(self):
         self._priority = 90
         self._base_url = 'http://ofdbgw.home-of-root.de/{path}/{query}'
-        self._attrs = {
-            'name': 'name',
-            'alternative_name': 'alternativ',
-            'photo': 'bild',
-            'birthday': None,
-            'placeofbirth': '',
-            'imdbid': 'imdbid',
-            'providerid': None,
-            'homepage': None,
-            'deathday': 'gestorben',
-            'popularity': None,
-            'biography': None,
-            'known_for': '__known_for'
-        }
+        self._attrs = [
+            'name', 'alternative_names', 'photo', 'placeofbirth', 'imdbid',
+            'deathday', 'known_for'
+        ]
 
     def build_url(self, search_params):
         if search_params['name'] is None:
@@ -128,11 +118,19 @@ class OFDBPerson(provider.IPersonProvider):
         return (self._build_person_url(matches), False)
 
     def _parse_person_module(self, result, _):
-        result_dict = {}
-        for key, value in self._attrs.items():
-            if value and not value.startswith('__'):
-                result_dict[key] = result[value]
-        return (result_dict, True)
+        result_dict = {k: None for k in self._attrs}
+
+        #str attrs
+        result_dict['name'] = result['name']
+        result_dict['imdbid'] = result['imdbid']
+        result_dict['deathday'] = result['gestorben']
+
+        #list attrs
+        result_dict['alternative_names'] = list(result['alternativ'])
+        if result['bild']:
+            result_dict['photo'] = list((None, result['bild']))
+
+        return result_dict, True
 
     def _build_person_url(self, ofdbid_list):
         url_list = []

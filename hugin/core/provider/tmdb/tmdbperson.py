@@ -13,20 +13,11 @@ class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
     def __init__(self):
         self._config = TMDBConfig.get_instance()
         self._priority = 100
-        self._attrs = {
-            'name': 'name',
-            'alternative_name': None,
-            'photo': '__images',
-            'birthday': 'birthday',
-            'placeofbirth': 'place_of_birth',
-            'imdbid': 'imdb_id',
-            'providerid': 'id',
-            'homepage': 'homepage',
-            'deathday': 'deathday',
-            'popularity': 'popularity',
-            'biography': 'biography',
-            'known_for': '__cast'
-        }
+        self._attrs = [
+            'name', 'photo', 'birthday', 'placeofbirth', 'imdbid',
+            'providerid', 'homepage', 'deathday', 'popularity', 'biography',
+            'known_for'
+        ]
         self._path = 'search/person'
 
     def build_url(self, search_params):
@@ -61,39 +52,43 @@ class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
             return (self._concat_result(response), True)
 
     def _concat_result(self, results):
-        result_map = {}
-        if 'images' not in results:
-            result_map['images'] = []
-        else:
-            result_map['images'] = self._parse_images(results['images'])
-        result_map['photo'] = result_map['images']
-        result_map['known_for'] = result_map['cast'] = self._extract_movie_credits(
+        result_dict = {k: None for k in self._attrs}
+        direct_mapping_str = [
+            'name', 'birthday', 'deathday', 'biography'
+        ]
+
+        #str attrs
+        result_dict['popularity'] = str(results['popularity'])
+        result_dict['providerid'] = str(results['id'])
+        result_dict['placeofbirth'] = str(results['place_of_birth'])
+        result_dict['imdbid'] = results['imdb_id']
+        for key in self._attrs:
+            if key in direct_mapping_str:
+                result_dict[key] = results[key]
+
+        #list attrs
+        result_dict['homepage'] = list(results['homepage'])
+        result_dict['photo'] = self._parse_images(results.get('images'))
+        result_dict['known_for'] = self._extract_movie_credits(
             results['movie_credits']
         )
-
-        result_dict = {key: None for key in self._attrs}
-        for key, value in self._attrs.items():
-            if value is not None:
-                if value.startswith('__'):
-                    result_dict[key] = result_map[value[2:]] or []
-                else:
-                    result_dict[key] = results[value] or []
         return result_dict
 
     def _extract_movie_credits(self, response):
-        result = defaultdict(set)
+        result = defaultdict(list)
         for person in response['cast']:
             actor = (person['character'], person['original_title'])
-            result['cast'].add(actor)
+            result['cast'].append(actor)
         return result['cast']
 
     def _parse_images(self, response):
         images = []
-        for item in response['profiles']:
-            images += self._config.get_image_url(
-                item['file_path'], 'profile'
-            )
-        return images
+        if response:
+            for item in response['profiles']:
+                images += self._config.get_image_url(
+                    item['file_path'], 'profile'
+                )
+            return images
 
     def _parse_search_module(self, result, search_params):
         similarity_map = []
@@ -108,32 +103,14 @@ class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
                     )
                 )
             similarity_map.append({'tmdbid': result['id'], 'ratio': ratio})
-
         similarity_map.sort(
+
             key=lambda value: value['ratio'],
             reverse=True
         )
         item_count = min(len(similarity_map), search_params['items'])
         matches = [item['tmdbid'] for item in similarity_map[:item_count]]
         return (self._config.build_person_url(matches, search_params), False)
-
-    def _parse_person_module(self, data, search_params):
-        result = {
-            'name': data['name'],
-            'photo': self._config.get_image_url(
-                data['profile_path'],
-                'profile'
-            ),
-            'birthday': data['birthday'],
-            'placeofbirth': data['place_of_birth'],
-            'imdbid': data['imdb_id'],
-            'providerid': data['id'],
-            'homepage': data['homepage'],
-            'deathday': data['deathday'],
-            'popularity': data['popularity'],
-            'biography': data['biography']
-        }
-        return ([result], True)
 
     @property
     def supported_attrs(self):

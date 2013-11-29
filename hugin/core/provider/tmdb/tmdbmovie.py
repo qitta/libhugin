@@ -36,8 +36,8 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
             'runtime': 'runtime',
             'imdbid': 'imdb_id',
             'vote_count': 'vote_count',
-            'rating': 'vote_average',
-            'providerid': 'id',
+            'rating': '__vote_average',
+            'providerid': '__id',
             'alternative_titles': '__alternative_titles',
             'directors': '__directors',
             'writers': '__writers',
@@ -54,7 +54,7 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
             'actors': '__actors',
             'keywords': '__keywords',
             'tagline': 'tagline',
-            'outline': None
+            #'outline': None
         }
 
     def build_url(self, search_params):
@@ -101,7 +101,10 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
             results['images'] = {'posters': [], 'backdrops': []}
 
         result_map = {}
-        result_map['year'] = results['release_date'][0:4]
+        try:
+            result_map['year'] = int(results['release_date'][0:4])
+        except ValueError:
+            result_map['year'] = 0
 
         directors, writers, actors, crew = self._extract_credits(
             results['credits']
@@ -118,7 +121,7 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
         result_map['posters'] = posters
         result_map['backdrops'] = backdrops
 
-        result_map['belongs_to_collection'] = results['belongs_to_collection']
+        result_map['belongs_to_collection'] = list(results['belongs_to_collection'] or [])
         result_map['alternative_titles'] = self._extract_alternative_titles(
             results['alternative_titles']
         )
@@ -130,6 +133,8 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
         result_map['genre_norm'] = self._genrenorm.normalize_genre_list(
             result_map['genres']
         )
+        result_map['vote_average'] = str(results['vote_average'])
+        result_map['id'] = str(results['id'])
 
         # filling the result dictionary
         result_dict = {key: None for key in self._attrs}
@@ -179,17 +184,17 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
         return titles
 
     def _extract_credits(self, credits):
-        result = defaultdict(set)
+        result = defaultdict(list)
         for person in credits['cast']:
             actor = (person['character'], person['name'])
-            result['cast'].add(actor)
+            result['cast'].append(actor)
         for person in credits['crew']:
-            result[person['department']].add(person['name'])
+            result[person['department']].append(person['name'])
 
         directors = result.pop('Directing', [])
         writers = result.pop('Writing', [])
         casts = result.pop('cast', [])
-        crew = result['crew'] or []
+        crew = result['crew']
         return directors, writers, casts, crew
 
     def _parse_search_module(self, result, search_params):
@@ -217,7 +222,7 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
 
     @property
     def supported_attrs(self):
-        return [k for k, v in self._attrs.items() if v is not None]
+        return [k for k, v in self._attrs.keys() if v is not None]
 
     def activate(self):
         provider.IMovieProvider.activate(self)

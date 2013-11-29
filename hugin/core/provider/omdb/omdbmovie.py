@@ -22,30 +22,30 @@ class OMDBMovie(provider.IMovieProvider):
         self._priority = 80
         self._attrs = {
             'title': 'Title',
-            'original_title': None,
+#            'original_title': None,
             'plot': '__Plot',
             'runtime': '__Runtime',
             'imdbid': 'imdbID',
             'vote_count': '__imdbVotes',
             'rating': 'imdbRating',
-            'providerid': None,
-            'alternative_titles': None,
+#            'providerid': None,
+#            'alternative_titles': None,
             'directors': '__Director',
             'writers': '__Writer',
-            'crew': None,
+#            'crew': None,
             'year': 'Year',
             'poster': '__Poster',
-            'fanart': None,
-            'countries': None,
+#            'fanart': None,
+#            'countries': None,
             'genre': '__Genre',
             'genre_norm': '__genre_norm',
-            'collection': None,
-            'studios': None,
-            'trailers': None,
+#            'collection': None,
+#            'studios': None,
+#            'trailers': None,
             'actors': '__Actors',
-            'keywords': None,
-            'tagline': None,
-            'outline' : None
+#            'keywords': None,
+#            'tagline': None,
+#            'outline' : None
         }
 
     def build_url(self, search_params):
@@ -110,17 +110,18 @@ class OMDBMovie(provider.IMovieProvider):
     def _parse_movie_module(self, data, search_params):
 
         result_map = {}
-        result_map['Poster'] = [(None, data['Poster'])]
+        result_map['Poster'] = list((None, data['Poster']))
         result_map['Actors'] = data['Actors'].split(',')
         result_map['Director'] = data['Director'].split(',')
         result_map['Writer'] = data['Writer'].split(',')
         result_map['Genre'] = data['Genre'].split(',')
-        result_map['Plot'] = data['Plot'].split(',')
-        result_map['imdbVotes'] = data['imdbVotes'].replace(',', '')
+        result_map['Plot'] = ''.join(data['Plot'].split(',')) or ''
+        result_map['imdbVotes'] = int(data['imdbVotes'].replace(',', ''))
         result_map['Runtime'] = self._format_runtime(data['Runtime'])
         result_map['genre_norm'] = self._genrenorm.normalize_genre_list(
             result_map['Genre']
         )
+        data['Year'] = int(data['Year'])
 
         result_dict = {key: None for key in self._attrs}
         for key, value in self._attrs.items():
@@ -149,11 +150,11 @@ class OMDBMovie(provider.IMovieProvider):
             result, = parse('{:d} min', runtime)
         elif 'h' in runtime:
             result, = parse('{:d} h', runtime)
-        return result
+        return int(result)
 
     @property
     def supported_attrs(self):
-        return [k for k, v in self._attrs.items() if v is not None]
+        return [k for k, v in self._attrs.keys() if v is not None]
 
     def activate(self):
         provider.IMovieProvider.activate(self)

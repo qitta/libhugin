@@ -23,28 +23,28 @@ class OFDBMovie(provider.IMovieProvider):
             'title': 'titel',
             'original_title': 'alternativ',
             'plot': 'beschreibung',
-            'runtime': None,
+#            'runtime': None,
             'imdbid': '__imdbid',
             'vote_count': '__stimmen',
             'rating': '__note',
-            'providerid': None,
-            'alternative_titles': None,
+#            'providerid': None,
+#            'alternative_titles': None,
             'directors': '__regie',
             'writers': '__drehbuch',
             'outline': 'kurzbeschreibung',
-            'tagline': None,
-            'crew': None,
-            'year': 'jahr',
+#            'tagline': None,
+#            'crew': None,
+            'year': '__jahr',
             'poster': 'bild',
-            'fanart': None,
-            'countries': 'produktionsland',
+#            'fanart': None,
+            'countries': '__produktionsland',
             'genre': 'genre',
             'genre_norm': '__genre_norm',
-            'collection': None,
-            'studios': None,
-            'trailers': None,
+#            'collection': None,
+#            'studios': None,
+#            'trailers': None,
             'actors': '__besetzung',
-            'keywords': None
+#            'keywords': None
         }
 
     def build_url(self, search_params):
@@ -162,32 +162,33 @@ class OFDBMovie(provider.IMovieProvider):
 
     def _parse_movie_module(self, result, _):
         result_map = {}
-        result_map['imdbid'] = 'tt{0}'.format(result['imdbid'])
+        result_map['imdbid'] = 'tt{0}'.format(result['imdbid']) or ''
         result_map['besetzung'] = self._extract_actor(result['besetzung'])
+        result_map['produktionsland'] = result['produktionsland']
         result_map['regie'] = [r['name'] for r in result['regie']]
         result_map['drehbuch'] = self._extract_writer(result['drehbuch'])
-        result_map['note'] = result['bewertung']['note']
-        result_map['stimmen'] = result['bewertung']['stimmen']
+        result_map['note'] = result['bewertung']['note'] or ''
+        result_map['stimmen'] = int(result['bewertung']['stimmen'])
         result_map['genre_norm'] = self._genrenorm.normalize_genre_list(
             result['genre']
         )
+        result['bild'] = [(None, result['bild'])]
+        result_map['jahr'] = int(result['jahr'])
 
         result_dict = {key: None for key in self._attrs}
         for key, value in self._attrs.items():
             if value is not None:
                 if value.startswith('__'):
-                    result_dict[key] = result_map[value[2:]] or []
+                    result_dict[key] = result_map[value[2:]]
                 else:
-                    result_dict[key] = result[value] or []
+                    result_dict[key] = result[value]
         return (result_dict, True)
 
     def _extract_writer(self, writer):
         person_list = []
         try:
             for person in writer:
-                item = {
-                    'name': person.get('name')
-                }
+                item = person.get('name')
                 person_list.append(item)
         except (AttributeError, TypeError):
             return []
@@ -197,10 +198,7 @@ class OFDBMovie(provider.IMovieProvider):
         actor_list = []
         try:
             for actor in actors:
-                item = {
-                    'name': actor.get('name'),
-                    'role': actor.get('rolle')
-                }
+                item = (actor.get('name'), actor.get('rolle'))
                 actor_list.append(item)
         except AttributeError:
             return []
@@ -215,4 +213,4 @@ class OFDBMovie(provider.IMovieProvider):
 
     @property
     def supported_attrs(self):
-        return [k for k, v in self._attrs.items() if v is not None]
+        return [k for k, v in self._attrs.keys() if v is not None]
