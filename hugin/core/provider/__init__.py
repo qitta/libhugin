@@ -37,9 +37,9 @@ class IProvider(IPlugin):
         lists to fetch, a empty list, a finished result object or None if
         parsing fails.
 
-        The method returns a  tuple containing a flag that indicates if provider
-        is done. If the flag is True, than there is nothing to do left,
-        otherwise the query is not ready yet.
+        The method returns a  tuple containing a flag that indicates if
+        provider is done. If the flag is True, than there is nothing to do
+        left, otherwise the query is not ready yet.
 
         Possible combinations ::
 
@@ -61,14 +61,6 @@ class IProvider(IPlugin):
 
         """
         raise NotImplementedError
-
-    def set_name(self, name):
-        setattr(self, '_name', name)
-
-    def get_name(self):
-        return self._name
-
-    name = property(fget=get_name, fset=set_name)
 
     @property
     def supported_attrs(self):
@@ -118,13 +110,40 @@ class IProvider(IPlugin):
 
     def __repr__(self):
         types = ', '.join(self._type)
-        return '{name} <{type}>'.format(name=self._name, type=types)
+        return '{name} <{type}>'.format(name=self.name, type=types)
 
 
 class IMovieProvider(IProvider):
 
     """ A base class for movie metadata plugins. """
 
+    # movie attrs to be documented
+    #
+    #'title': str,
+    #'original_title': str,
+    #'plot': str,
+    #'runtime': int,
+    #'imdbid': str,
+    #'vote_count': int,
+    #'rating': str,
+    #'providerid': str,
+    #'alternative_titles': list,
+    #'directors': list,
+    #'writers': list,
+    #'crew': list,
+    #'year': int,
+    #'poster': list,
+    #'fanart': list,
+    #'countries': list,
+    #'genre': list,
+    #'genre_norm': list,
+    #'collection': list,
+    #'studios': list,
+    #'trailers': list,
+    #'actors': list,
+    #'keywords': list,
+    #'tagline': str,
+    #'outline': str
     pass
 
 
@@ -132,6 +151,20 @@ class IPersonProvider(IProvider):
 
     """ A base class for person metadata plugins. """
 
+    # person attrs to be documented
+    #
+    #'name': str,
+    #'alternative_names': list,
+    #'photo': list,
+    #'birthday': str,
+    #'placeofbirth': str,
+    #'imdbid': str,
+    #'providerid': str,
+    #'homepage': list,
+    #'deathday': str,
+    #'popularity': str,
+    #'biography': str,
+    #'known_for': list
     pass
 
 
