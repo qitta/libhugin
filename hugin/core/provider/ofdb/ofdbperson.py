@@ -1,29 +1,30 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-""" OFDB Person text provider. """
-
-from urllib.parse import quote
-import json
 
 import hugin.core.provider as provider
 from hugin.common.utils.stringcompare import string_similarity_ratio
+from hugin.core.provider.ofdb.ofdbcommon import OFDBCommon
+
+from urllib.parse import quote
 
 
 class OFDBPerson(provider.IPersonProvider):
     def __init__(self):
         self._priority = 90
-        self._base_url = 'http://ofdbgw.home-of-root.de/{path}/{query}'
+        self._common = OFDBCommon()
         self._attrs = [
             'name', 'alternative_names', 'photo', 'placeofbirth', 'imdbid',
             'deathday', 'known_for'
         ]
 
     def build_url(self, search_params):
-        if search_params['name'] is None:
-            return None
-        path, query = 'searchperson_json', quote(search_params['name'])
-        return [self._base_url.format(path=path, query=query)]
+        if search_params['name']:
+            return [
+                self._common.base_url.format(
+                    path='searchperson_json',
+                    query=quote(search_params['name']))
+            ]
 
     def parse_response(self, url_response, search_params):
         """
@@ -39,75 +40,48 @@ class OFDBPerson(provider.IPersonProvider):
 
         """
 
-        if url_response is None:
-            return (None, False)
+        # validate the response data
+        status, retvalue, url, response = self._common.validate_url_response(
+            url_response
+        )
 
-        try:
-            first_element, *_ = url_response
-            _, response = first_element
-        except ValueError:
-            return (None, False)
+        if status in ['retry', 'critical']:
+            return retvalue
 
-        try:
-            ofdb_response = json.loads(response).get('ofdbgw')
-        except (TypeError, ValueError):
-            ofdb_response = self._try_sanitize(response)
-            if ofdb_response is None:
-                return (None, True)
+        # validate the response status of the provider
+        status, retv = self._common.check_response_status(response)
 
-        status = ofdb_response['status']
+        if status in ['critical', 'unknown', 'no_data']:
+            return retv
 
-        if status['rcode'] in [4, 9]:
-            return ([], True)
+        select_parse_method = {
+            'person': self._parse_person_module,
+            'searchperson': self._parse_search_module
+        }.get(response['status']['modul'])
 
-        # we want retries to start
-        if status['rcode'] in [1, 2, 5]:
-            return (None, False)
+        if select_parse_method:
+            return select_parse_method(
+                response['resultat'],
+                search_params
+            )
 
-        if status['rcode'] in [3]:
-            return (None, True)
-
-        if status['rcode'] == 0:
-            select_parse_method = {
-                'person': self._parse_person_module,
-                'searchperson': self._parse_search_module
-            }.get(status['modul'])
-
-            if select_parse_method is not None:
-                return select_parse_method(
-                    ofdb_response['resultat'],
-                    search_params
-                )
-        else:
-            return (None, False)
-
-    def _try_sanitize(self, response):
-        if response is not None:
-            splited = response.splitlines()
-            response = ''
-            for item in splited:
-                if '{"ofdbgw"' in item:
-                    response = item
-                    break
-            try:
-                return json.loads(response).get('ofdbgw')
-            except (TypeError, ValueError):
-                return None
+        return None, True
 
     def _parse_search_module(self, result, search_params):
-
         similarity_map = []
         for result in result['eintrag']:
             if result['wert'].isnumeric():
+                # a 'hack' for better name matching, as name string often looks
+                # like this 'Emma Roberts (10.02.1991) alias Emma Rose Roberts'
+                clean_name, *_ = result['name'].split('(')
                 ratio = string_similarity_ratio(
-                    result['name'],
+                    clean_name,
                     search_params['name']
                 )
                 similarity_map.append(
                     {'ofdbid': result['wert'],
-                     'ratio': ratio}
+                     'ratio': ratio, 'name': result['name']}
                 )
-
         # sort by ratio, generate ofdbid list with requestet item count
         similarity_map.sort(
             key=lambda value: value['ratio'],
@@ -115,7 +89,7 @@ class OFDBPerson(provider.IPersonProvider):
         )
         item_count = min(len(similarity_map), search_params['items'])
         matches = [item['ofdbid'] for item in similarity_map[:item_count]]
-        return (self._build_person_url(matches), False)
+        return (self._common.personids_to_urllist(matches), False)
 
     def _parse_person_module(self, result, _):
         result_dict = {k: None for k in self._attrs}
@@ -126,19 +100,12 @@ class OFDBPerson(provider.IPersonProvider):
         result_dict['deathday'] = result['gestorben']
 
         #list attrs
-        result_dict['alternative_names'] = list(result['alternativ'])
+        result_dict['alternative_names'] = [result['alternativ']]
         if result['bild']:
             result_dict['photo'] = list((None, result['bild']))
 
         return result_dict, True
 
-    def _build_person_url(self, ofdbid_list):
-        url_list = []
-        for ofdbid in ofdbid_list:
-            url = self._base_url.format(path='person_json', query=ofdbid)
-            url_list.append([url])
-        return url_list
-
     @property
     def supported_attrs(self):
-        return [k for k, v in self._attrs.items() if v is not None]
+        return self._attrs
