@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-
-from hugin.common.utils.stringcompare import string_similarity_ratio
-from hugin.core.provider.genrenorm import GenreNormalize
-from urllib.parse import urlencode
-from urllib.parse import quote_plus
+from urllib.parse import urlencode, quote_plus
 from parse import parse
 import hugin.core.provider as provider
 import json
 import os
+
+from hugin.common.utils.stringcompare import string_similarity_ratio
+from hugin.core.provider.genrenorm import GenreNormalize
 
 
 class OMDBMovie(provider.IMovieProvider):
@@ -21,31 +20,9 @@ class OMDBMovie(provider.IMovieProvider):
         )
         self._priority = 80
         self._attrs = {
-            'title': 'Title',
-#            'original_title': None,
-            'plot': '__Plot',
-            'runtime': '__Runtime',
-            'imdbid': 'imdbID',
-            'vote_count': '__imdbVotes',
-            'rating': 'imdbRating',
-#            'providerid': None,
-#            'alternative_titles': None,
-            'directors': '__Director',
-            'writers': '__Writer',
-#            'crew': None,
-            'year': 'Year',
-            'poster': '__Poster',
-#            'fanart': None,
-#            'countries': None,
-            'genre': '__Genre',
-            'genre_norm': '__genre_norm',
-#            'collection': None,
-#            'studios': None,
-#            'trailers': None,
-            'actors': '__Actors',
-#            'keywords': None,
-#            'tagline': None,
-#            'outline' : None
+            'title', 'plot', 'runtime', 'imdbid', 'vote_count', 'rating',
+            'directors', 'writers', 'year', 'poster', 'genre', 'genre_norm',
+            'actors'
         }
 
     def build_url(self, search_params):
@@ -53,33 +30,33 @@ class OMDBMovie(provider.IMovieProvider):
             params = {
                 'i': search_params['imdbid']
             }
-        elif search_params['title']:
+            return [self._base_url.format(query=urlencode(params))]
+        if search_params['title']:
             params = {
                 's': quote_plus(search_params['title']) or '',
                 'y': search_params['year'] or ''
             }
-        else:
-            return None
-        return [self._base_url.format(query=urlencode(params))]
+            return [self._base_url.format(query=urlencode(params))]
 
     def parse_response(self, url_response, search_params):
         fail_states = ['Incorrect IMDb ID', 'Movie not found!']
-        first_element, *_ = url_response
-        _, response = first_element
-        try:
-            response = json.loads(response)
-        except TypeError:
-            return (None, True)
-        else:
-            if 'Error' in response:
-                if response['Error'] in fail_states:
-                    return ([], True)
-                else:
-                    return (None, True)
-            if 'Search' in response:
-                return self._parse_search_module(response, search_params)
 
-            return self._parse_movie_module(response, search_params)
+        try:
+            url, response = url_response.pop()
+            response = json.loads(response)
+        except (TypeError, IndexError):
+            return None, True
+
+        if 'Error' in response and response['Error'] in fail_states:
+            return [], True
+
+        if 'Search' in response:
+            return self._parse_search_module(response, search_params), False
+
+        if 'Title' in response:
+            return self._parse_movie_module(response, search_params), True
+
+        return None, True
 
     def _parse_search_module(self, result, search_params):
         similarity_map = []
@@ -89,77 +66,66 @@ class OMDBMovie(provider.IMovieProvider):
                     result['Title'],
                     search_params['title']
                 )
-                similarity_map.append({'imdbid': result['imdbID'], 'ratio': ratio})
-
-        similarity_map.sort(
-            key=lambda value: value['ratio'],
-            reverse=True
-        )
+                similarity_map.append(
+                    {'imdbid': result['imdbID'], 'ratio': ratio}
+                )
+        similarity_map.sort(key=lambda value: value['ratio'], reverse=True)
         item_count = min(len(similarity_map), search_params['items'])
-        matches = [item['imdbid'] for item in similarity_map[:item_count]]
-        return (self._build_movie_url(matches), False)
+        movieids = [item['imdbid'] for item in similarity_map[:item_count]]
+        return self._movieids_to_urllist(movieids)
 
-    def _build_movie_url(self, matches):
+    def _movieids_to_urllist(self, movieids):
         url_list = []
-        for item in matches:
-            query = 'i={imdb_id}'.format(imdb_id=item)
-            url = self._base_url.format(query=query)
-            url_list.append([url])
+        for movieid in movieids:
+            query = 'i={imdb_id}'.format(imdb_id=movieid)
+            url_list.append([self._base_url.format(query=query)])
         return url_list
 
-    def _parse_movie_module(self, data, search_params):
+    def _parse_movie_module(self, result, search_params):
+        result_dict = {k: None for k in self._attrs}
 
-        result_map = {}
-        result_map['Poster'] = list((None, data['Poster']))
-        result_map['Actors'] = data['Actors'].split(',')
-        result_map['Director'] = data['Director'].split(',')
-        result_map['Writer'] = data['Writer'].split(',')
-        result_map['Genre'] = data['Genre'].split(',')
-        result_map['Plot'] = ''.join(data['Plot'].split(',')) or ''
-        result_map['imdbVotes'] = int(data['imdbVotes'].replace(',', ''))
-        result_map['Runtime'] = self._format_runtime(data['Runtime'])
-        result_map['genre_norm'] = self._genrenorm.normalize_genre_list(
-            result_map['Genre']
+        #str attrs
+        result_dict['title'] = ''.join(result['Title'].split(','))
+        result_dict['plot'] = ''.join(result['Plot'].split(','))
+        result_dict['imdbid'] = result['imdbID']
+        result_dict['rating'] = result['imdbRating']
+
+        #list attrs
+        result_dict['poster'] = [(None, result['Poster'])]
+        result_dict['actors'] = result['Actors'].split(',')
+        result_dict['directors'] = result['Director'].split(',')
+        result_dict['writers'] = result['Writer'].split(',')
+        result_dict['genre'] = result['Genre'].split(',')
+        result_dict['genre_norm'] = self._genrenorm.normalize_genre_list(
+            result_dict['genre']
         )
-        data['Year'] = int(data['Year'])
 
-        result_dict = {key: None for key in self._attrs}
-        for key, value in self._attrs.items():
-            if value is not None:
-                if value.startswith('__'):
-                    result_dict[key] = self._filter_na(result_map[value[2:]])
-                else:
-                    result_dict[key] = self._filter_na(data[value])
+        #numeric attrs
+        result_dict['runtime'] = int(self._format_runtime(result['Runtime']))
+        result_dict['vote_count'] = int(result['imdbVotes'].replace(',', ''))
+        result_dict['year'] = int(result['Year'])
 
-        return (result_dict, True)
+        return {key: self._filter_na(val) for key, val in result_dict.items()}
 
-    def _filter_na(self, result):
-        if result == 'N/A':
+    def _filter_na(self, value):
+        if value == 'N/A':
             return ''
-        elif result == ['N/A']:
+        if value == ['N/A']:
             return []
-        else:
-            return result
+        return value
 
     def _format_runtime(self, runtime):
         result = []
+        time_fmt = {'HM': '{:d} h {:d} min', 'H': '{:d} h', 'M': '{:d} min'}
         if runtime and 'h' in runtime and 'min' in runtime:
-            h, m = parse('{:d} h {:d} min', runtime)
+            h, m = parse(time_fmt['HM'], runtime)
             result = (h * 60) + m
         elif 'min' in runtime:
-            result, = parse('{:d} min', runtime)
+            result, = parse(time_fmt['M'], runtime)
         elif 'h' in runtime:
-            result, = parse('{:d} h', runtime)
-        return int(result)
+            result, = parse(time_fmt['H'], runtime)
+        return result
 
     @property
     def supported_attrs(self):
-        return [k for k, v in self._attrs.keys() if v is not None]
-
-    def activate(self):
-        provider.IMovieProvider.activate(self)
-        print('activating... ', __name__)
-
-    def deactivate(self):
-        provider.IMovieProvider.deactivate(self)
-        print('deactivating... ', __name__)
+        return self._attrs
