@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-""" OFDB Movie text provider. """
-
 from urllib.parse import quote
-import json
 import os
 
-import hugin.core.provider as provider
 from hugin.common.utils.stringcompare import string_similarity_ratio
 from hugin.core.provider.genrenorm import GenreNormalize
 from hugin.core.provider.ofdb.ofdbcommon import OFDBCommon
+import hugin.core.provider as provider
 
 
 class OFDBMovie(provider.IMovieProvider):
@@ -39,18 +36,6 @@ class OFDBMovie(provider.IMovieProvider):
         return [self._common.base_url.format(path=path, query=query)]
 
     def parse_response(self, url_response, search_params):
-        """
-        Parse ofdb response.
-
-        0 = Keine Fehler
-        1 = Unbekannter Fehler
-        2 = Fehler oder Timeout bei Anfrage an IMDB bzw. OFDB
-        3 = Keine oder falsche ID angebene
-        4 = Keine Daten zu angegebener ID oder Query gefunden
-        5 = Fehler bei der Datenverarbeitung
-        9 = Wartungsmodus, OFDBGW derzeit nicht verfügbar.
-
-        """
         # validate the response data
         status, retvalue, url, response = self._common.validate_url_response(
             url_response
@@ -65,22 +50,22 @@ class OFDBMovie(provider.IMovieProvider):
         if status in ['critical', 'unknown', 'no_data']:
             return retv
 
-        select_parse_method = {
-            'movie': self._parse_movie_module,
-            'imdb2ofdb': self._parse_imdb2ofdb_module,
-            'search': self._parse_search_module
-        }.get(response['status']['modul'])
+        response_type = response['status']['modul']
+        response = response['resultat']
 
-        if select_parse_method is not None:
-            return select_parse_method(
-                response['resultat'],
-                search_params
-            )
+        if 'search' in response_type:
+            return self._parse_search_module(response, search_params), False
+
+        if 'imdb2ofdb' in response_type:
+            return self._parse_imdb2ofdb_module(response, search_params), False
+
+        if 'movie' in response_type:
+            return self._parse_movie_module(response, search_params), True
 
         return None, True
 
     def _parse_imdb2ofdb_module(self, result, _):
-        return (self._common.urllist_from_movie_ids([result['ofdbid']]), False)
+        return self._common.urllist_from_movie_ids([result['ofdbid']])
 
     def _parse_search_module(self, result, search_params):
         # create similarity matrix for title, check agains german and original
@@ -107,7 +92,7 @@ class OFDBMovie(provider.IMovieProvider):
         )
         item_count = min(len(similarity_map), search_params['items'])
         matches = [item['ofdbid'] for item in similarity_map[:item_count]]
-        return (self._common.movieids_to_urllist(matches), False)
+        return self._common.movieids_to_urllist(matches)
 
     def _parse_movie_module(self, result, _):
         result_dict = {k: None for k in self._attrs}
@@ -127,35 +112,28 @@ class OFDBMovie(provider.IMovieProvider):
         # list attrs
         result_dict['poster'] = [(None, result['bild'])]
         result_dict['countries'] = result['produktionsland']
-        result_dict['actors'] = self._extract_actor(result['besetzung'])
+        result_dict['actors'] = self._extract_person(result['besetzung'])
         result_dict['directors'] = [r['name'] for r in result['regie']]
-        result_dict['writers'] = self._extract_writer(result['drehbuch'])
+        result_dict['writers'] = self._extract_person(result['drehbuch'])
         result_dict['genre'] = result['genre']
         result_dict['genre_norm'] = self._genrenorm.normalize_genre_list(
             result_dict['genre']
         )
 
-        return (result_dict, True)
+        return result_dict
 
-    def _extract_writer(self, writer):
+    def _extract_person(self, persons):
         person_list = []
         try:
-            for person in writer:
-                item = person.get('name')
-                person_list.append(item)
+            for person in persons:
+                role, name = person.get('rolle'), person.get('name')
+                if role:
+                    person_list.append((role, name))
+                else:
+                    person_list.append(name)
         except (AttributeError, TypeError):
             return []
         return person_list
-
-    def _extract_actor(self, actors):
-        actor_list = []
-        try:
-            for actor in actors:
-                item = (actor.get('name'), actor.get('rolle'))
-                actor_list.append(item)
-        except AttributeError:
-            return []
-        return actor_list
 
     @property
     def supported_attrs(self):

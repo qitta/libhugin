@@ -1,27 +1,12 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-""" Common ofdb provider suff. """
-
 import json
 
 
 class OFDBCommon:
     def __init__(self):
         self.base_url = 'http://ofdbgw.home-of-root.de/{path}/{query}'
-
-    def validate_url_response(self, url_response):
-        try:
-            url, response = url_response.pop()
-            return 'ok', (None,None), url, json.loads(response).get('ofdbgw')
-        except (TypeError, IndexError):
-            return 'critical', (None, True), None, None
-        except (ValueError, AttributeError):
-            response = self._try_sanitize(response)
-            if response is False:
-                return 'retry', (None, False), url, response
-            else:
-                return 'ok', (None, None), url, response
 
     def _try_sanitize(self, response):
         splited = response.splitlines()
@@ -35,12 +20,6 @@ class OFDBCommon:
         except (TypeError, ValueError):
             return False
 
-    def personids_to_urllist(self, ids):
-        return self._build_urllist_from_idlist(ids, 'person_json')
-
-    def movieids_to_urllist(self, ids):
-        return self._build_urllist_from_idlist(ids, 'movie_json')
-
     def _build_urllist_from_idlist(self, ids, path):
         url_list = []
         for ofdbid in ids:
@@ -48,34 +27,38 @@ class OFDBCommon:
             url_list.append([url])
         return url_list
 
+    def validate_url_response(self, url_response):
+        try:
+            url, response = url_response.pop()
+            return 'ok', (None, None), url, json.loads(response).get('ofdbgw')
+        except (TypeError, IndexError):
+            return 'critical', (None, True), None, None
+        except (ValueError, AttributeError):
+            response = self._try_sanitize(response)
+            if response is False:
+                return 'retry', (None, False), url, response
+            else:
+                return 'ok', (None, None), url, response
 
+    def personids_to_urllist(self, ids):
+        return self._build_urllist_from_idlist(ids, 'person_json')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def movieids_to_urllist(self, ids):
+        return self._build_urllist_from_idlist(ids, 'movie_json')
 
     def check_response_status(self, response):
+        """
+        Parse ofdb response.
+
+        0 = Keine Fehler
+        1 = Unbekannter Fehler
+        2 = Fehler oder Timeout bei Anfrage an IMDB bzw. OFDB
+        3 = Keine oder falsche ID angebene
+        4 = Keine Daten zu angegebener ID oder Query gefunden
+        5 = Fehler bei der Datenverarbeitung
+        9 = Wartungsmodus, OFDBGW derzeit nicht verfügbar.
+
+        """
         status = response['status']['rcode']
         return_code = {
             'valid_response': [0],

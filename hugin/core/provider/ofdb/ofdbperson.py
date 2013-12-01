@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+from urllib.parse import quote
 
-import hugin.core.provider as provider
 from hugin.common.utils.stringcompare import string_similarity_ratio
 from hugin.core.provider.ofdb.ofdbcommon import OFDBCommon
-
-from urllib.parse import quote
+import hugin.core.provider as provider
 
 
 class OFDBPerson(provider.IPersonProvider):
@@ -27,18 +26,6 @@ class OFDBPerson(provider.IPersonProvider):
             ]
 
     def parse_response(self, url_response, search_params):
-        """
-        Parse ofdb response.
-
-        0 = Keine Fehler
-        1 = Unbekannter Fehler
-        2 = Fehler oder Timeout bei Anfrage an IMDB bzw. OFDB
-        3 = Keine oder falsche ID angebene
-        4 = Keine Daten zu angegebener ID oder Query gefunden
-        5 = Fehler bei der Datenverarbeitung
-        9 = Wartungsmodus, OFDBGW derzeit nicht verfügbar.
-
-        """
 
         # validate the response data
         status, retvalue, url, response = self._common.validate_url_response(
@@ -54,16 +41,14 @@ class OFDBPerson(provider.IPersonProvider):
         if status in ['critical', 'unknown', 'no_data']:
             return retv
 
-        select_parse_method = {
-            'person': self._parse_person_module,
-            'searchperson': self._parse_search_module
-        }.get(response['status']['modul'])
+        response_type = response['status']['modul']
+        response = response['resultat']
 
-        if select_parse_method:
-            return select_parse_method(
-                response['resultat'],
-                search_params
-            )
+        if 'searchperson' in response_type:
+            return self._parse_search_module(response, search_params), False
+
+        if 'person' in response_type:
+            return self._parse_person_module(response, search_params), True
 
         return None, True
 
@@ -88,8 +73,8 @@ class OFDBPerson(provider.IPersonProvider):
             reverse=True
         )
         item_count = min(len(similarity_map), search_params['items'])
-        matches = [item['ofdbid'] for item in similarity_map[:item_count]]
-        return (self._common.personids_to_urllist(matches), False)
+        personids = [item['ofdbid'] for item in similarity_map[:item_count]]
+        return self._common.personids_to_urllist(personids)
 
     def _parse_person_module(self, result, _):
         result_dict = {k: None for k in self._attrs}
@@ -104,7 +89,7 @@ class OFDBPerson(provider.IPersonProvider):
         if result['bild']:
             result_dict['photo'] = list((None, result['bild']))
 
-        return result_dict, True
+        return result_dict
 
     @property
     def supported_attrs(self):
