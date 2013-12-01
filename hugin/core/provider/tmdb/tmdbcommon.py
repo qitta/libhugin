@@ -30,23 +30,13 @@ class TMDBConfig:
             TMDBConfig._instance = TMDBConfig()
         return TMDBConfig._instance
 
-    def validate_url_response(self, response):
+    def validate_url_response(self, url_response):
         try:
-            return json.loads(response)
-        except (ValueError, TypeError):
-            return None
+            url, response = url_response.pop()
+            return url, json.loads(response)
+        except (ValueError, TypeError, IndexError, AttributeError):
+            return url, None
 
-    def validate_response(self, url_response):
-        responses = []
-        flag = False
-        for url, response in url_response:
-            try:
-                response = json.loads(response)
-                responses.append((url, response))
-            except (ValueError, TypeError):
-                responses.append((url, None))
-                flag = True
-        return (responses, flag)
 
     def _image_sizes_from(self, image_type):
         """
@@ -96,10 +86,10 @@ class TMDBConfig:
     def build_person_search_url(self, matches, search_params):
         return self._build_url(matches, search_params, 'person').pop()
 
-    def build_movie_url(self, matches, search_params):
+    def build_movie_urllist(self, matches, search_params):
         return self._build_url(matches, search_params, 'movie')
 
-    def build_person_url(self, matches, search_params):
+    def build_person_urllist(self, matches, search_params):
         return self._build_url(matches, search_params, 'person')
 
     def _build_url(self, matches, search_params, metatype):

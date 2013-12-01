@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+""" TMDB person provider. """
 
-from hugin.common.utils.stringcompare import string_similarity_ratio
 import hugin.core.provider as provider
+from hugin.common.utils.stringcompare import string_similarity_ratio
 from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
-from collections import defaultdict
+
 from urllib.parse import quote
 
 
@@ -18,99 +19,84 @@ class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
             'providerid', 'homepage', 'deathday', 'popularity', 'biography',
             'known_for'
         ]
-        self._path = 'search/person'
 
     def build_url(self, search_params):
         if search_params['name']:
-            name = quote(search_params['name'])
-            query = '{name}'.format(
-                name=name
-            )
-            return [self._config.baseurl.format(
-                path=self._path,
-                apikey=self._config.apikey,
-                query=query
-            )]
-        else:
-            return None
+            return [
+                self._config.baseurl.format(
+                    path='search/person',
+                    apikey=self._config.apikey,
+                    query=quote(search_params['name'])
+                )
+            ]
 
     def parse_response(self, url_response, search_params):
-        fr, *_ = url_response
-        url, response = fr
-        response = self._config.validate_url_response(response)
-        if response is None:
-            return (None, True)
-        elif 'status_code' in response:
-            return (None, True)
+        url, response = self._config.validate_url_response(url_response)
+
+        if response is None or 'status_code' in response:
+            return None, True
 
         if 'search/person?' in url:
             if response['total_results'] == 0:
-                return ([], True)
+                return [], True
             else:
-                return self._parse_search_module(response, search_params)
-        else:
-            return (self._concat_result(response), True)
+                return self._parse_search_response(response, search_params), False
 
-    def _concat_result(self, results):
+        return self._build_result_dict(response), True
+
+    def _build_result_dict(self, json_response):
         result_dict = {k: None for k in self._attrs}
-        direct_mapping_str = [
-            'name', 'birthday', 'deathday', 'biography'
-        ]
+        direct_mapping_str = ['name', 'birthday', 'deathday', 'biography']
 
         #str attrs
-        result_dict['popularity'] = str(results['popularity'])
-        result_dict['providerid'] = str(results['id'])
-        result_dict['placeofbirth'] = str(results['place_of_birth'])
-        result_dict['imdbid'] = results['imdb_id']
+        result_dict['popularity'] = str(json_response['popularity'])
+        result_dict['providerid'] = str(json_response['id'])
+        result_dict['placeofbirth'] = str(json_response['place_of_birth'])
+        result_dict['imdbid'] = json_response['imdb_id']
         for key in self._attrs:
             if key in direct_mapping_str:
-                result_dict[key] = results[key]
+                result_dict[key] = json_response[key]
 
         #list attrs
-        result_dict['homepage'] = list(results['homepage'])
-        result_dict['photo'] = self._parse_images(results.get('images'))
-        result_dict['known_for'] = self._extract_movie_credits(
-            results['movie_credits']
+        result_dict['homepage'] = [json_response['homepage']]
+
+        image_entry = json_response.get('images')
+        if image_entry:
+            result_dict['photo'] = self._parse_images(image_entry)
+
+        result_dict['known_for'] = self._parse_movie_credits(
+            json_response['movie_credits']
         )
         return result_dict
 
-    def _extract_movie_credits(self, response):
-        result = defaultdict(list)
+    def _parse_movie_credits(self, response):
+        credits = []
         for person in response['cast']:
-            actor = (person['character'], person['original_title'])
-            result['cast'].append(actor)
-        return result['cast']
+            character_movie = (person['character'], person['original_title'])
+            credits.append(character_movie)
+        return credits
 
     def _parse_images(self, response):
         images = []
-        if response:
-            for item in response['profiles']:
-                images += self._config.get_image_url(
-                    item['file_path'], 'profile'
-                )
-            return images
+        for image_entry in response['profiles']:
+            images += self._config.get_image_url(
+                image_entry['file_path'], 'profile'
+            )
+        return images
 
-    def _parse_search_module(self, result, search_params):
+    def _parse_search_response(self, response, search_params):
         similarity_map = []
-        for result in result['results']:
-            ratio = 0.0
-            for title_key in ['name']:
-                ratio = max(
-                    ratio,
-                    string_similarity_ratio(
-                        result[title_key],
-                        search_params['name']
-                    )
-                )
-            similarity_map.append({'tmdbid': result['id'], 'ratio': ratio})
-        similarity_map.sort(
+        for item in response['results']:
+            ratio = string_similarity_ratio(
+                item['name'],
+                search_params['name']
+            )
+            similarity_map.append({'tmdbid': item['id'], 'ratio': ratio})
 
-            key=lambda value: value['ratio'],
-            reverse=True
-        )
+        similarity_map.sort(key=lambda value: value['ratio'], reverse=True)
         item_count = min(len(similarity_map), search_params['items'])
-        matches = [item['tmdbid'] for item in similarity_map[:item_count]]
-        return (self._config.build_person_url(matches, search_params), False)
+        movie_ids = [item['tmdbid'] for item in similarity_map[:item_count]]
+        return self._config.build_person_urllist(movie_ids, search_params)
 
     @property
     def supported_attrs(self):
