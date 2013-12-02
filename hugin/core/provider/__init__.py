@@ -115,7 +115,14 @@ class IProvider(IPlugin):
 
 class IMovieProvider(IProvider):
 
-    """ A base class for movie metadata plugins. """
+    """ A base class for movie metadata plugins.
+
+    .. py:function:: attribute_format
+
+        :param title: Was ist der title
+        :type title: [str]
+
+    """
 
     # movie attrs to be documented
     #

@@ -115,7 +115,7 @@ class OMDBMovie(provider.IMovieProvider):
         return value
 
     def _format_runtime(self, runtime):
-        result = []
+        result = 0
         time_fmt = {'HM': '{:d} h {:d} min', 'H': '{:d} h', 'M': '{:d} min'}
         if runtime and 'h' in runtime and 'min' in runtime:
             h, m = parse(time_fmt['HM'], runtime)

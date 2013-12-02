@@ -2,15 +2,6 @@
 # encoding: utf-8
 
 
-'''
-
-.. py:function:: attribute_format
-
-    :param title: Was ist der title
-    :type title: [str]
-
-'''
-
 from urllib.parse import quote_plus
 from collections import defaultdict
 import os
@@ -105,20 +96,25 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
             result_dict[key_result] = str(result[key_response])
 
         # list attrs
-        directors, writers, actors, crew = self._extract_credits(
-            result['credits']
+        crew = self._config.extract_keyvalue_attrs(
+            result['credits']['crew'], key_a='job', key_b='name'
         )
-        result_dict['directors'] = directors
-        result_dict['writers'] = writers
-        result_dict['actors'] = actors
-        result_dict['crew'] = crew
-        result_dict['poster'], result_dict['fanart'] = self._extract_images(
-            result
+        result_dict['directors'] = [n for j, n in crew if j == 'Director']
+        result_dict['writers'] = [n for j, n in crew if j == 'Writer']
+        result_dict['crew'] = [(j, n) for j, n in crew if j not in ['Director', 'Writer']]
+        result_dict['actors'] = self._config.extract_keyvalue_attrs(
+            result['credits']['cast'], key_a='character', key_b='name'
+        )
+        result_dict['poster'] = self._config.extract_image_by_type(
+            result, 'posters'
+        )
+        result_dict['fanart'] = self._config.extract_image_by_type(
+            result, 'backdrops'
         )
         result_dict['trailers'] = self._extract_trailers(result['trailers'])
         result_dict['collection'] = [result['belongs_to_collection']]
-        result_dict['alternative_titles'] = self._extract_alternative_titles(
-            result['alternative_titles']
+        result_dict['alternative_titles'] = self._config.extract_keyvalue_attrs(
+            result['alternative_titles']['titles'], 'iso_3166_1', 'title'
         )
         listattr_keymap = [
             'studios:production_companies', 'genre:genres',
@@ -127,40 +123,20 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
         for keymap in listattr_keymap:
             key_result, key_response = keymap.split(':', maxsplit=1)
             result_dict[key_result] = self._config.extract_keyvalue_attrs(
-                result[key_response]
+                result[key_response], 'name'
             )
         result_dict['genre_norm'] = self._genrenorm.normalize_genre_list(
             result_dict['genre']
         )
         result_dict['keywords'] = self._config.extract_keyvalue_attrs(
-            result['keywords']['keywords']
+            result['keywords']['keywords'], 'name'
         )
 
         # numeric attrs
-        result_dict['year'] = int(result['release_date'][0:4] or 0)
-        result_dict['runtime'] = int(result_dict['runtime'] or 0)
-        result_dict['vote_count'] = int(result_dict['vote_count'] or 0)
-
+        result_dict['year'] = int(result['release_date'][0:4] or 0) or None
+        result_dict['runtime'] = int(result['runtime'] or 0) or None
+        result_dict['vote_count'] = int(result['vote_count'] or 0) or None
         return result_dict
-
-    def _extract_images(self, result):
-        posters, backdrops = [], []
-        if 'images' not in result:
-            return posters, backdrops
-
-        for item in result['images']['posters']:
-            posters += self._config.get_image_url(
-                item['file_path'],
-                'poster'
-            )
-        for item in result['images']['backdrops']:
-            backdrops.append(
-                self._config.get_image_url(
-                    item['file_path'],
-                    'backdrop'
-                )
-            )
-        return posters, backdrops
 
     def _extract_trailers(self, response):
         yt_url = 'http://www.youtube.com/watch\\?v\\={path}'
@@ -168,31 +144,12 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
         for path in response['youtube']:
             trailer_url = (path['size'], yt_url.format(path=path['source']))
             result.append(trailer_url)
+
         for source in response['quicktime']:
             for path in source['sources']:
                 trailer_url = (path['size'], path['source'])
                 result.append(trailer_url)
         return result
-
-    def _extract_alternative_titles(self, response):
-        titles = []
-        for title in response['titles']:
-            title = (title['iso_3166_1'], title['title'])
-            titles.append(title)
-        return titles
-
-    def _extract_credits(self, credits):
-        result = defaultdict(list)
-        for person in credits['cast']:
-            actor = (person['character'], person['name'])
-            result['cast'].append(actor)
-        for person in credits['crew']:
-            result[person['department']].append(person['name'])
-        directors = result.pop('Directing', [])
-        writers = result.pop('Writing', [])
-        casts = result.pop('cast', [])
-        crew = result['crew']
-        return directors, writers, casts, crew
 
     @property
     def supported_attrs(self):

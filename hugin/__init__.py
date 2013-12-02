@@ -326,24 +326,24 @@ if __name__ == '__main__':
                 search_text=True,
                 use_cache=False,
                 search_pictures=True,
-                language='de',
+                language='en',
                 retries=5,
-                title='sin',
-                strategy='flat',  # or flat
-                items=20
+                title='watchmen',
+                strategy='deep',  # or flat
+                items=5
             )
             result_list = hs.submit(q)
             print(100 * '-')
-            pp, *other = hs.get_postprocessing()
-            custom = pp.create_custom_result(result_list, profile={'default':['TMDB'], 'plot':['OFDB']})
-            result_list += custom
+            #pp, *other = hs.get_postprocessing()
+            #custom = pp.create_custom_result(result_list, profile={'default':['TMDB'], 'plot':['OFDB']})
+            #result_list += custom
             for item in result_list:
                 if item.result_dict:
                     print(item)
                     print()
-                    print('title:', item._result_dict['title'], item._result_dict['genre_norm'], item._result_dict['imdbid'])
+                    print('title:', item._result_dict['title'])
                     print()
-                    print(item._result_dict['plot'])
+                    #print(item._result_dict['plot'])
                     print()
                     print(100 * '-')
         hs._cache.close()

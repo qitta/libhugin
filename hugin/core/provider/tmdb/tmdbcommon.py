@@ -74,10 +74,22 @@ class TMDBConfig:
             url_list.append((size, url.format(size=size, image=image)))
         return url_list
 
-    def extract_keyvalue_attrs(self, data):
+    def extract_image_by_type(self, response, image_type):
+        images = []
+        if response.get('images'):
+            for image_entry in response['images'][image_type]:
+                images += self.get_image_url(
+                    image_entry['file_path'], image_type[:-1]
+                )
+        return images
+
+    def extract_keyvalue_attrs(self, data, key_a=None, key_b=None):
         values = []
         for value in data:
-            values.append(value['name'])
+            if key_b:
+                values.append((value[key_a], value[key_b]))
+            else:
+                values.append(value[key_a])
         return values
 
     def build_movie_search_url(self, matches, search_params):
