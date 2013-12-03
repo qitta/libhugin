@@ -97,7 +97,7 @@ class DownloadQueue:
                     job['return_code'].append(source)
                     job['cache_used'].append((url, True))
                 else:
-                    if job['response'] is not None:
+                    if job['response'] is not None and content is not None:
                         try:
                             job['response'].append(
                                 (url, self._bytes_to_unicode(content))

@@ -4,6 +4,8 @@
 """ TMDB Provider config and common  attributes. """
 
 from urllib.request import urlopen
+from urllib.error import HTTPError
+from http.client import BadStatusLine
 import json
 
 
@@ -31,11 +33,13 @@ class TMDBConfig:
         return TMDBConfig._instance
 
     def validate_url_response(self, url_response):
+        url, response = None, None
         try:
             url, response = url_response.pop()
-            return url, json.loads(response)
+            response = json.loads(response)
         except (ValueError, TypeError, IndexError, AttributeError):
-            return url, None
+            print('Error invalid url_response.')
+        return url, response
 
 
     def _image_sizes_from(self, image_type):
@@ -137,14 +141,14 @@ class TMDBConfig:
         '''
         Initial tmdb configuration
         '''
-        response_bytes = urlopen(
-            self.baseurl.format(
-                path='configuration',
-                apikey=self.apikey,
-                query=''
-            )
-        )
         try:
+            response_bytes = urlopen(
+                self.baseurl.format(
+                    path='configuration',
+                    apikey=self.apikey,
+                    query=''
+                )
+            )
             response = json.loads(response_bytes.readall().decode('utf-8'))
             response = response.get('images')
             self.image_base_url = '{url}{{size}}{{image}}'.format(
@@ -155,8 +159,8 @@ class TMDBConfig:
             self._profile_sizes = response['profile_sizes']
             self._logo_sizes = response['logo_sizes']
             response_bytes.close()
-        except UnicodeDecodeError as e:
-            print(e)
+        except (UnicodeDecodeError, HTTPError, BadStatusLine) as e:
+            print('Error while downloading tmdb configuration.')
 
 if __name__ == '__main__':
     t = TMDBConfig.get_instance()
