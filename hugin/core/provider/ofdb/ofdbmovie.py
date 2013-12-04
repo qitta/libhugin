@@ -65,7 +65,7 @@ class OFDBMovie(provider.IMovieProvider):
         return None, True
 
     def _parse_imdb2ofdb_module(self, result, _):
-        return self._common.urllist_from_movie_ids([result['ofdbid']])
+        return self._common.movieids_to_urllist([result['ofdbid']])
 
     def _parse_search_module(self, result, search_params):
         # create similarity matrix for title, check agains german and original
