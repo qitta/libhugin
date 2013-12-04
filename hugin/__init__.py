@@ -99,7 +99,8 @@ class Session:
 
     def submit(self, query):
         if self._shutdown_session:
-            self.clean_up() else:
+            self.clean_up()
+        else:
             results = []
             downloadqueue = self._init_download_queue(query)
 
