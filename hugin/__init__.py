@@ -11,6 +11,7 @@ from threading import Lock
 from operator import add
 import sys
 import queue
+import copy
 import signal
 
 from hugin.core.pluginhandler import PluginHandler
@@ -92,14 +93,13 @@ class Session:
         self._downloadqueues.append(downloadqueue)
         return downloadqueue
 
-    def _add_to_cache(self, job):
-        for url, data in job['response']:
+    def _add_to_cache(self, response):
+        for url, data in response:
             self._cache.write(url, data)
 
     def submit(self, query):
         if self._shutdown_session:
-            self.clean_up()
-        else:
+            self.clean_up() else:
             results = []
             downloadqueue = self._init_download_queue(query)
 
@@ -115,10 +115,15 @@ class Session:
                 except queue.Empty:
                     break
 
+                response = copy.deepcopy(job['response'])
+
                 # trigger provider to parse its request and process the result
                 job['result'], job['is_done'] = job['provider'].parse_response(
                     job['response'], query
                 )
+
+                if job['result'] and job['result'] != []:
+                    self._add_to_cache(response)
 
                 if job['is_done']:
                     self._process_flagged_as_done(
@@ -128,7 +133,6 @@ class Session:
                     self._process_flagged_as_not_done(
                         job, downloadqueue, query, results
                     )
-
             downloadqueue.push(None)
             return self._select_results_by_strategy(results, query)
 
@@ -142,18 +146,14 @@ class Session:
 
     def _process_flagged_as_done(self, job, downloadqueue, query, results):
         if job['is_done'] or job['result'] == []:
-            if job['result'] is not None:
-                self._add_to_cache(job)
             results.append(self._job_to_result(job, query))
 
     def _process_flagged_as_not_done(self, job, downloadqueue, query, results):
-        if job['result'] and job['is_done'] is False:
-            self._add_to_cache(job)
+        if job['result']:
             new_jobs = self._create_new_jobs_from_result(job, query)
             for job in new_jobs:
                 downloadqueue.push(job)
-
-        if job['result'] is None and job['is_done'] is False:
+        else:
             job = self._decrement_retries(job)
             if job['is_done']:
                 results.append(self._job_to_result(job, query))
@@ -208,14 +208,21 @@ class Session:
             'retries_left': query.get('retries')
         }
 
-    def _create_jobs_according_to_search_params(self, query):
+    def _get_provider_for_current_job(self, query):
         providers = []
         for key, value in self._provider_types.items():
             if query['type'] in key:
                 providers += self._provider_types[key]
 
+        if query['providers']:
+            allowed_provider = [x.upper() for x in query['providers']]
+            prov_filter = lambda x : x['name'].name.upper() in allowed_provider
+            providers = [x for x in filter(prov_filter, providers)]
+        return providers
+
+    def _create_jobs_according_to_search_params(self, query):
         job_list = []
-        for provider in providers:
+        for provider in self._get_provider_for_current_job(query):
             provider = provider['name']
             job = self._get_job_struct(provider=provider, query=query)
             url_list = job['provider'].build_url(query)

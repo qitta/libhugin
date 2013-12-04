@@ -12,7 +12,7 @@ class Query(UserDict):
         self._query_attrs = [
             'title', 'year', 'name', 'imdbid', 'type', 'search_text',
             'language', 'search_pictures', 'items', 'use_cache', 'retries',
-            'strategy'
+            'strategy', 'providers'
         ]
         self.data = {k: None for k in self._query_attrs}
         self._set_query_values(data)
