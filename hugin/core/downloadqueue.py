@@ -52,25 +52,25 @@ class DownloadQueue:
         self._executor.shutdown(wait=True)
         self._is_shutdown = True
 
-    def _get_single_url(self, url, timeout_sec):
-        source, content = None, None
+    def _fetch_url(self, url, timeout_sec):
+        header, content = None, None
         try:
             if self._local_cache is not None:
-            # we use 0 as status code for local fetch
-                source, content = 'local', self._local_cache.read(url)
-            # if nothing found in local cache
+                header, content = 'local', self._local_cache.read(url)
+
             if content is None:
                 http = httplib2.Http(timeout=timeout_sec)
-                source, content = http.request(uri=url, headers=self._headers)
+                header, content = http.request(uri=url, headers=self._headers)
+
         except httplib2.RelativeURIError as e:
-            print('RelativeURIError', e, source, content)
+            print('RelativeURIError', e, header, content)
         except timeout as e:
             print('Something went terribly wrong! TIMEOUT', url)
         except Exception as e:
-            print('Something went terribly wrong!', url, source, content)
-        return source, content
+            print('Something went terribly wrong!', url, header, content)
+        return header, content
 
-    def _fetch_url(self, urllist, timeout_sec):
+    def _fetch_urllist(self, urllist, timeout_sec):
         """
         Get the requested url from cache or web.
 
@@ -78,37 +78,41 @@ class DownloadQueue:
         :param timeout_sec: A timeout to be used for each request.
 
         """
-        response = []
+        response_list = []
+
         for url in urllist:
-            source, content = self._get_single_url(url, timeout_sec)
+            header, content = self._fetch_url(url, timeout_sec)
             content = (url, content)
-            response.append((source, content))
+            response_list.append((header, content))
 
         with self._url_to_job_lock:
             job = self._url_to_job.pop(id(urllist))
-            job['response'] = []
-            job['return_code'] = []
-            job['cache_used'] = []
-            for response_item in response:
-                source, url_content = response_item
-                url, content = url_content
-                if source == 'local':
-                    job['response'].append(url_content)
-                    job['return_code'].append(source)
-                    job['cache_used'].append((url, True))
-                else:
-                    if job['response'] is not None and content is not None:
-                        try:
-                            job['response'].append(
-                                (url, self._bytes_to_unicode(content))
-                            )
-                            job['return_code'].append(source)
-                            job['cache_used'].append((url, False))
-                        except AttributeError:
-                            print('AttributeError')
-                        except Exception as e:
-                            print('Something went terribly wrong!', e, source, content)
+            job = self._fill_job_response(job, response_list)
             self._request_queue.put(job)
+
+    def _fill_job_response(self, job, response_list):
+        job['response'], job['return_code'], job['cache_used'] = [], [], []
+
+        for response_item in response_list:
+            header, url_content = response_item
+            url, content = url_content
+            if header == 'local':
+                job['response'].append(url_content)
+                job['return_code'].append(header)
+                job['cache_used'].append((url, True))
+            else:
+                if content is not None:
+                    try:
+                        job['response'].append(
+                            (url, self._bytes_to_unicode(content))
+                        )
+                        job['return_code'].append(header)
+                        job['cache_used'].append((url, False))
+                    except AttributeError:
+                        print('AttributeError')
+                    except Exception as e:
+                        print('Something went terribly wrong!', e, header, content)
+        return job
 
     def _bytes_to_unicode(self, byte_data):
         """
@@ -147,7 +151,7 @@ class DownloadQueue:
                 with self._url_to_job_lock:
                     self._url_to_job[id_urllist] = job
                 job['future'] = self._executor.submit(
-                    self._fetch_url,
+                    self._fetch_urllist,
                     urllist=urllist,
                     timeout_sec=self._timeout_sec
                 )
