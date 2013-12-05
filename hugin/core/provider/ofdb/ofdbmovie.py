@@ -14,9 +14,7 @@ class OFDBMovie(provider.IMovieProvider):
     def __init__(self):
         self._priority = 90
         self._common = OFDBCommon()
-        self._genrenorm = GenreNormalize(
-            os.path.abspath('hugin/core/provider/ofdb.genre')
-        )
+        self._genrenorm = GenreNormalize('ofdb.genre')
         self._attrs = {
             'title', 'original_title', 'plot', 'imdbid', 'vote_count',
             'rating', 'directors', 'writers', 'outline', 'year', 'poster',

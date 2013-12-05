@@ -16,9 +16,7 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
     def __init__(self):
         self._config = TMDBConfig.get_instance()
         self._priority = 100
-        self._genrenorm = GenreNormalize(
-            os.path.abspath('hugin/core/provider/tmdb.genre')
-        )
+        self._genrenorm = GenreNormalize('tmdb.genre')
         self._attrs = {
             'title', 'original_title', 'plot', 'runtime', 'imdbid',
             'vote_count', 'rating', 'providerid', 'alternative_titles',
