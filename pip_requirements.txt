@@ -12,5 +12,8 @@ charade
 #: yapsy.PluginManager
 yapsy==1.10.1-pythons2n3
 
+#: parse
+parse
+
 #: httplib2
 httplib2
