@@ -6,7 +6,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 from queue import Queue, Empty
-from socket import timeout
+#from socket import timeout
 
 import charade
 import httplib2
@@ -62,12 +62,12 @@ class DownloadQueue:
                 http = httplib2.Http(timeout=timeout_sec)
                 header, content = http.request(uri=url, headers=self._headers)
 
-        except httplib2.RelativeURIError as e:
-            print('RelativeURIError', e, header, content)
-        except timeout as e:
-            print('Something went terribly wrong! TIMEOUT', url)
+        except httplib2.HttpLib2Error as e:
+            print('Httplib2 Error', e)
+        except OSError as e:
+            print('A Exception occured', e)
         except Exception as e:
-            print('Something went terribly wrong!', url, header, content)
+            print('Uncaught Exception? in full job response.', e)
         return header, content
 
     def _fetch_urllist(self, urllist, timeout_sec):
@@ -101,17 +101,17 @@ class DownloadQueue:
                 job['return_code'].append(header)
                 job['cache_used'].append((url, True))
             else:
-                if content is not None:
+                if content:
                     try:
                         job['response'].append(
                             (url, self._bytes_to_unicode(content))
                         )
                         job['return_code'].append(header)
                         job['cache_used'].append((url, False))
-                    except AttributeError:
-                        print('AttributeError')
+                    except AttributeError as e:
+                        print('AttributeError raised in fill job response.', e)
                     except Exception as e:
-                        print('Something went terribly wrong!', e, header, content)
+                        print('Uncaught Exception? in full job response.', e)
         return job
 
     def _bytes_to_unicode(self, byte_data):
@@ -127,10 +127,16 @@ class DownloadQueue:
         """
         try:
             return byte_data.decode('utf-8')
-        except (TypeError, AttributeError) as e:
-            print(e, 'trying to use charade now to quess encoding.')
+        except (TypeError, AttributeError, UnicodeError) as e:
+            print('Error decoding bytes to utf-8.', e)
+
+        try:
             encoding = charade.detect(byte_data).get('encoding')
             return byte_data.decode(encoding)
+        except (TypeError, AttributeError, UnicodeError) as e:
+            print('Error decoding bytes after charade  detection to utf-8.', e)
+
+
 
     def push(self, job):
         """
