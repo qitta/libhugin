@@ -10,7 +10,7 @@ charade
 #: yapsy.IPlugin
 #: yapsy.IPluginManager
 #: yapsy.PluginManager
-yapsy
+-e git://github.com/qitta/yapsy.git#egg=yapsy
 
 #: httplib2
 httplib2
