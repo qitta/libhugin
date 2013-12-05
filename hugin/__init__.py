@@ -12,19 +12,19 @@ from operator import add
 import sys
 import queue
 import copy
-import signal
 
 from hugin.core.pluginhandler import PluginHandler
 from hugin.core.downloadqueue import DownloadQueue
 from hugin.core.provider.result import Result
 from hugin.core.cache import Cache
 from hugin.query import Query
+from hugin.common.utils.stringcompare import string_similarity_ratio
 
 
 class Session:
     def __init__(
         self, cache_path='/tmp', parallel_jobs=1,
-        timeout_sec=5, user_agent='libhugin/1.0', use_cache='True'
+        timeout_sec=5, user_agent='libhugin/1.0'
     ):
         self._config = {
             'cache_path': cache_path,
@@ -167,18 +167,40 @@ class Session:
         else:
             return self._results_flat_strategy(results, query)
 
+    def _results_deep_strategy(self, results, query):
+        results.sort(key=lambda x: x.provider._priority, reverse=True)
+        results = self._sort_by_ratio(results, query)
+        return results[:query['items']]
+
     def _results_flat_strategy(self, results, query):
         result_map = defaultdict(list)
         for result in results:
             result_map[result.provider].append(result)
+
+        for result in result_map.values():
+            result = self._sort_by_ratio(result, query)
+
         results = list(
             filter(None, reduce(add, zip_longest(*result_map.values())))
         )
-        return results[0:query['items']]
+        return results[:query['items']]
 
-    def _results_deep_strategy(self, results, query):
-        results.sort(key=lambda x: x.provider._priority, reverse=True)
-        return results[0:query['items']]
+    def _sort_by_ratio(self, results, query):
+        ratio_table = []
+        for result in filter(lambda res: res._result_dict, results):
+            ratio = 0.0
+            if query['imdbid'] and query['imdbid'] == result._result_dict['imdbid']:
+                ratio = 1.0
+            elif query['title'] and result._result_dict['title']:
+                ratio = string_similarity_ratio(
+                    query['title'], result._result_dict['title']
+                )
+
+            ratio_entry = {'result': result, 'ratio': ratio}
+            ratio_table.append(ratio_entry)
+
+        ratio_table.sort(key=lambda x: x['ratio'], reverse=True)
+        return [res['result'] for res in ratio_table]
 
     def _job_to_result(self, job, query):
         retries = query['retries'] - job['retries_left']
@@ -261,16 +283,11 @@ class Session:
     def get_providers(self):
         return self._provider_types
 
-    def get_provider(self, name):
-        extract_provider += [y for z, y in self._provider_types.items()]
-        for item in extract_provider:
-            print(item['name'])
-
     def get_postprocessing(self):
         return self._postprocessing
 
     def converter_list(self):
-        pass
+        return self._converter
 
     def config_list(self):
         return self._config
@@ -296,5 +313,5 @@ class Session:
         """ Cancel the currently running session. """
         self._shutdown_session = True
 
-    def signal_handler(self, signal, frame):
-        self.cancel()
+def signal_handler(self, signal, frame):
+    self.cancel()
