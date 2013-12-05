@@ -1,28 +1,34 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+import pkgutil
 
-import os
-
-GLOBAL_GENRE = 'hugin/core/provider/normalized_genre.dat'
 
 class GenreNormalize:
-
-    def __init__(self, provider_file=None):
+    def __init__(self, provider_genre_file):
         self._global_genre_map = []
         self._provider_genre_map = {}
-        self._provider_genre_file = provider_file
-        self._global_genre_file = os.path.abspath(GLOBAL_GENRE)
-        self._init_mapping()
+        self._init_mapping(provider_genre_file)
 
-    def _init_mapping(self):
-        self._global_genre_map = self.create_global_genre_map(
-            self.read_genre(self._global_genre_file)
-        )
-        self._provider_genre_map = self.create_provider_genre_map(
-            self.read_genre(self._provider_genre_file)
-        )
+    def _init_mapping(self, provider_genre_file):
+        try:
+            # read the genrefiles inside packages
+            global_genre_bytes = pkgutil.get_data(
+                __package__, 'normalized_genre.dat'
+            )
+            provider_genre_bytes = pkgutil.get_data(
+                __package__, provider_genre_file
+            )
 
+            # create the mapping according given genre files
+            self._global_genre_map = self.create_global_genre_map(
+                global_genre_bytes.decode('utf-8')
+            )
+            self._provider_genre_map = self.create_provider_genre_map(
+                provider_genre_bytes.decode('utf-8')
+            )
+        except (UnicodeError, OSError) as e:
+            print('Error while reading genrenormalization files.', e)
 
     def print_mapping(self):
         for idx_genre in self._provider_genre_map:
@@ -30,11 +36,6 @@ class GenreNormalize:
             for genre in genres:
                 genre = genre.strip()
                 print(genre, '-->', self.normalize_genre(genre, 'de'))
-
-
-    def read_genre(self, genre_file):
-        with open(genre_file, 'r') as f:
-            return f.read()
 
     def clean_genre_string(self, genre_list):
         cleaned = []
