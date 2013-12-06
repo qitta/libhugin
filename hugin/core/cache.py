@@ -3,6 +3,7 @@
 
 """ A simple caching implementation for http requests. """
 
+# stdlib
 from threading import Lock
 import shelve
 import os

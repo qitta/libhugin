@@ -3,19 +3,29 @@
 
 """ This module encapsulates a thread-based downloadqueue. """
 
+# stdlib
 from concurrent.futures import ThreadPoolExecutor
-from threading import Lock
 from queue import Queue, Empty
-#from socket import timeout
+from threading import Lock
 
+# 3rd party
 import charade
 import httplib2
 
 
 class DownloadQueue:
 
-    """ A simple queue/threadpool wrapper for simultanous downloading using."""
+    """ A simple queue/threadpool wrapper for simultanous downloading.
 
+    .. note::
+
+        public methods:
+
+            push(job)
+            pop()
+            running_jobs()
+
+    """
     def __init__(
             self, num_threads=4, user_agent='libhugin/1.0', timeout_sec=5,
             local_cache=None):
@@ -24,7 +34,7 @@ class DownloadQueue:
 
         :param num_threads: Number of threads for simultanous downloading.
         :param user_agent: User-Agent to be used.
-        :param timeout: Url timeout to be used for each url.
+        :param timeout: Url timeout to be used for each http request.
         :param local_cache: A local cache for lookup before download.
 
         """
@@ -41,7 +51,7 @@ class DownloadQueue:
 
         self._url_to_job_lock = Lock()
         self._url_to_job = {}
-        self._request_queue = Queue()
+        self._job_result_queue = Queue()
 
         self._executor = ThreadPoolExecutor(max_workers=self._num_threads)
         self._shutdown_downloadqueue = False
@@ -53,6 +63,16 @@ class DownloadQueue:
         self._is_shutdown = True
 
     def _fetch_url(self, url, timeout_sec):
+        """ Fetch a specific url.
+
+        If cache is available, that a cache lookup is done first, otherwise
+        download is triggerd.
+
+        :param url: Url to fetch.
+        :param timeout_sec: Timeout for http request.
+        :returns: A tuple with the header and http response
+
+        """
         header, content = None, None
         try:
             if self._local_cache is not None:
@@ -70,27 +90,32 @@ class DownloadQueue:
             print('Uncaught Exception? in full job response.', e)
         return header, content
 
-    def _fetch_urllist(self, urllist, timeout_sec):
+    def _fetch_urllist(self, urls, timeout_sec):
         """
-        Get the requested url from cache or web.
+        Download urls, fill job struct and add job to job_result_queue.
 
-        :param url: A absolute URI that starts with http/https.
-        :param timeout_sec: A timeout to be used for each request.
+        1.) Urls are fetched
+        2.) Jobs are filled in with http responses
+        3.) Jobs are pushed to job_result_queue
+
+        :param urls: A list with urls to fetch.
+        :param timeout_sec: A timeout to be used for http request.
 
         """
         response_list = []
 
-        for url in urllist:
+        for url in urls:
             header, content = self._fetch_url(url, timeout_sec)
             content = (url, content)
             response_list.append((header, content))
 
         with self._url_to_job_lock:
-            job = self._url_to_job.pop(id(urllist))
+            job = self._url_to_job.pop(id(urls))
             job = self._fill_job_response(job, response_list)
-            self._request_queue.put(job)
+            self._job_result_queue.put(job)
 
     def _fill_job_response(self, job, response_list):
+        """ Fills job with response data. """
         job['response'], job['return_code'], job['cache_used'] = [], [], []
 
         for response_item in response_list:
@@ -136,13 +161,11 @@ class DownloadQueue:
         except (TypeError, AttributeError, UnicodeError) as e:
             print('Error decoding bytes after charade  detection to utf-8.', e)
 
-
-
     def push(self, job):
         """
         Execute a asynchronous download job.
 
-        :param job: A job object.
+        :param job: A job dict structure.
 
         """
         if job is None and self._shutdown_downloadqueue is False:
@@ -150,33 +173,33 @@ class DownloadQueue:
             self._shutdown()
 
         if self._shutdown_downloadqueue is False:
-            urllist = job['url']
-            id_urllist = id(urllist)
-            if urllist and id_urllist not in self._url_to_job:
+            urls = job['url']
+            id_urllist = id(urls)
+            if urls and id_urllist not in self._url_to_job:
 
                 with self._url_to_job_lock:
                     self._url_to_job[id_urllist] = job
                 job['future'] = self._executor.submit(
                     self._fetch_urllist,
-                    urllist=urllist,
+                    urls=urls,
                     timeout_sec=self._timeout_sec
                 )
 
     def pop(self):
         """
-        Get the a finished job object.
+        Get the a finished job.
 
         :returns: Next avaiable provider data object.
         :raises:  Empty exception if queue is empty.
 
         """
         try:
-            return self._request_queue.get_nowait()
+            return self._job_result_queue.get_nowait()
         except Empty:
             if len(self._url_to_job) == 0:
                 raise Empty
             else:
-                return self._request_queue.get()
+                return self._job_result_queue.get()
 
     def running_jobs(self):
         """
@@ -185,7 +208,7 @@ class DownloadQueue:
         :returns: Sum of jobs in queue and pending/active jobs
 
         """
-        return self._request_queue.qsize() + len(self._url_to_job)
+        return self._job_result_queue.qsize() + len(self._url_to_job)
 
 
 if __name__ == '__main__':
@@ -254,7 +277,6 @@ if __name__ == '__main__':
             for response in job['response']:
                 url, content = response
                 self.assertTrue(content is '')
-
 
         def test_without_local_cache(self):
             self._dq_default.push(self._job)
