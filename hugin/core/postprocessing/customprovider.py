@@ -3,15 +3,24 @@
 
 """ Postprocessing module to create a custom result out of found results. """
 
-import hugin.core.provider as provider
-from hugin.core.provider.result import Result
-
+# stdlib
 from collections import defaultdict
 import copy
 
+# hugin
+from hugin.core.provider.result import Result
+import hugin.core.provider as provider
+
 
 class CustomProvider(provider.IPostprocessing):
-    """Create a custom result. """
+    """Create a custom result.
+
+    .. note::
+
+        public methods:
+
+            create_custom_result(resultlist)
+    """
 
     def __init__(self):
         # attrs to be merged on auto merge
@@ -33,7 +42,9 @@ class CustomProvider(provider.IPostprocessing):
                 if profile is None:
                     new_result = self._merge_results_by_priority(results)
                 else:
-                    new_result = self._merge_results_by_profile(results, profile)
+                    new_result = self._merge_results_by_profile(
+                        results, profile
+                    )
                 normalized_multi_genre = self._create_multi_provider_genre(
                     results, 'genre_norm'
                 )
@@ -101,17 +112,18 @@ class CustomProvider(provider.IPostprocessing):
         """
         for left_result in left_results:
             for key, value in new_result._result_dict.items():
+                left_result = left_result._result_dict[key]
                 if key in self._mergable_attrs:
                     if not value:
-                        new_result._result_dict[key] = value or left_result._result_dict[key]
+                        new_result._result_dict[key] = value or left_result
 
     def _merge_results_by_profile(self, results, profile):
         """
         Merge results by user given merge profile.
 
         :results: A list with results to be merged.
-
         :returns: A custom result according to profile user specs.
+
         """
         # getting the default result provider
         for name in profile['default']:
@@ -125,9 +137,10 @@ class CustomProvider(provider.IPostprocessing):
                 for provider_name in provider_list:
                     provider_result = self._get_result_by_providername(
                         results, provider_name
-                    )
+                    )._result_dict[key]
+
                     if provider_result:
-                        custom_result._result_dict[key] = provider_result._result_dict[key]
+                        custom_result._result_dict[key] = provider_result
                         break
         return custom_result
 
@@ -137,6 +150,7 @@ class CustomProvider(provider.IPostprocessing):
 
         :param results: A list with result objects.
         :param provider_name: Name of the provider to be search for in results.
+        :returns: Returns provider with given provider_name.
 
         """
         for result in results:
@@ -148,6 +162,7 @@ class CustomProvider(provider.IPostprocessing):
         Group result list by imdbid.
 
         :param results: A list with results to be grouped by imdbid.
+        :returns: Grouped results with imdbid as key
 
         """
         grouped_results = defaultdict(list)

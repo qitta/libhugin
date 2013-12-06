@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+""" String compare utils. """
+
 import difflib
 
 
@@ -13,6 +15,7 @@ def string_similarity_ratio(s1, s2):
     :params s1, s2: Two input strings which will be compared
     :returns: A ratio between 0.0 (not similar at all) and 1.0 (probably the
     same string).
+
     """
     s1 = _clean_movie_title(s1)
     s2 = _clean_movie_title(s2)
