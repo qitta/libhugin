@@ -1,16 +1,33 @@
 #/usr/bin/env python
 # encoding: utf-8
 
-""" Responsible for loading provider, converter and prostprocessing plugins. """
+""" Management module for provider, converter and prostprocessing plugins. """
 
+# 3rd pary
+from yapsy.PluginManager import PluginManager
+
+# hugin
+from hugin.core.provider import IOutputConverter, IPostprocessing
 from hugin.core.provider import IMovieProvider, IPictureProvider
 from hugin.core.provider import IPersonProvider, IProvider
-from hugin.core.provider import IOutputConverter, IPostprocessing
-
-from yapsy.PluginManager import PluginManager
 
 
 class PluginHandler:
+    """
+    Handles management of provider, postprocessing and converter plugins.
+
+    .. note::
+
+        public methods:
+
+            activate_plugins_by_category(category)
+            deactivate_plugins_by_category(category)
+            get_plugins_from_category(category)
+            is_activated(category)
+
+    Categories are Provider, OutputConverter and Postprocessing.
+
+    """
     def __init__(self):
         self._plugin_manager = PluginManager()
         self._category_active = {
@@ -29,10 +46,7 @@ class PluginHandler:
         self._collect_all_plugins()
 
     def _collect_all_plugins(self):
-        '''
-        Collects all provider, converter and prostprocessing plugins.
-
-        '''
+        """ Collects all provider, converter and prostprocessing plugins.  """
         self._plugin_manager.setPluginPlaces([
             'hugin/core/provider',
             'hugin/core/converter',
@@ -59,9 +73,11 @@ class PluginHandler:
         self._plugin_manager.collectPlugins()
 
     def activate_plugins_by_category(self, category):
+        """ Activate plugins from given category. """
         self._toggle_activate_plugins_by_categroy(category)
 
     def deactivate_plugins_by_category(self, category):
+        """ Deactivate plugins from given category. """
         self._toggle_activate_plugins_by_categroy(category)
 
     def _toggle_activate_plugins_by_categroy(self, category):
@@ -83,6 +99,16 @@ class PluginHandler:
         self._category_active[category] = not is_active
 
     def get_plugins_from_category(self, category):
+        """
+        Retrun plugins from the given categrory.
+
+        Gets plugins from given categrory. Plugin name is set according to name
+        given in yapsy plugin file.
+
+        :param categrory: The category plugins to load from.
+        :returns: A list  with plugins.
+
+        """
         plugins = []
         for plugin in self._plugin_from_category[category]:
             plugin.plugin_object.name = plugin.name
@@ -90,6 +116,7 @@ class PluginHandler:
         return plugins
 
     def is_activated(self, category):
+        """ True if category is activated. """
         return self._category_active[category]
 
 if __name__ == '__main__':
