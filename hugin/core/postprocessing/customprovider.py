@@ -15,11 +15,10 @@ import hugin.core.provider as provider
 class CustomProvider(provider.IPostprocessing):
     """Create a custom result.
 
-    .. note::
+    .. autosummary::
 
-        public methods:
+        create_custom_result
 
-            create_custom_result(resultlist)
     """
 
     def __init__(self):
@@ -38,18 +37,17 @@ class CustomProvider(provider.IPostprocessing):
         valid_results = [result for result in results if result.result_dict]
         grouped_results = self._group_by_imdbid(valid_results)
         for results in grouped_results.values():
-            if len(results) > 1:
-                if profile is None:
-                    new_result = self._merge_results_by_priority(results)
-                else:
-                    new_result = self._merge_results_by_profile(
-                        results, profile
-                    )
-                normalized_multi_genre = self._create_multi_provider_genre(
-                    results, 'genre_norm'
+            if profile is None:
+                new_result = self._merge_results_by_priority(results)
+            else:
+                new_result = self._merge_results_by_profile(
+                    results, profile
                 )
-                new_result._result_dict['genre_norm'] = normalized_multi_genre
-                custom_results.append(new_result)
+            normalized_multi_genre = self._create_multi_provider_genre(
+                results, 'genre_norm'
+            )
+            new_result._result_dict['genre_norm'] = normalized_multi_genre
+            custom_results.append(new_result)
         return custom_results
 
     def _create_multi_provider_genre(self, results, genre_key):

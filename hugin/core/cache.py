@@ -13,13 +13,12 @@ class Cache:
     """
     Http response cache with a dict key value behavior.
 
-    .. note::
+    .. autosummary::
 
-        public methods:
-            open(path, cache_name)
-            read(key)
-            write(key, value)
-            close()
+        open
+        read
+        write
+        close
 
     """
     def __init__(self):

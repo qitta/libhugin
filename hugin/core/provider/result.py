@@ -1,24 +1,45 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+""" Represens a finished result that hugin understands. """
+
 
 class Result:
-    """ A Object representing a result. """
+    """
+    A Object representing a result.
+
+    The movie result contains following parameters:
+
+        * provider that was used
+        * the provider filled in result_dict
+        * number of retries used
+        * result type, according to type in query params
+
+    """
 
     def __init__(self, provider, query, result, retries):
+        """
+        A normalized result containing provider and job/result items.
+
+        :param provider: The provider responsible for the result.
+        :param result: The result dict the provider filled in.
+        :param query: The query was used to generate the result dict.
+        :param retries: The number of retries was used to get the job done.
+
+        """
         self._provider = provider
         self._search_params = query
         self._result_type = self._search_params['type']
         self._retries = retries
         self._result_dict = result
 
-    def set_provider(self):
+    @property
+    def provider(self):
         return self._provider
 
+    @provider.setter
     def get_provider(self, provider):
         self._provider = provider
-
-    provider = property(fget=set_provider, fset=get_provider)
 
     @property
     def result_dict(self):

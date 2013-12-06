@@ -8,9 +8,8 @@ from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
 from itertools import zip_longest
 from functools import reduce
-from threading import Lock
 from operator import add
-import sys
+import signal
 import queue
 import copy
 
@@ -27,13 +26,14 @@ class Session:
     """
     Create a hugin session object, the entry point to use libhugin core.
 
-    .. note::
 
-        public methods:
+    .. autosummary::
 
-            create_query()
-            submit(query)
-            submit_async(query)
+        create_query
+        submit
+        submit_async
+        clean_up
+        cancel
 
     """
     def __init__(
@@ -44,10 +44,11 @@ class Session:
         Init a session object with user specified parameters.
 
         :param cache_path: Path of cache to be written to.
-        :param parallel_jobs: Number of simultanous jobs to be used.
+        :param parallel_jobs: Number of simultaneous jobs to be used.
         :param timeout_sec: Timeout for http requests to be used.
 
         """
+        signal.signal(signal.SIGINT, self._signal_handler)
         self._config = {
             'cache_path': cache_path,
             # limit parallel jobs to 4, there is no reason for a huge number of
@@ -88,9 +89,8 @@ class Session:
             'person_picture': []
         }
         self._downloadqueues = []
-        self._futures = []
+        self._submit_futures = []
         self._shutdown_session = False
-        self._global_session_lock = Lock()
 
         # categorize provider for convinience reasons
         for provider in self._provider:
@@ -150,7 +150,7 @@ class Session:
                 job['response'], query
             )
 
-            if job['result'] and job['result'] != []:
+            if job['result']:
                 self._add_to_cache(response)
 
             if job['is_done']:
@@ -162,6 +162,7 @@ class Session:
                     job, downloadqueue, query, results
                 )
         downloadqueue.push(None)
+        print(results)
         return self._select_results_by_strategy(results, query)
 
     def submit(self, query):
@@ -178,17 +179,17 @@ class Session:
             return self._submit(query)
 
     def submit_async(self, query):
-        """ Invoke :func:`submit` asynchronous. """
+        """ Invoke :func:`submit` asynchronously. """
         future = self._async_executor.submit(
             self.submit,
             query
         )
-        self._futures.append(future)
+        self._submit_futures.append(future)
         return future
 
     def _process_flagged_as_done(self, job, downloadqueue, query, results):
         """ Process jobs which are marked as done by provider. """
-        if job['is_done'] or job['result'] == []:
+        if job['result'] == []:
             results.append(self._job_to_result(job, query))
 
     def _process_flagged_as_not_done(self, job, downloadqueue, query, results):
@@ -284,10 +285,12 @@ class Session:
             'retries_left', 'provider'
         ]
         job = {param: None for param in params}
+        # job = types.SimpleNamespace(**{param: None for param in params})
+        # job.provider, job.retries_left = provider, Query['retries']
         job['provider'], job['retries_left'] = provider, query['retries']
         return job
 
-    def _get_provider_for_current_job(self, query):
+    def _get_matching_provider(self, query):
         """ Return provider list with according to params in query. """
         providers = []
         for key, value in self._provider_types.items():
@@ -303,7 +306,7 @@ class Session:
     def _create_jobs_according_to_search_params(self, query):
         """ Create new jobs, according to given search params in query. """
         job_list = []
-        for provider in self._get_provider_for_current_job(query):
+        for provider in self._get_matching_provider(query):
             provider = provider['name']
             job = self._get_job_struct(provider=provider, query=query)
             url_list = job['provider'].build_url(query)
@@ -342,13 +345,17 @@ class Session:
             {'name': provider, 'supported_attrs': provider.supported_attrs}
         )
 
-    def get_postprocessing(self):
+    def postprocessing_plugins(self):
         """ Return prostprocessing filters, this is for test purposes only. """
         return self._postprocessing
 
-    def converter_list(self):
+    def converter_plugins(self):
         """ Return converters, this is for test purposes only. """
         return self._converter
+
+    def provider_plugins(self):
+        """ Return converters, this is for test purposes only. """
+        return self._provider
 
     def clean_up(self):
         """ Do a clean up on keyboard interrupt or submit cancel. """
@@ -357,7 +364,7 @@ class Session:
             print('You pressed Ctrl+C!')
             print('cleaning  up.')
             # kill all pending futures
-            for future in self._futures:
+            for future in self._submit_futures:
                 if future.running() is False and future.done() is False:
                     future.cancel()
             print('waiting for remaining futures to complete.')
@@ -365,12 +372,11 @@ class Session:
             print('closing cache.')
             self._cache.close()
             print('cache closed.')
-            sys.exit(1)
 
     def cancel(self):
         """ Cancel the currently running session. """
         self._shutdown_session = True
 
-    def signal_handler(self, signal, frame):
+    def _signal_handler(self, signal, frame):
         """ Invoke cancel on signal interrupt. """
         self.cancel()

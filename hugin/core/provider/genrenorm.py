@@ -10,10 +10,10 @@ class GenreNormalize:
     """
     Normalize genre according to given provider genre mapping files.
 
-    public methods:
+    ..autosummary ::
 
-        normalize_genre(genre)
-        normalize_genre_list(genre_list)
+        normalize_genre
+        normalize_genre_list
 
     """
     def __init__(self, provider_genre_file):

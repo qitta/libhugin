@@ -16,14 +16,12 @@ class PluginHandler:
     """
     Handles management of provider, postprocessing and converter plugins.
 
-    .. note::
+    .. autosummary::
 
-        public methods:
-
-            activate_plugins_by_category(category)
-            deactivate_plugins_by_category(category)
-            get_plugins_from_category(category)
-            is_activated(category)
+        activate_plugins_by_category
+        deactivate_plugins_by_category
+        get_plugins_from_category
+        is_activated
 
     Categories are Provider, OutputConverter and Postprocessing.
 
@@ -46,7 +44,7 @@ class PluginHandler:
         self._collect_all_plugins()
 
     def _collect_all_plugins(self):
-        """ Collects all provider, converter and prostprocessing plugins.  """
+        """ Collect all provider, converter and postprocessing plugins.  """
         self._plugin_manager.setPluginPlaces([
             'hugin/core/provider',
             'hugin/core/converter',
@@ -74,13 +72,13 @@ class PluginHandler:
 
     def activate_plugins_by_category(self, category):
         """ Activate plugins from given category. """
-        self._toggle_activate_plugins_by_categroy(category)
+        self._toggle_activate_plugins_by_category(category)
 
     def deactivate_plugins_by_category(self, category):
         """ Deactivate plugins from given category. """
-        self._toggle_activate_plugins_by_categroy(category)
+        self._toggle_activate_plugins_by_category(category)
 
-    def _toggle_activate_plugins_by_categroy(self, category):
+    def _toggle_activate_plugins_by_category(self, category):
         plugins = self._plugin_manager.getPluginsOfCategory(category)
         is_active = self._category_active[category]
         for pluginInfo in plugins:

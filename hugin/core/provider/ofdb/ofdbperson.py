@@ -1,14 +1,21 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+# stdlib
 from urllib.parse import quote
 
+# hugin
 from hugin.common.utils.stringcompare import string_similarity_ratio
 from hugin.core.provider.ofdb.ofdbcommon import OFDBCommon
 import hugin.core.provider as provider
 
 
 class OFDBPerson(provider.IPersonProvider):
+    """ OFDB Person text metadata provider.
+
+    Interfaces implemented according to hugin.provider.interfaces.
+
+    """
     def __init__(self):
         self._priority = 90
         self._common = OFDBCommon()
@@ -52,20 +59,21 @@ class OFDBPerson(provider.IPersonProvider):
 
         return None, True
 
-    def _parse_search_module(self, result, search_params):
+    def _parse_search_module(self, response, search_params):
+        """ Parse a search response. Find high prio result. Build urllist."""
         similarity_map = []
-        for result in result['eintrag']:
-            if result['wert'].isnumeric():
+        for response in response['eintrag']:
+            if response['wert'].isnumeric():
                 # a 'hack' for better name matching, as name string often looks
                 # like this 'Emma Roberts (10.02.1991) alias Emma Rose Roberts'
-                clean_name, *_ = result['name'].split('(')
+                clean_name, *_ = response['name'].split('(')
                 ratio = string_similarity_ratio(
                     clean_name,
                     search_params['name']
                 )
                 similarity_map.append(
-                    {'ofdbid': result['wert'],
-                     'ratio': ratio, 'name': result['name']}
+                    {'ofdbid': response['wert'],
+                     'ratio': ratio, 'name': response['name']}
                 )
         # sort by ratio, generate ofdbid list with requestet item count
         similarity_map.sort(
@@ -76,19 +84,19 @@ class OFDBPerson(provider.IPersonProvider):
         personids = [item['ofdbid'] for item in similarity_map[:item_count]]
         return self._common.personids_to_urllist(personids)
 
-    def _parse_person_module(self, result, _):
+    def _parse_person_module(self, response, _):
+        """ Fill in result_dict. """
         result_dict = {k: None for k in self._attrs}
 
         #str attrs
-        result_dict['name'] = result['name']
-        result_dict['imdbid'] = result['imdbid']
-        result_dict['deathday'] = result['gestorben']
+        result_dict['name'] = response['name']
+        result_dict['imdbid'] = response['imdbid']
+        result_dict['deathday'] = response['gestorben']
 
         #list attrs
-        result_dict['alternative_names'] = [result['alternativ']]
-        if result['bild']:
-            result_dict['photo'] = list((None, result['bild']))
-
+        result_dict['alternative_names'] = [response['alternativ']]
+        if response['bild']:
+            result_dict['photo'] = [(None, response['bild'])]
         return result_dict
 
     @property

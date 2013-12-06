@@ -17,19 +17,20 @@ class DownloadQueue:
 
     """ A simple queue/threadpool wrapper for simultanous downloading.
 
-    .. note::
+    .. autosummary::
 
-        public methods:
 
-            push(job)
-            pop()
-            running_jobs()
+        push
+        pop
+        running_jobs
 
     """
     def __init__(
             self, num_threads=4, user_agent='libhugin/1.0', timeout_sec=5,
             local_cache=None):
         """
+        .. todo:: REAL DQ threads, not job sreds!
+
         Set custom downlodqueue parameters.
 
         :param num_threads: Number of threads for simultanous downloading.
@@ -45,22 +46,17 @@ class DownloadQueue:
             'cache-control': 'no-cache'
         }
         self._timeout_sec = timeout_sec
-        self._local_cache = None
-        if local_cache is not None:
-            self._local_cache = local_cache
-
+        self._local_cache = local_cache
         self._url_to_job_lock = Lock()
         self._url_to_job = {}
         self._job_result_queue = Queue()
 
         self._executor = ThreadPoolExecutor(max_workers=self._num_threads)
         self._shutdown_downloadqueue = False
-        self._is_shutdown = False
 
     def _shutdown(self):
         """ Stop the ThreadPool and wait until pending jobs are done. """
         self._executor.shutdown(wait=True)
-        self._is_shutdown = True
 
     def _fetch_url(self, url, timeout_sec):
         """ Fetch a specific url.
@@ -111,11 +107,16 @@ class DownloadQueue:
 
         with self._url_to_job_lock:
             job = self._url_to_job.pop(id(urls))
-            job = self._fill_job_response(job, response_list)
-            self._job_result_queue.put(job)
+        job = self._fill_job_response(job, response_list)
+        self._job_result_queue.put(job)
 
     def _fill_job_response(self, job, response_list):
-        """ Fills job with response data. """
+        """
+        Fills job with response data.
+
+        .. todo:: cache_use und return_code spezifizieren und vollständig machen.
+
+        """
         job['response'], job['return_code'], job['cache_used'] = [], [], []
 
         for response_item in response_list:
@@ -125,18 +126,13 @@ class DownloadQueue:
                 job['response'].append(url_content)
                 job['return_code'].append(header)
                 job['cache_used'].append((url, True))
-            else:
-                if content:
-                    try:
-                        job['response'].append(
-                            (url, self._bytes_to_unicode(content))
-                        )
-                        job['return_code'].append(header)
-                        job['cache_used'].append((url, False))
-                    except AttributeError as e:
-                        print('AttributeError raised in fill job response.', e)
-                    except Exception as e:
-                        print('Uncaught Exception? in full job response.', e)
+            elif content:
+                job['response'].append(
+                    (url, self._bytes_to_unicode(content))
+                )
+                job['return_code'].append(header)
+                job['cache_used'].append((url, False))
+
         return job
 
     def _bytes_to_unicode(self, byte_data):
@@ -175,8 +171,11 @@ class DownloadQueue:
         if self._shutdown_downloadqueue is False:
             urls = job['url']
             id_urllist = id(urls)
-            if urls and id_urllist not in self._url_to_job:
 
+            with self._url_to_job_lock:
+                in_url_to_job = id_urllist in self._url_to_job
+
+            if urls and not in_url_to_job:
                 with self._url_to_job_lock:
                     self._url_to_job[id_urllist] = job
                 job['future'] = self._executor.submit(

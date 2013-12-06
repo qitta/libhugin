@@ -1,17 +1,24 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-from urllib.parse import urlencode, quote_plus
+# stdlib
 from parse import parse
-import hugin.core.provider as provider
+from urllib.parse import urlencode, quote_plus
 import json
 import os
 
+#hugin
 from hugin.common.utils.stringcompare import string_similarity_ratio
 from hugin.core.provider.genrenorm import GenreNormalize
+import hugin.core.provider as provider
 
 
 class OMDBMovie(provider.IMovieProvider):
+    """ OMDB Person text metadata provider.
+
+    Interfaces implemented according to hugin.provider.interfaces.
+
+    """
 
     def __init__(self):
         self._base_url = 'http://www.omdbapi.com/?{query}&plot=full'

@@ -13,12 +13,11 @@ class IProvider(IPlugin):
 
     """ This abstract interface to be implemented by all provider plugins.
 
-    .. note::
+    .. autosummary::
 
-        interfaces:
+        build_url
+        parse_response
 
-            build_url(search_params)
-            parse_response(response, search_params)
     """
 
     def build_url(self, search_params):
@@ -38,12 +37,12 @@ class IProvider(IPlugin):
 
     def parse_response(self, url_response, search_params):
         """
-        Parse a url-http_response tupe.
+        Parse a url-http_response list with tuples.
 
         The provider itself is responsible for parsing its previously requested
         items.
 
-        Possible result return values are ::
+        Possible result return values are:
 
             * list with urls to fetch next
             * a empty list if nothing found
@@ -67,8 +66,8 @@ class IProvider(IPlugin):
         which tells that the database/server had a timeout. In this case just
         return (None, False) and a retry will be triggered.
 
-        :param response: A utf-8 encoded http response.
-        :type response: str
+        :param url_response: A url-response tuple list.
+        :type url_response: list
         :param search_params: See :func: `core.provider.IProvider.search`.
         :returns: A tuple containing a data and a state flag.
 
@@ -94,22 +93,20 @@ class IProvider(IPlugin):
         return isinstance(self, IMovieProvider)
 
     def identify_type(self):
-        types = self._type
+        types = self._types()
         maintype = 'movie' if 'movie' in types else 'person'
         if 'picture' in types:
             return '{maintype}_{subtype}'.format(
                 maintype=maintype,
                 subtype='picture'
             )
-        else:
-            return '{maintype}'.format(maintype=maintype)
+        return maintype
 
     @property
     def is_person_provider(self):
         return isinstance(self, IPersonProvider)
 
-    @property
-    def _type(self):
+    def _types(self):
         provider_types = {
             'person': IPersonProvider,
             'movie': IMovieProvider,
@@ -122,7 +119,7 @@ class IProvider(IPlugin):
         return types
 
     def __repr__(self):
-        types = ', '.join(self._type)
+        types = ', '.join(self._types())
         return '{name} <{type}>'.format(name=self.name, type=types)
 
 

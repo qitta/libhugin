@@ -14,29 +14,22 @@ class Query(UserDict):
             'language', 'search_pictures', 'items', 'use_cache', 'retries',
             'strategy', 'providers'
         ]
-        self.data = {k: None for k in self._query_attrs}
-        self._set_query_values(data)
-        self._set_required_defaults()
 
-    def _set_query_values(self, data):
-        '''
-        Filters all unwanted query params
-        '''
+        self.data = {key: None for key in self._query_attrs}
+        self.data.update({
+            'items': 1,
+            'use_cache': True,
+            'language': '',
+            'retries': 5,
+            'strategy': 'deep'
+        })
+        # self.data.update(data)
         for key, value in data.items():
             if key in self.data:
                 self.data[key] = value
 
-    def _set_required_defaults(self):
-        if self.data['items'] is None:
-            self.data['items'] = 1
-        if self.data['use_cache'] is None:
-            self.data['use_cache'] = True
-        if self.data['language'] is None:
-            self.data['language'] = ''
-        if self.data['retries'] is None:
-            self.data['retries'] = 5
-        if self.data['strategy'] is None:
-            self.data['strategy'] = 'deep'
+        def __getattr__(self, key):
+            return self.data[key]
 
 
 if __name__ == '__main__':

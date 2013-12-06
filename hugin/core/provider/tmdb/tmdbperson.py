@@ -43,6 +43,8 @@ class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
         if '/person/' in url:
             return self._build_result_dict(response), True
 
+        return None, True
+
     def _build_result_dict(self, response):
         result_dict = {k: None for k in self._attrs}
         direct_mapping_str = ['name', 'birthday', 'deathday', 'biography']

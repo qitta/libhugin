@@ -1,16 +1,22 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+# stdlib
 from urllib.parse import quote
-import os
 
+#hugin
 from hugin.common.utils.stringcompare import string_similarity_ratio
-from hugin.core.provider.genrenorm import GenreNormalize
 from hugin.core.provider.ofdb.ofdbcommon import OFDBCommon
+from hugin.core.provider.genrenorm import GenreNormalize
 import hugin.core.provider as provider
 
 
 class OFDBMovie(provider.IMovieProvider):
+    """ OFDB Movie text metadata provider.
+
+    Interfaces implemented according to hugin.provider.interfaces.
+
+    """
     def __init__(self):
         self._priority = 90
         self._common = OFDBCommon()
@@ -38,7 +44,7 @@ class OFDBMovie(provider.IMovieProvider):
         status, retvalue, url, response = self._common.validate_url_response(
             url_response
         )
-
+        # CHECK IF CRITICAL MATCHES
         if status in ['retry', 'critical']:
             return retvalue
 
@@ -55,33 +61,37 @@ class OFDBMovie(provider.IMovieProvider):
             return self._parse_search_module(response, search_params), False
 
         if 'imdb2ofdb' in response_type:
-            return self._parse_imdb2ofdb_module(response, search_params), False
+            return self._parse_imdb2ofdb_module(response), False
 
         if 'movie' in response_type:
-            return self._parse_movie_module(response, search_params), True
+            return self._parse_movie_module(response), True
 
         return None, True
 
-    def _parse_imdb2ofdb_module(self, result, _):
-        return self._common.movieids_to_urllist([result['ofdbid']])
+    def _parse_imdb2ofdb_module(self, response):
+        """ Invoke url build method for movie id found in response. """
+        return self._common.movieids_to_urllist([response['ofdbid']])
 
-    def _parse_search_module(self, result, search_params):
+    def _parse_search_module(self, response, search_params):
+        """ Parse a search response. Find high prio result. Build urllist."""
         # create similarity matrix for title, check agains german and original
         # title, higher ratio wins
         similarity_map = []
-        for result in result['eintrag']:
+        for response in response['eintrag']:
             # Get the title with the highest similarity ratio:
             ratio = 0.0
-            if 'TV-Mini-Serie' not in result['titel_de'] and 'TV-Serie' not in result['titel_de']:
+            if '-Serie' not in response['titel_de']:
                 for title_key in ['titel_de', 'titel_orig']:
                     ratio = max(
                         ratio,
                         string_similarity_ratio(
-                            result[title_key],
+                            response[title_key],
                             search_params['title']
                         )
                     )
-                similarity_map.append({'ofdbid': result['id'], 'ratio': ratio})
+                similarity_map.append(
+                    {'ofdbid': response['id'], 'ratio': ratio}
+                )
 
         # sort by ratio, generate ofdbid list with requestet item count
         similarity_map.sort(
@@ -92,35 +102,36 @@ class OFDBMovie(provider.IMovieProvider):
         matches = [item['ofdbid'] for item in similarity_map[:item_count]]
         return self._common.movieids_to_urllist(matches)
 
-    def _parse_movie_module(self, result, _):
+    def _parse_movie_module(self, response):
+        """ Fill in result_dict. """
         result_dict = {k: None for k in self._attrs}
 
         #str attrs
-        result_dict['title'] = result['titel']
-        result_dict['original_title'] = result['alternativ']
-        result_dict['plot'] = result['beschreibung']
-        result_dict['outline'] = result['kurzbeschreibung']
-        result_dict['imdbid'] = 'tt{0}'.format(result['imdbid'])
-        result_dict['rating'] = result['bewertung']['note']
+        result_dict['title'] = response['titel']
+        result_dict['original_title'] = response['alternativ']
+        result_dict['plot'] = response['beschreibung']
+        result_dict['outline'] = response['kurzbeschreibung']
+        result_dict['imdbid'] = 'tt{0}'.format(response['imdbid'])
+        result_dict['rating'] = response['bewertung']['note']
 
         # number attrs
-        result_dict['vote_count'] = int(result['bewertung']['stimmen'])
-        result_dict['year'] = int(result['jahr'])
+        result_dict['vote_count'] = int(response['bewertung']['stimmen'])
+        result_dict['year'] = int(response['jahr'])
 
         # list attrs
-        result_dict['poster'] = [(None, result['bild'])]
-        result_dict['countries'] = result['produktionsland']
-        result_dict['actors'] = self._extract_person(result['besetzung'])
-        result_dict['directors'] = [r['name'] for r in result['regie']]
-        result_dict['writers'] = self._extract_person(result['drehbuch'])
-        result_dict['genre'] = result['genre']
+        result_dict['poster'] = [(None, response['bild'])]
+        result_dict['countries'] = response['produktionsland']
+        result_dict['actors'] = self._extract_person(response['besetzung'])
+        result_dict['directors'] = [r['name'] for r in response['regie']]
+        result_dict['writers'] = self._extract_person(response['drehbuch'])
+        result_dict['genre'] = response['genre']
         result_dict['genre_norm'] = self._genrenorm.normalize_genre_list(
             result_dict['genre']
         )
-
         return result_dict
 
     def _extract_person(self, persons):
+        """ Extract person information from person response part. """
         person_list = []
         try:
             for person in persons:
