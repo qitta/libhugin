@@ -11,7 +11,15 @@ __all__ = ['IMovieProvider', 'IPersonProvider', 'IPictureProvider',
 
 class IProvider(IPlugin):
 
-    """ This abstract interface to be implemented by all provider plugins. """
+    """ This abstract interface to be implemented by all provider plugins.
+
+    .. note::
+
+        interfaces:
+
+            build_url(search_params)
+            parse_response(response, search_params)
+    """
 
     def build_url(self, search_params):
         """
@@ -19,36 +27,41 @@ class IProvider(IPlugin):
 
 
         The build url method builds a url according to the given search
-        parameters.  The build_url method has to return a list with URI or None
-        if building a search URI fails.
+        parameters.  The build_url method has to return a list with URIs or
+        None if building a search URIs fails.
 
         :param search_params: A dictionary containing query parameters
-        :returns: A url on success, else None
+        :returns: A list with urls on success, else None
 
         """
         raise NotImplementedError
 
-    def parse_response(self, response, search_params):
+    def parse_response(self, url_response, search_params):
         """
-        Parse a response url, http response tupe.
+        Parse a url-http_response tupe.
 
         The provider itself is responsible for parsing its previously requested
-        data via the build_url function.  The result might be a list of new url
-        lists to fetch, a empty list, a finished result object or None if
-        parsing fails.
+        items.
+
+        Possible result return values are ::
+
+            * list with urls to fetch next
+            * a empty list if nothing found
+            * a finished result_dict
+            * None if parsing fails
 
         The method returns a  tuple containing a flag that indicates if
         provider is done. If the flag is True, than there is nothing to do
         left, otherwise the query is not ready yet.
 
-        Possible combinations ::
+        Possible combinations  ::
 
-            valid response      =>  ([[url,...],...], False)
-                                    (None, False)
-                                    ([], True)
-                                    (result, True)
+            * on valid response:     => ([[url_a, url_b, ...],...], False)
+                                        ([], True)
+                                        (result, True)
+                                        (None, False)
 
-            invalid response    => (None, True)
+            * on invalid response:   => (None, True)
 
         The (None, False) case is for provider that may get a valid response
         which tells that the database/server had a timeout. In this case just
