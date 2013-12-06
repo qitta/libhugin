@@ -8,10 +8,19 @@ import shelve
 import os
 
 
-class Cache(object):
+class Cache:
+    """
+    Http response cache with a dict key value behavior.
 
-    """ Http response cache with a dict key value behavior. """
+    .. note::
 
+        public methods:
+            open(path, cache_name)
+            read(key)
+            write(key, value)
+            close()
+
+    """
     def __init__(self):
         self._cache = None
         self._cache_lock = Lock()
