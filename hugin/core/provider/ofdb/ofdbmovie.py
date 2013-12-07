@@ -98,7 +98,7 @@ class OFDBMovie(provider.IMovieProvider):
             key=lambda value: value['ratio'],
             reverse=True
         )
-        item_count = min(len(similarity_map), search_params.items)
+        item_count = min(len(similarity_map), search_params.amount)
         matches = [item['ofdbid'] for item in similarity_map[:item_count]]
         return self._common.movieids_to_urllist(matches)
 

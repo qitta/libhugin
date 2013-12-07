@@ -80,7 +80,7 @@ class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
             similarity_map.append({'tmdbid': item['id'], 'ratio': ratio})
 
         similarity_map.sort(key=lambda value: value['ratio'], reverse=True)
-        item_count = min(len(similarity_map), search_params.items)
+        item_count = min(len(similarity_map), search_params.amount)
         movie_ids = [item['tmdbid'] for item in similarity_map[:item_count]]
         return self._config.build_person_urllist(movie_ids, search_params)
 

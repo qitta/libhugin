@@ -75,7 +75,7 @@ class OMDBMovie(provider.IMovieProvider):
                     {'imdbid': result['imdbID'], 'ratio': ratio}
                 )
         similarity_map.sort(key=lambda value: value['ratio'], reverse=True)
-        item_count = min(len(similarity_map), search_params.items)
+        item_count = min(len(similarity_map), search_params.amount)
         movieids = [item['imdbid'] for item in similarity_map[:item_count]]
         return self._movieids_to_urllist(movieids)
 

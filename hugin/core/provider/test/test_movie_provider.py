@@ -41,20 +41,21 @@ PROVIDER = {
 
 if __name__ == '__main__':
     import unittest
+    from hugin.query import Query
 
     class TestMovie(unittest.TestCase):
 
         def setUp(self):
             self._providers = [p for p in PROVIDER.keys()]
-            self._params = {
+            self._params = Query({
                 'title': 'Sin City',
                 'year': '2005',
                 'imdbid': 'tt0401792',
-                'items': 2,
+                'amount': 2,
                 'type': 'movie',
                 'search_pictures': True,
                 'language': 'en'
-            }
+            })
 
             self._key_types = {
                 'title': str,
@@ -93,7 +94,7 @@ if __name__ == '__main__':
         # specs for further information
         def test_search_title(self):
             for provider in self._providers:
-                self._params['year'] = self._params['imdbid'] = None
+                self._params.year = self._params.imdbid = None
                 result_list = provider.build_url(self._params)
                 self.assertTrue(isinstance(result_list, list))
                 for result in result_list:
@@ -101,7 +102,7 @@ if __name__ == '__main__':
                     self.assertTrue(result is not None)
 
         def test_search_title_year(self):
-            self._params['imdbid'] = None
+            self._params.imdbid = None
             for provider in self._providers:
                 result_list = provider.build_url(self._params)
                 self.assertTrue(isinstance(result_list, list))
@@ -110,20 +111,21 @@ if __name__ == '__main__':
                     self.assertTrue(result is not None)
 
         def test_search_invalid_params(self):
-            self._params = {key: None for key in self._params.keys()}
+            self._params._set_all_none()
+
             for provider in self._providers:
                 result_list = provider.build_url(self._params)
                 self.assertTrue(result_list is None)
 
         def test_search_year_only(self):
-            self._params = {key: None for key in self._params.keys()}
+            self._params._set_all_none()
             for provider in self._providers:
-                self._params['year'] = '2005'
+                self._params.year = '2005'
                 result_list = provider.build_url(self._params)
                 self.assertTrue(result_list is None)
 
         def test_search_imdbid_only(self):
-            self._params['items'] = self._params['title'] = None
+            self._params.amount = self._params.title = None
             for provider in self._providers:
                 result_list = provider.build_url(self._params)
                 self.assertTrue(isinstance(result_list, list))

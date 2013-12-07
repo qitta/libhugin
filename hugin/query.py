@@ -23,7 +23,7 @@ class Query(UserDict):
             'retries': 5,
             'strategy': 'deep'
         })
-        # self.data.update(data)
+
         for key, value in data.items():
             if key in self.data:
                 self.data[key] = value
@@ -31,9 +31,13 @@ class Query(UserDict):
     def __getattr__(self, key):
         return self.data[key]
 
+    def _set_all_none(self):
+        self.data = {key: None for key in self._query_attrs}
+
+
 
 if __name__ == '__main__':
     def create_query(**kwargs):
         return Query(kwargs)
-    q = create_query(wolfgang=223, title='Sin City', name='444')
-    print(q.title)
+    q = create_query(title='Sin City')
+    print(q)

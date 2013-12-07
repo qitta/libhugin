@@ -80,7 +80,7 @@ class OFDBPerson(provider.IPersonProvider):
             key=lambda value: value['ratio'],
             reverse=True
         )
-        item_count = min(len(similarity_map), search_params.items)
+        item_count = min(len(similarity_map), search_params.amount)
         personids = [item['ofdbid'] for item in similarity_map[:item_count]]
         return self._common.personids_to_urllist(personids)
 

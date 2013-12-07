@@ -76,7 +76,7 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
                 similarity_map.append({'tmdbid': result['id'], 'ratio': ratio})
 
         similarity_map.sort(key=lambda value: value['ratio'], reverse=True)
-        item_count = min(len(similarity_map), search_params.items)
+        item_count = min(len(similarity_map), search_params.amount)
         movieids = [item['tmdbid'] for item in similarity_map[:item_count]]
         return self._config.build_movie_urllist(movieids, search_params)
 

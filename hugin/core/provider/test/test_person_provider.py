@@ -30,18 +30,19 @@ PROVIDER = {
 
 if __name__ == '__main__':
     import unittest
+    from hugin.query import Query
 
     class TestMovie(unittest.TestCase):
 
         def setUp(self):
             self._providers = [p for p in PROVIDER.keys()]
-            self._params = {
+            self._params = Query({
                 'name': 'Emma Stone',
                 'items': 1,
                 'type': 'person',
                 'search_pictures': True,
                 'language': 'en',
-            }
+            })
 
             self._key_types = {
                 'name': str,
@@ -74,7 +75,7 @@ if __name__ == '__main__':
                     self.assertTrue(isinstance(result, str))
 
         def test_search_invalid_params(self):
-            self._params = {key: None for key in self._params.keys()}
+            self._params._set_all_none()
             for provider in self._providers:
                 result = provider.build_url(self._params)
                 self.assertTrue(result is None)
