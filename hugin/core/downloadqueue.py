@@ -214,6 +214,7 @@ if __name__ == '__main__':
     from hugin.core.cache import Cache
     import json
     import unittest
+    import types
 
     class TestDownloadQueue(unittest.TestCase):
 
@@ -227,11 +228,11 @@ if __name__ == '__main__':
                 local_cache=self._cache
             )
             self._url = 'http://httpbin.org/status/{code}'
-            self._job = {
+            self._job = types.SimpleNamespace(**{
                 'url': ['http://httpbin.org/get'],
                 'response': None,
                 'return_code': None
-            }
+            })
 
         def test_user_agent(self):
             self._dq_default.push(self._job)
@@ -307,17 +308,17 @@ if __name__ == '__main__':
                 self._dq_default.pop()
 
         def test_downloadqueue_shutdown(self):
-            self.assertTrue(self._dq_default._is_shutdown is False)
+            self.assertTrue(self._dq_default._shutdown_downloadqueue is False)
             self._dq_default.push(None)
-            self.assertTrue(self._dq_default._is_shutdown is True)
+            self.assertTrue(self._dq_default._shutdown_downloadqueue is True)
 
-            self.assertTrue(self._dq_custom._is_shutdown is False)
+            self.assertTrue(self._dq_custom._shutdown_downloadqueue is False)
             self._dq_custom.push(self._job)
-            self.assertTrue(self._dq_custom._is_shutdown is False)
+            self.assertTrue(self._dq_custom._shutdown_downloadqueue is False)
             self._dq_default.push(None)
             self._dq_default.push(None)
             self._dq_default.push(None)
-            self.assertTrue(self._dq_default._is_shutdown is True)
+            self.assertTrue(self._dq_default._shutdown_downloadqueue is True)
 
         def tearDown(self):
             self._cache.close()
