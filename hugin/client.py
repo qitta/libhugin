@@ -30,7 +30,7 @@ def search():
     query = session.create_query(
         type=metatype,
         search_text=True,
-        use_cache=arguments['--use-cache'],
+        cache=arguments['--use-cache'],
         name=arguments['<name>'],
         title=arguments['<title>'],
         imdbid=arguments['<imdbid>'],

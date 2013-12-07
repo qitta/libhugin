@@ -14,30 +14,29 @@ import queue
 import copy
 
 # hugin
+from hugin.common.utils.stringcompare import string_similarity_ratio
 from hugin.core.pluginhandler import PluginHandler
 from hugin.core.downloadqueue import DownloadQueue
 from hugin.core.provider.result import Result
 from hugin.core.cache import Cache
 from hugin.query import Query
-from hugin.common.utils.stringcompare import string_similarity_ratio
 
 
 class Session:
     """
     Create a hugin session object, the entry point to use libhugin core.
 
-
     .. autosummary::
 
         create_query
         submit
         submit_async
-        clean_up
         cancel
+        clean_up
 
     """
     def __init__(
-        self, cache_path='/tmp', parallel_jobs=1,
+        self, cache_path='/tmp', parallel_jobs=2, parallel_downloads_per_job=8,
         timeout_sec=5, user_agent='libhugin/1.0'
     ):
         """
@@ -45,6 +44,7 @@ class Session:
 
         :param cache_path: Path of cache to be written to.
         :param parallel_jobs: Number of simultaneous jobs to be used.
+        :param parallel_downloads_per_job: Number of simultaneous downloads.
         :param timeout_sec: Timeout for http requests to be used.
 
         """
@@ -54,6 +54,7 @@ class Session:
             # limit parallel jobs to 4, there is no reason for a huge number of
             # parallel jobs because of the GIL
             'parallel_jobs': min(4, parallel_jobs),
+            'download_threads': parallel_downloads_per_job,
             'timeout_sec': timeout_sec,
             'user_agent': user_agent,
             'profile': {
@@ -78,7 +79,7 @@ class Session:
         self._cache = Cache()
         self._cache.open()
         self._async_executor = ThreadPoolExecutor(
-            max_workers=4
+            max_workers=self._config['parallel_jobs']
         )
 
         self._cleanup_triggered = False
@@ -106,17 +107,17 @@ class Session:
         :retrun: A configured downloadqueue.
 
         """
-        if query['use_cache']:
+        if query['cache']:
             print('enabling cache.')
-            query['use_cache'] = self._cache
+            query['cache'] = self._cache
         else:
-            query['use_cache'] = None
+            query['cache'] = None
 
         downloadqueue = DownloadQueue(
-            num_threads=self._config['parallel_jobs'],
+            num_threads=self._config['download_threads'],
             timeout_sec=self._config['timeout_sec'],
             user_agent=self._config['user_agent'],
-            local_cache=query['use_cache']
+            local_cache=query['cache']
         )
         self._downloadqueues.append(downloadqueue)
         return downloadqueue
@@ -132,7 +133,7 @@ class Session:
         downloadqueue = self._init_download_queue(query)
 
         for job in self._create_jobs_according_to_search_params(query):
-            if job['is_done']:
+            if job['done']:
                 results.append(self._job_to_result(job, query))
             else:
                 downloadqueue.push(job)
@@ -146,14 +147,14 @@ class Session:
             response = copy.deepcopy(job['response'])
 
             # trigger provider to parse its request and process the result
-            job['result'], job['is_done'] = job['provider'].parse_response(
+            job['result'], job['done'] = job['provider'].parse_response(
                 job['response'], query
             )
 
             if job['result']:
                 self._add_to_cache(response)
 
-            if job['is_done']:
+            if job['done']:
                 self._process_flagged_as_done(
                     job, downloadqueue, query, results
                 )
@@ -189,7 +190,7 @@ class Session:
 
     def _process_flagged_as_done(self, job, downloadqueue, query, results):
         """ Process jobs which are marked as done by provider. """
-        if job['result'] == []:
+        if job['done'] or job['result'] == []:
             results.append(self._job_to_result(job, query))
 
     def _process_flagged_as_not_done(self, job, downloadqueue, query, results):
@@ -202,7 +203,7 @@ class Session:
                 downloadqueue.push(job)
         else:
             job = self._decrement_retries(job)
-            if job['is_done']:
+            if job['done']:
                 results.append(self._job_to_result(job, query))
             else:
                 downloadqueue.push(job)
@@ -275,13 +276,13 @@ class Session:
         if job['retries_left'] > 0:
             job['retries_left'] -= 1
         else:
-            job['is_done'] = True
+            job['done'] = True
         return job
 
     def _get_job_struct(self, provider, query):
         """ Return a job structure. """
         params = [
-            'url', 'future', 'response', 'is_done', 'result', 'return_code',
+            'url', 'future', 'response', 'done', 'result', 'return_code',
             'retries_left', 'provider'
         ]
         job = {param: None for param in params}
@@ -314,7 +315,7 @@ class Session:
             if url_list is not None:
                 job['url'] = url_list
             else:
-                job['is_done'] = True
+                job['done'] = True
             job_list.append(job)
 
         return job_list

@@ -40,6 +40,7 @@ class DownloadQueue:
 
         """
         self._num_threads = min(num_threads, 10)
+        print(self._num_threads)
         self._headers = {
             'User-Agent': user_agent,
             'Connection': 'close',
