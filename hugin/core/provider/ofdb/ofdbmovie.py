@@ -29,14 +29,14 @@ class OFDBMovie(provider.IMovieProvider):
 
     def build_url(self, search_params):
         # not enough search params
-        if search_params['title'] is None and search_params['imdbid'] is None:
+        if search_params.title is None and search_params.imdbid is None:
             return None
 
         # try to search by imdbid if available, else use title
-        if search_params['imdbid']:
-            path, query = 'imdb2ofdb_json', search_params['imdbid']
+        if search_params.imdbid:
+            path, query = 'imdb2ofdb_json', search_params.imdbid
         else:
-            path, query = 'search_json', quote(search_params['title'])
+            path, query = 'search_json', quote(search_params.title)
         return [self._common.base_url.format(path=path, query=query)]
 
     def parse_response(self, url_response, search_params):
@@ -86,7 +86,7 @@ class OFDBMovie(provider.IMovieProvider):
                         ratio,
                         string_similarity_ratio(
                             response[title_key],
-                            search_params['title']
+                            search_params.title
                         )
                     )
                 similarity_map.append(
@@ -98,7 +98,7 @@ class OFDBMovie(provider.IMovieProvider):
             key=lambda value: value['ratio'],
             reverse=True
         )
-        item_count = min(len(similarity_map), search_params['items'])
+        item_count = min(len(similarity_map), search_params.items)
         matches = [item['ofdbid'] for item in similarity_map[:item_count]]
         return self._common.movieids_to_urllist(matches)
 

@@ -26,18 +26,18 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
         }
 
     def build_url(self, search_params):
-        if search_params['imdbid']:
+        if search_params.imdbid:
             return self._config.build_movie_urllist(
-                [search_params['imdbid']],
+                [search_params.imdbid],
                 search_params
             ).pop()
 
-        if search_params['title']:
-            title = quote_plus(search_params['title'])
+        if search_params.title:
+            title = quote_plus(search_params.title)
             query = '{title}&year={year}&language={language}'.format(
                 title=title,
-                year=search_params['year'] or '',
-                language=search_params['language'] or ''
+                year=search_params.year or '',
+                language=search_params.language or ''
             )
             return [self._config.baseurl.format(
                 path='search/movie',
@@ -70,13 +70,13 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
                         ratio,
                         string_similarity_ratio(
                             result[title_key],
-                            search_params['title']
+                            search_params.title
                         )
                     )
                 similarity_map.append({'tmdbid': result['id'], 'ratio': ratio})
 
         similarity_map.sort(key=lambda value: value['ratio'], reverse=True)
-        item_count = min(len(similarity_map), search_params['items'])
+        item_count = min(len(similarity_map), search_params.items)
         movieids = [item['tmdbid'] for item in similarity_map[:item_count]]
         return self._config.build_movie_urllist(movieids, search_params)
 

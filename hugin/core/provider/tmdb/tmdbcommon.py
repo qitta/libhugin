@@ -114,17 +114,17 @@ class TMDBConfig:
             'movie': ['keywords', 'credits', 'alternative_titles', 'trailers']
         }.get(metatype)
 
-        if search_params['search_pictures'] is True:
+        if search_params.search_pictures is True:
             attrs += ['images']
 
         append_to_response = ','.join(attrs)
-        language = search_params['language'] or ''
+        language = search_params.language or ''
 
         url_list = []
         for tmdbid in matches:
             fullpath = '{url_type}/{tmdbid}'.format(
                 tmdbid=tmdbid,
-                url_type=search_params['type']
+                url_type=search_params.type
             )
             url = self.baseurl.format(
                 path=fullpath,

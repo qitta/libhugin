@@ -40,7 +40,6 @@ class DownloadQueue:
 
         """
         self._num_threads = min(num_threads, 10)
-        print(self._num_threads)
         self._headers = {
             'User-Agent': user_agent,
             'Connection': 'close',
@@ -118,21 +117,21 @@ class DownloadQueue:
         .. todo:: cache_use und return_code spezifizieren und vollständig machen.
 
         """
-        job['response'], job['return_code'], job['cache_used'] = [], [], []
+        job.response, job.return_code, job.cache_used = [], [], []
 
         for response_item in response_list:
             header, url_content = response_item
             url, content = url_content
             if header == 'local':
-                job['response'].append(url_content)
-                job['return_code'].append(header)
-                job['cache_used'].append((url, True))
+                job.response.append(url_content)
+                job.return_code.append(header)
+                job.cache_used.append((url, True))
             elif content:
-                job['response'].append(
+                job.response.append(
                     (url, self._bytes_to_unicode(content))
                 )
-                job['return_code'].append(header)
-                job['cache_used'].append((url, False))
+                job.return_code.append(header)
+                job.cache_used.append((url, False))
 
         return job
 
@@ -170,7 +169,7 @@ class DownloadQueue:
             self._shutdown()
 
         if self._shutdown_downloadqueue is False:
-            urls = job['url']
+            urls = job.url
             id_urllist = id(urls)
 
             with self._url_to_job_lock:
@@ -179,7 +178,7 @@ class DownloadQueue:
             if urls and not in_url_to_job:
                 with self._url_to_job_lock:
                     self._url_to_job[id_urllist] = job
-                job['future'] = self._executor.submit(
+                job.future = self._executor.submit(
                     self._fetch_urllist,
                     urls=urls,
                     timeout_sec=self._timeout_sec
@@ -237,7 +236,7 @@ if __name__ == '__main__':
         def test_user_agent(self):
             self._dq_default.push(self._job)
             job = self._dq_default.pop()
-            for url, content in job['response']:
+            for url, content in job.response:
                 response = json.loads(content)
                 self.assertTrue(
                     response['headers']['User-Agent'] == 'katzenbaum/4.2'
@@ -245,36 +244,36 @@ if __name__ == '__main__':
 
         def test_bad_status_codes(self):
             test_codes = ['404', '408', '503']
-            self._job['url'] = [
+            self._job.url = [
                 self._url.format(code=_code) for _code in test_codes
             ]
             self._dq_default.push(self._job)
             job = self._dq_default.pop()
 
-            for code in job['return_code']:
+            for code in job.return_code:
                 self.assertTrue(code['status'] in test_codes)
                 test_codes.remove(code['status'])
 
-            for response in job['response']:
+            for response in job.response:
                 url, content = response
                 self.assertTrue(content is '')
 
         def test_good_status_codes(self):
             test_codes = ['200', '300', '304']
 
-            self._job['url'] = [
+            self._job.url = [
                 self._url.format(code=_code) for _code in test_codes
             ]
-            self._job['response'] = None
+            self._job.response = None
 
             self._dq_default.push(self._job)
             job = self._dq_default.pop()
 
-            for code in job['return_code']:
+            for code in job.return_code:
                 self.assertTrue(code['status'] in test_codes)
                 test_codes.remove(code['status'])
 
-            for response in job['response']:
+            for response in job.response:
                 url, content = response
                 self.assertTrue(content is '')
 
@@ -283,24 +282,24 @@ if __name__ == '__main__':
             job = self._dq_default.pop()
             self._dq_default.push(self._job)
             job = self._dq_default.pop()
-            for code in job['return_code']:
+            for code in job.return_code:
                 self.assertTrue(code != 'local')
                 self.assertTrue(code['status'] == '200')
 
         def test_with_local_cache(self):
             self._dq_default.push(self._job)
             job = self._dq_default.pop()
-            for code in job['return_code']:
+            for code in job.return_code:
                 self.assertTrue(code['status'] == '200')
 
-            for url, content in job['response']:
+            for url, content in job.response:
                 self._cache.write(url, content)
-        #    self._cache.write(job['url'], job['response'])
+        #    self._cache.write(job.url, job.response)
 
             self._dq_custom.push(job)
             job = self._dq_custom.pop()
 
-            for code in job['return_code']:
+            for code in job.return_code:
                 self.assertTrue(code == 'local')
 
         def test_pop_empty(self):

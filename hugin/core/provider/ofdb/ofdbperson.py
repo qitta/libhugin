@@ -25,11 +25,11 @@ class OFDBPerson(provider.IPersonProvider):
         ]
 
     def build_url(self, search_params):
-        if search_params['name']:
+        if search_params.name:
             return [
                 self._common.base_url.format(
                     path='searchperson_json',
-                    query=quote(search_params['name']))
+                    query=quote(search_params.name))
             ]
 
     def parse_response(self, url_response, search_params):
@@ -69,7 +69,7 @@ class OFDBPerson(provider.IPersonProvider):
                 clean_name, *_ = response['name'].split('(')
                 ratio = string_similarity_ratio(
                     clean_name,
-                    search_params['name']
+                    search_params.name
                 )
                 similarity_map.append(
                     {'ofdbid': response['wert'],
@@ -80,7 +80,7 @@ class OFDBPerson(provider.IPersonProvider):
             key=lambda value: value['ratio'],
             reverse=True
         )
-        item_count = min(len(similarity_map), search_params['items'])
+        item_count = min(len(similarity_map), search_params.items)
         personids = [item['ofdbid'] for item in similarity_map[:item_count]]
         return self._common.personids_to_urllist(personids)
 

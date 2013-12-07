@@ -31,15 +31,15 @@ class OMDBMovie(provider.IMovieProvider):
         }
 
     def build_url(self, search_params):
-        if search_params['imdbid']:
+        if search_params.imdbid:
             params = {
-                'i': search_params['imdbid']
+                'i': search_params.imdbid
             }
             return [self._base_url.format(query=urlencode(params))]
-        if search_params['title']:
+        if search_params.title:
             params = {
-                's': quote_plus(search_params['title']) or '',
-                'y': search_params['year'] or ''
+                's': quote_plus(search_params.title) or '',
+                'y': search_params.year or ''
             }
             return [self._base_url.format(query=urlencode(params))]
 
@@ -69,13 +69,13 @@ class OMDBMovie(provider.IMovieProvider):
             if result['Type'] == 'movie':
                 ratio = string_similarity_ratio(
                     result['Title'],
-                    search_params['title']
+                    search_params.title
                 )
                 similarity_map.append(
                     {'imdbid': result['imdbID'], 'ratio': ratio}
                 )
         similarity_map.sort(key=lambda value: value['ratio'], reverse=True)
-        item_count = min(len(similarity_map), search_params['items'])
+        item_count = min(len(similarity_map), search_params.items)
         movieids = [item['imdbid'] for item in similarity_map[:item_count]]
         return self._movieids_to_urllist(movieids)
 

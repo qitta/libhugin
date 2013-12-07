@@ -19,12 +19,12 @@ class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
         ]
 
     def build_url(self, search_params):
-        if search_params['name']:
+        if search_params.name:
             return [
                 self._config.baseurl.format(
                     path='search/person',
                     apikey=self._config.apikey,
-                    query=quote(search_params['name'])
+                    query=quote(search_params.name)
                 )
             ]
 
@@ -75,12 +75,12 @@ class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
         for item in response['results']:
             ratio = string_similarity_ratio(
                 item['name'],
-                search_params['name']
+                search_params.name
             )
             similarity_map.append({'tmdbid': item['id'], 'ratio': ratio})
 
         similarity_map.sort(key=lambda value: value['ratio'], reverse=True)
-        item_count = min(len(similarity_map), search_params['items'])
+        item_count = min(len(similarity_map), search_params.items)
         movie_ids = [item['tmdbid'] for item in similarity_map[:item_count]]
         return self._config.build_person_urllist(movie_ids, search_params)
 

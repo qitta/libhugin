@@ -9,6 +9,7 @@ from collections import defaultdict
 from itertools import zip_longest
 from functools import reduce
 from operator import add
+import types
 import signal
 import queue
 import copy
@@ -107,17 +108,17 @@ class Session:
         :retrun: A configured downloadqueue.
 
         """
-        if query['cache']:
+        if query.cache:
             print('enabling cache.')
-            query['cache'] = self._cache
+            query.cache = self._cache
         else:
-            query['cache'] = None
+            query.cache = None
 
         downloadqueue = DownloadQueue(
             num_threads=self._config['download_threads'],
             timeout_sec=self._config['timeout_sec'],
             user_agent=self._config['user_agent'],
-            local_cache=query['cache']
+            local_cache=query.cache
         )
         self._downloadqueues.append(downloadqueue)
         return downloadqueue
@@ -133,7 +134,7 @@ class Session:
         downloadqueue = self._init_download_queue(query)
 
         for job in self._create_jobs_according_to_search_params(query):
-            if job['done']:
+            if job.done:
                 results.append(self._job_to_result(job, query))
             else:
                 downloadqueue.push(job)
@@ -144,17 +145,17 @@ class Session:
             except queue.Empty:
                 break
 
-            response = copy.deepcopy(job['response'])
+            response = copy.deepcopy(job.response)
 
             # trigger provider to parse its request and process the result
-            job['result'], job['done'] = job['provider'].parse_response(
-                job['response'], query
+            job.result, job.done = job.provider.parse_response(
+                job.response, query
             )
 
-            if job['result']:
+            if job.result:
                 self._add_to_cache(response)
 
-            if job['done']:
+            if job.done:
                 self._process_flagged_as_done(
                     job, downloadqueue, query, results
                 )
@@ -190,20 +191,20 @@ class Session:
 
     def _process_flagged_as_done(self, job, downloadqueue, query, results):
         """ Process jobs which are marked as done by provider. """
-        if job['done'] or job['result'] == []:
+        if job.done or job.result == []:
             results.append(self._job_to_result(job, query))
 
     def _process_flagged_as_not_done(self, job, downloadqueue, query, results):
         """ Process jobs which are marked as not done by provider. """
-        if job['result']:
+        if job.result:
             new_jobs = self._create_new_jobs_from_urls(
-                job['result'], job['provider'], query
+                job.result, job.provider, query
             )
             for job in new_jobs:
                 downloadqueue.push(job)
         else:
             job = self._decrement_retries(job)
-            if job['done']:
+            if job.done:
                 results.append(self._job_to_result(job, query))
             else:
                 downloadqueue.push(job)
@@ -216,7 +217,7 @@ class Session:
         :param query: The query that belongs to the results given.
 
         """
-        if query['strategy'] == 'deep':
+        if query.strategy == 'deep':
             return self._results_deep_strategy(results, query)
         else:
             return self._results_flat_strategy(results, query)
@@ -225,7 +226,7 @@ class Session:
         """ Return results proccessed with deep strategy. """
         results.sort(key=lambda x: x.provider._priority, reverse=True)
         results = self._sort_by_ratio(results, query)
-        return results[:query['items']]
+        return results[:query.amount]
 
     def _results_flat_strategy(self, results, query):
         """ Return results proccessed with flat strategy. """
@@ -239,19 +240,19 @@ class Session:
         results = list(
             filter(None, reduce(add, zip_longest(*result_map.values())))
         )
-        return results[:query['items']]
+        return results[:query.amount]
 
     def _sort_by_ratio(self, results, query):
         """ Sort results by ratio between result and search params. """
         ratio_table = []
-        qry_imdb = query['imdbid']
+        qry_imdb = query.imdbid
         for result in filter(lambda res: res._result_dict, results):
             ratio = 0.0
             if qry_imdb and qry_imdb == result._result_dict['imdbid']:
                 ratio = 1.0
-            elif query['title'] and result._result_dict['title']:
+            elif query.title and result._result_dict['title']:
                 ratio = string_similarity_ratio(
-                    query['title'], result._result_dict['title']
+                    query.title, result._result_dict['title']
                 )
 
             ratio_entry = {'result': result, 'ratio': ratio}
@@ -262,21 +263,21 @@ class Session:
 
     def _job_to_result(self, job, query):
         """ Return a result generated from finished job and query. """
-        retries = query['retries'] - job['retries_left']
+        retries = query.retries - job.retries_left
         result = Result(
-            provider=job['provider'],
+            provider=job.provider,
             query=query,
-            result=job['result'],
+            result=job.result,
             retries=retries
         )
         return result
 
     def _decrement_retries(self, job):
         """ Decrement retries inside job, set to done if no retries left. """
-        if job['retries_left'] > 0:
-            job['retries_left'] -= 1
+        if job.retries_left > 0:
+            job.retries_left -= 1
         else:
-            job['done'] = True
+            job.done = True
         return job
 
     def _get_job_struct(self, provider, query):
@@ -285,21 +286,19 @@ class Session:
             'url', 'future', 'response', 'done', 'result', 'return_code',
             'retries_left', 'provider'
         ]
-        job = {param: None for param in params}
-        # job = types.SimpleNamespace(**{param: None for param in params})
-        # job.provider, job.retries_left = provider, Query['retries']
-        job['provider'], job['retries_left'] = provider, query['retries']
+        job = types.SimpleNamespace(**{param: None for param in params})
+        job.provider, job.retries_left = provider, query.retries
         return job
 
     def _get_matching_provider(self, query):
         """ Return provider list with according to params in query. """
         providers = []
         for key, value in self._provider_types.items():
-            if query['type'] in key:
+            if query.type in key:
                 providers += self._provider_types[key]
 
-        if query['providers']:
-            allowed_provider = [x.upper() for x in query['providers']]
+        if query.providers:
+            allowed_provider = [x.upper() for x in query.providers]
             prov_filter = lambda x: x['name'].name.upper() in allowed_provider
             providers = [x for x in filter(prov_filter, providers)]
         return providers
@@ -310,12 +309,12 @@ class Session:
         for provider in self._get_matching_provider(query):
             provider = provider['name']
             job = self._get_job_struct(provider=provider, query=query)
-            url_list = job['provider'].build_url(query)
+            url_list = job.provider.build_url(query)
 
             if url_list is not None:
-                job['url'] = url_list
+                job.url = url_list
             else:
-                job['done'] = True
+                job.done = True
             job_list.append(job)
 
         return job_list
@@ -325,7 +324,7 @@ class Session:
         jobs = []
         for url_list in urls:
             job = self._get_job_struct(provider=provider, query=query)
-            job['url'] = url_list
+            job.url = url_list
             jobs.append(job)
         return jobs
 
