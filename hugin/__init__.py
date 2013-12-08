@@ -27,6 +27,22 @@ class Session:
     """
     Create a hugin session object, the entry point to use libhugin core.
 
+    Usage:
+
+    .. code-block:: python
+
+        import  hugin
+
+        s = hugin.Session()
+        query = s.create_query(title='Sin City', type='movie', amount=3)
+        results = s.submit(query)
+        print(results)
+
+        [TMDB <picture, movie> ==> movie, Item found: True, Retries: 0,
+        OFDB <movie> ==> movie, Item found: True, Retries: 0,
+        OMDB <movie> ==> movie, Item found: True, Retries: 0]
+
+
     .. autosummary::
 
         create_query
@@ -99,7 +115,34 @@ class Session:
             self._categorize(provider)
 
     def create_query(self, **kwargs):
-        """ Return a query object build of user given kwargs. """
+        """
+        Return a query object build of user given kwargs.
+
+        Movie specific:
+
+            title=<string> - Movie title.
+            year=<number> - Movie release date.
+            imdbid=<string> - The imdbid.
+
+        Person specific:
+
+            name=<string> - Person name.
+
+        General:
+
+            type=<string> - Metadata type movie or person (default=movie).
+            search_text=<boolean> - Search textual metadata (default=True).
+            search_pictures=<boolean> - Search picture metadata (default=True).
+            strategy=<string> - Search strategy deep or flat (default=flat).
+            cache=<boolean> - Use local cache (default=True).
+            retries=<number> - Number of retries to be used (default=5).
+            amount=<number> - Amount of items yout want to get (default=3).
+            providers=<list> - A list with provider name strings (default=all).
+            language=<string> - Language ISO 639-1 Format (default='')
+
+        All invalid key parameters will be filtered.
+
+        """
         return Query(kwargs)
 
     def _init_download_queue(self, query):
@@ -145,8 +188,11 @@ class Session:
             except queue.Empty:
                 break
 
-            response = copy.deepcopy(job.response)
+            if not job.response:
+                results.append(self._job_to_result(job, query))
+                continue
 
+            response = copy.deepcopy(job.response)
             # trigger provider to parse its request and process the result
             job.result, job.done = job.provider.parse_response(
                 job.response, query
@@ -156,15 +202,12 @@ class Session:
                 self._add_to_cache(response)
 
             if job.done:
-                self._process_flagged_as_done(
-                    job, downloadqueue, query, results
-                )
+                results.append(self._job_to_result(job, query))
             else:
                 self._process_flagged_as_not_done(
                     job, downloadqueue, query, results
                 )
         downloadqueue.push(None)
-        print(results)
         return self._select_results_by_strategy(results, query)
 
     def submit(self, query):
@@ -188,11 +231,6 @@ class Session:
         )
         self._submit_futures.append(future)
         return future
-
-    def _process_flagged_as_done(self, job, downloadqueue, query, results):
-        """ Process jobs which are marked as done by provider. """
-        if job.done or job.result == []:
-            results.append(self._job_to_result(job, query))
 
     def _process_flagged_as_not_done(self, job, downloadqueue, query, results):
         """ Process jobs which are marked as not done by provider. """
@@ -328,16 +366,12 @@ class Session:
             jobs.append(job)
         return jobs
 
-    def providers_list(self, category=None):
+    def providers(self, category=None):
         """ List available providers. """
         if category and category in self._provider_types:
             return self._provider_types[category]
         else:
             return self._provider_types
-
-    def provider_types(self):
-        """ List available provider types. """
-        return self._provider_types.keys()
 
     def _categorize(self, provider):
         """ Cagegorizes providers according to its type. """
