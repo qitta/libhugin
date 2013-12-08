@@ -5,10 +5,11 @@ from collections import UserDict
 
 
 class Query(UserDict):
-    '''
-    Simple query object
-    '''
-    def __init__(self, data):
+    """
+    Represents a search query that is passed to the core submit method.
+
+    """
+    def __init__(self, user_data):
         self._query_attrs = [
             'title', 'year', 'name', 'imdbid', 'type', 'search_text',
             'language', 'search_pictures', 'amount', 'cache', 'retries',
@@ -17,27 +18,56 @@ class Query(UserDict):
 
         self.data = {key: None for key in self._query_attrs}
         self.data.update({
-            'amount': 1,
+            'amount': 3,
             'cache': True,
+            'search_text': True,
+            'search_pictures': True,
             'language': '',
             'retries': 5,
-            'strategy': 'deep'
+            'strategy': 'flat'
         })
 
-        for key, value in data.items():
+        self._check_params_inconsistency(user_data)
+
+        for key, value in user_data.items():
             if key in self.data:
                 self.data[key] = value
+
+        self._cleanup_params()
+
+    def _cleanup_params(self):
+        if self.data['type'] == 'movie':
+            self.data.pop('name', None)
+        else:
+            self.data.pop('title', None)
+            self.data.pop('imdbid', None)
+
+    def _check_params_inconsistency(self, data):
+        movie_params = data.get('title') or data.get('imdbid')
+
+        if all([movie_params, data.get('name')]):
+            raise KeyError('You can only search for title/imdbid *or* name.')
+
+        if not any([movie_params, data.get('name')]):
+            raise KeyError('You need to search for title, imdbid or name')
+
+        if not data.get('type'):
+            if 'title' in data or 'imdbid' in data:
+                data.setdefault('type', 'movie')
+            else:
+                data.setdefault('type', 'person')
+
+        if data['type'] not in ['movie', 'person']:
+            raise KeyError('Invalid metadata type {0}'.format(data['type']))
+
+        if all([movie_params, data['type'] == 'person']):
+            raise KeyError('Params and metadatatype dosent match.')
+
+        if all([data.get('name'), data['type'] == 'movie']):
+            raise KeyError('Params and metadatatype dosent match.')
 
     def __getattr__(self, key):
         return self.data[key]
 
     def _set_all_none(self):
         self.data = {key: None for key in self._query_attrs}
-
-
-
-if __name__ == '__main__':
-    def create_query(**kwargs):
-        return Query(kwargs)
-    q = create_query(title='Sin City')
-    print(q)
