@@ -19,7 +19,7 @@ PROVIDER = {
     },
 
     OFDBPerson(): {
-        'name': 'ofdofdbb',
+        'name': 'ofdb',
         'search': 'ofdb_person_search.json',
         'person': 'ofdb_person_response.json',
         'nothing_found': 'ofdb_nothing_found.json',
@@ -150,7 +150,7 @@ if __name__ == '__main__':
         def test_parse_invalid(self):
             for provider in self._providers:
                 result_list, finished = provider.parse_response(
-                    [('fakeurl', None)],
+                    [('fakeurl', '')],
                     self._params
                 )
                 self.assertTrue(finished)

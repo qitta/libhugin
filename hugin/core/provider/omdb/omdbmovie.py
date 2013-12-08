@@ -49,7 +49,7 @@ class OMDBMovie(provider.IMovieProvider):
         try:
             url, response = url_response.pop()
             response = json.loads(response)
-        except (TypeError, IndexError):
+        except (TypeError, ValueError):
             return None, True
 
         if 'Error' in response and response['Error'] in fail_states:

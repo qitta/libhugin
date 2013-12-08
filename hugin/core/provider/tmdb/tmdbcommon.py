@@ -36,11 +36,10 @@ class TMDBConfig:
         url, response = None, None
         try:
             url, response = url_response.pop()
-            response = json.loads(response)
-        except (ValueError, TypeError, IndexError, AttributeError):
+            return url, json.loads(response)
+        except (ValueError, AttributeError):
             print('Error invalid url_response.')
         return url, response
-
 
     def _image_sizes_from(self, image_type):
         """

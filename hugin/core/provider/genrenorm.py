@@ -171,11 +171,3 @@ class GenreNormalize:
             if normalized_genre is not None:
                 normalized.append(normalized_genre)
         return normalized
-
-if __name__ == '__main__':
-    import glob
-    import os
-    print('genre normalization.')
-    for provider_genre in glob.glob('*.genre'):
-        prov = os.path.basename(provider_genre)
-        gn = GenreNormalize(prov)

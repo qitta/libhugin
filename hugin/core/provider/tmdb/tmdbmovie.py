@@ -60,6 +60,8 @@ class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
         if '/movie/' in url:
             return self._parse_movie_module(response), True
 
+        return None, True
+
     def _parse_search_module(self, result, search_params):
         similarity_map = []
         for result in result['results']:
