@@ -27,7 +27,7 @@ class Query(UserDict):
             'strategy': 'flat'
         })
 
-        self._check_params_inconsistency(user_data)
+        self._check_params_contradictory(user_data)
 
         for key, value in user_data.items():
             if key in self.data:
@@ -42,7 +42,7 @@ class Query(UserDict):
             self.data.pop('title', None)
             self.data.pop('imdbid', None)
 
-    def _check_params_inconsistency(self, data):
+    def _check_params_contradictory(self, data):
         movie_params = data.get('title') or data.get('imdbid')
 
         if all([movie_params, data.get('name')]):
