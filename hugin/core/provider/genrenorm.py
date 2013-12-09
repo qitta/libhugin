@@ -141,7 +141,7 @@ class GenreNormalize:
         for line in genre_filerepr.splitlines():
             idx, *genres = line.split(',')
             clean_genres = list(set(self._strip_genre_list(genres)))
-            genre_map.append((idx, (clean_genres)))
+            genre_map.append((idx, clean_genres))
         return genre_map
 
     def normalize_genre(self, genre, output_lang='de'):

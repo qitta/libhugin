@@ -31,16 +31,14 @@ class Session:
 
     .. code-block:: python
 
-        import  hugin
-
-        s = hugin.Session()
-        query = s.create_query(title='Sin City', type='movie', amount=3)
-        results = s.submit(query)
-        print(results)
-
-        [TMDB <picture, movie> ==> movie, Item found: True, Retries: 0,
-        OFDB <movie> ==> movie, Item found: True, Retries: 0,
-        OMDB <movie> ==> movie, Item found: True, Retries: 0]
+        >>> import  hugin
+        >>> s = hugin.Session()
+        >>> query = s.create_query(title='Sin City', type='movie', amount=3)
+        >>> results = s.submit(query)
+        >>> print(results)
+        ... [TMDB <picture, movie> ==> movie, Item found: True, Retries: 0,
+        ... OFDB <movie> ==> movie, Item found: True, Retries: 0,
+        ... OMDB <movie> ==> movie, Item found: True, Retries: 0]
 
 
     .. autosummary::
