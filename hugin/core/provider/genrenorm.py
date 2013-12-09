@@ -69,7 +69,6 @@ class GenreNormalize:
         self._global_genre_map = []
         self._provider_genre_map = {}
         self._init_mapping(provider_genre_file)
-        self._print_mapping(provider_genre_file)
 
     def _init_mapping(self, provider_genre_file):
         """ Initializes mapping structures. """
