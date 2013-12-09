@@ -5,7 +5,7 @@
 from urllib.parse import quote
 
 #hugin
-from hugin.common.utils.stringcompare import string_similarity_ratio
+from hugin.utils.stringcompare import string_similarity_ratio
 from hugin.core.provider.ofdb.ofdbcommon import OFDBCommon
 from hugin.core.provider.genrenorm import GenreNormalize
 import hugin.core.provider as provider

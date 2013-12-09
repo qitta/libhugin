@@ -4,6 +4,7 @@
 """ Genre normalization module. """
 
 import pkgutil
+import os
 
 
 class GenreNormalize:
@@ -75,10 +76,10 @@ class GenreNormalize:
         try:
             # read the genrefiles inside packages
             global_genre_bytes = pkgutil.get_data(
-                __package__, 'normalized_genre.dat'
+                __package__, os.path.join('genrefiles', 'normalized_genre.dat')
             )
             provider_genre_bytes = pkgutil.get_data(
-                __package__, provider_genre_file
+                __package__, os.path.join('genrefiles', provider_genre_file)
             )
 
             # create the mapping according given genre files

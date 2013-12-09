@@ -3,7 +3,7 @@
 
 from urllib.parse import quote
 
-from hugin.common.utils.stringcompare import string_similarity_ratio
+from hugin.utils.stringcompare import string_similarity_ratio
 from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
 import hugin.core.provider as provider
 
@@ -63,7 +63,7 @@ class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
 
         image_entry = response.get('images')
         if image_entry:
-            result_dict['photo'] = self._config._extract_image_by_type(response, 'profiles')
+            result_dict['photo'] = self._config.extract_image_by_type(response, 'profiles')
 
         result_dict['known_for'] = self._parse_movie_credits(
             response['movie_credits']
