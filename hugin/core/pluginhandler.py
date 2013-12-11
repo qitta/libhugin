@@ -8,8 +8,7 @@ from yapsy.PluginManager import PluginManager
 
 # hugin
 from hugin.core.provider import IOutputConverter, IPostprocessing
-from hugin.core.provider import IMovieProvider, IPictureProvider
-from hugin.core.provider import IPersonProvider, IProvider
+from hugin.core.provider import IMovieProvider, IPersonProvider, IProvider
 
 
 class PluginHandler:
@@ -60,7 +59,6 @@ class PluginHandler:
             # sub metadata provider
             'Movie': IMovieProvider,
             'Person': IPersonProvider,
-            'Picture': IPictureProvider,
 
             # output converter
             'OutputConverter': IOutputConverter,

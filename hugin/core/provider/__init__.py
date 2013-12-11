@@ -84,14 +84,6 @@ class IProvider(IPlugin):
         """
         raise NotImplementedError
 
-    @property
-    def is_picture_provider(self):
-        return isinstance(self, IPictureProvider)
-
-    @property
-    def is_movie_provider(self):
-        return isinstance(self, IMovieProvider)
-
     def identify_type(self):
         types = self._types()
         maintype = 'movie' if 'movie' in types else 'person'
@@ -102,20 +94,17 @@ class IProvider(IPlugin):
             )
         return maintype
 
-    @property
-    def is_person_provider(self):
-        return isinstance(self, IPersonProvider)
-
     def _types(self):
         provider_types = {
-            'person': IPersonProvider,
-            'movie': IMovieProvider,
-            'picture': IPictureProvider
+            'person': [IPersonProvider],
+            'movie': [IMovieProvider],
+            'picture': [IMoviePictureProvider, IPersonPictureProvider]
         }
         types = []
-        for string, instance in provider_types.items():
-            if isinstance(self, instance):
-                types.append(string)
+        for string, instances in provider_types.items():
+            for instance in instances:
+                if isinstance(self, instance):
+                    types.append(string)
         return types
 
     def __repr__(self):
@@ -164,6 +153,10 @@ class IMovieProvider(IProvider):
     pass
 
 
+class IMoviePictureProvider(IProvider):
+    pass
+
+
 class IPersonProvider(IProvider):
 
     """ A base class for person metadata plugins. """
@@ -185,10 +178,7 @@ class IPersonProvider(IProvider):
     pass
 
 
-class IPictureProvider(IProvider):
-
-    """ A base class for picture metadata plugins.  """
-
+class IPersonPictureProvider(IProvider):
     pass
 
 

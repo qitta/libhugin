@@ -12,7 +12,7 @@ from hugin.core.provider.genrenorm import GenreNormalize
 import hugin.core.provider as provider
 
 
-class TMDBMovie(provider.IMovieProvider, provider.IPictureProvider):
+class TMDBMovie(provider.IMovieProvider, provider.IMoviePictureProvider):
     def __init__(self):
         self._config = TMDBConfig.get_instance()
         self._priority = 100

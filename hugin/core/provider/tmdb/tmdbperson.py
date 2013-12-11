@@ -8,7 +8,7 @@ from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
 import hugin.core.provider as provider
 
 
-class TMDBPerson(provider.IPersonProvider, provider.IPictureProvider):
+class TMDBPerson(provider.IPersonProvider, provider.IPersonPictureProvider):
     def __init__(self):
         self._config = TMDBConfig.get_instance()
         self._priority = 100
