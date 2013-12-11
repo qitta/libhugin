@@ -72,11 +72,6 @@ class Session:
             'download_threads': parallel_downloads_per_job,
             'timeout_sec': timeout_sec,
             'user_agent': user_agent,
-            'profile': {
-                'default': [],
-                'search_pictures': False,
-                'search_text': True
-            }
         }
 
         self._plugin_handler = PluginHandler()
@@ -253,6 +248,11 @@ class Session:
         :param query: The query that belongs to the results given.
 
         """
+        if query.remove_invalid:
+            print('removing invalid results [items:{}].'.format(len(results)))
+            results = [result for result in results if result._result_dict]
+            print('removing invalid results [items:{}].'.format(len(results)))
+
         if query.strategy == 'deep':
             return self._results_deep_strategy(results, query)
         else:

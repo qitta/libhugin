@@ -20,6 +20,7 @@ class Query(UserDict):
             'amount': 3,
             'cache': True,
             'search': 'text',
+            'remove_invalid': True,
             'language': '',
             'retries': 5,
             'strategy': 'flat'
