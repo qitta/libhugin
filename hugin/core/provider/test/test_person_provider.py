@@ -30,7 +30,7 @@ PROVIDER = {
 
 if __name__ == '__main__':
     import unittest
-    from hugin.query import Query
+    from hugin.core.query import Query
 
     class TestMovie(unittest.TestCase):
 

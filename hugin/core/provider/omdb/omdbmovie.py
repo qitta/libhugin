@@ -98,6 +98,7 @@ class OMDBMovie(provider.IMovieProvider):
         #list attrs
         result_dict['poster'] = [(None, result['Poster'])]
         result_dict['actors'] = result['Actors'].split(',')
+        result_dict['actors'] = [(None, a) for a in result_dict['actors']]
         result_dict['directors'] = result['Director'].split(',')
         result_dict['writers'] = result['Writer'].split(',')
         result_dict['genre'] = result['Genre'].split(',')

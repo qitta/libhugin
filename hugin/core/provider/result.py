@@ -29,7 +29,7 @@ class Result:
         """
         self._provider = provider
         self._search_params = query
-        self._result_type = self._search_params.type
+        self._result_type = self._search_params['type']
         self._retries = retries
         self._result_dict = result
 

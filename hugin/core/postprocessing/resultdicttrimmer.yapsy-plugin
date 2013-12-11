@@ -1,0 +1,9 @@
+[Core]
+Name = RESULTTRIMMER
+Module = resultdicttrimmer
+
+[Documentation]
+Description = Postprocessing plugin to trim strings inside the result dict.
+Author = Christoph Piechula
+Version = 1.0
+Website = n/a

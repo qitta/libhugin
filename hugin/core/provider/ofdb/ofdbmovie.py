@@ -121,24 +121,28 @@ class OFDBMovie(provider.IMovieProvider):
         # list attrs
         result_dict['poster'] = [(None, response['bild'])]
         result_dict['countries'] = response['produktionsland']
-        result_dict['actors'] = self._extract_person(response['besetzung'])
+        result_dict['actors'] = self._extract_person(
+            response['besetzung'], 'actors'
+        )
         result_dict['directors'] = [r['name'] for r in response['regie']]
-        result_dict['writers'] = self._extract_person(response['drehbuch'])
+        result_dict['writers'] = self._extract_person(
+            response['drehbuch'], 'directors'
+        )
         result_dict['genre'] = response['genre']
         result_dict['genre_norm'] = self._genrenorm.normalize_genre_list(
             result_dict['genre']
         )
         return result_dict
 
-    def _extract_person(self, persons):
+    def _extract_person(self, persons, person_type):
         """ Extract person information from person response part. """
         person_list = []
         try:
             for person in persons:
                 role, name = person.get('rolle'), person.get('name')
-                if role:
+                if person_type == 'actors':
                     person_list.append((role, name))
-                else:
+                elif person_type == 'directors':
                     person_list.append(name)
         except (AttributeError, TypeError):
             return []

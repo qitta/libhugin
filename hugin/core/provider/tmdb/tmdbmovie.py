@@ -112,7 +112,11 @@ class TMDBMovie(provider.IMovieProvider, provider.IMoviePictureProvider):
             result, 'backdrops'
         )
         result_dict['trailers'] = self._extract_trailers(result['trailers'])
-        result_dict['collection'] = [result['belongs_to_collection']]
+        if result['belongs_to_collection']:
+            result_dict['collection'] = [result['belongs_to_collection']['name']]
+        else:
+            result_dict['collection'] = []
+
         result_dict['alternative_titles'] = self._config.extract_keyvalue_attrs(
             result['alternative_titles']['titles'], 'iso_3166_1', 'title'
         )

@@ -19,6 +19,8 @@ class IProvider(IPlugin):
         parse_response
 
     """
+    def __init__(self):
+        self.name = 'IProvider'
 
     def build_url(self, search_params):
         """
@@ -115,7 +117,7 @@ class IProvider(IPlugin):
 class IMovieProvider(IProvider):
 
     """ A base class for movie metadata plugins.
-
+<F3>
     .. py:function:: attribute_format
 
         :param title: Was ist der title
