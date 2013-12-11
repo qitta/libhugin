@@ -11,17 +11,15 @@ class Query(UserDict):
     """
     def __init__(self, user_data):
         self._query_attrs = [
-            'title', 'year', 'name', 'imdbid', 'type', 'search_text',
-            'language', 'search_pictures', 'amount', 'cache', 'retries',
-            'strategy', 'providers'
+            'title', 'year', 'name', 'imdbid', 'type', 'language', 'search',
+            'amount', 'cache', 'retries', 'strategy', 'providers'
         ]
 
         self.data = {key: None for key in self._query_attrs}
         self.data.update({
             'amount': 3,
             'cache': True,
-            'search_text': True,
-            'search_pictures': True,
+            'search': 'text',
             'language': '',
             'retries': 5,
             'strategy': 'flat'

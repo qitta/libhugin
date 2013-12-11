@@ -129,7 +129,7 @@ class Session:
         General:
 
             type=<string> - Metadata type movie or person (default=movie).
-            search_text=<boolean> - Search textual metadata (default=True).
+            search=<string> - Search textual, picture or both metadata (default=text).
             search_pictures=<boolean> - Search picture metadata (default=True).
             strategy=<string> - Search strategy deep or flat (default=flat).
             cache=<boolean> - Use local cache (default=True).

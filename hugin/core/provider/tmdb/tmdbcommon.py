@@ -113,7 +113,7 @@ class TMDBConfig:
             'movie': ['keywords', 'credits', 'alternative_titles', 'trailers']
         }.get(metatype)
 
-        if search_params.search_pictures is True:
+        if search_params.search in ['both', 'pictures']:
             attrs += ['images']
 
         append_to_response = ','.join(attrs)

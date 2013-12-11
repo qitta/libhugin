@@ -63,7 +63,9 @@ class TMDBPerson(provider.IPersonProvider, provider.IPersonPictureProvider):
 
         image_entry = response.get('images')
         if image_entry:
-            result_dict['photo'] = self._config.extract_image_by_type(response, 'profiles')
+            result_dict['photo'] = self._config.extract_image_by_type(
+                response, 'profiles'
+            )
 
         result_dict['known_for'] = self._parse_movie_credits(
             response['movie_credits']
