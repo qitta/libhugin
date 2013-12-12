@@ -27,7 +27,7 @@ class OMDBMovie(provider.IMovieProvider):
         self._attrs = {
             'title', 'plot', 'runtime', 'imdbid', 'vote_count', 'rating',
             'directors', 'writers', 'year', 'poster', 'genre', 'genre_norm',
-            'actors'
+            'actors', 'original_title'
         }
 
     def build_url(self, search_params):
@@ -91,6 +91,7 @@ class OMDBMovie(provider.IMovieProvider):
 
         #str attrs
         result_dict['title'] = ''.join(result['Title'].split(','))
+        result_dict['original_title'] = result_dict['title']
         result_dict['plot'] = ''.join(result['Plot'].split(','))
         result_dict['imdbid'] = result['imdbID']
         result_dict['rating'] = result['imdbRating']
