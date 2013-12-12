@@ -3,18 +3,44 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <style type="text/css">
-            <!--
-            .imgleft {
-                float: left;
-                margin: 0px 15px 10px 0px;
-                border: 1px solid #666666;
+            <!-- Taken from the flask theme https://github.com/mitsuhiko/flask-sphinx-themes/blob/master/flask/static/flasky.css_t
+            body {
+                font-family: 'Georgia', serif;
+                font-size: 17px;
+                background-color: white;
+                color: #000;
+                margin: 0;
+                padding: 0;
             }
+            img.floating {
+                padding: 0 0 10px 10px;
+                float: left;
+            }
+            a {
+                color: #004B6B;
+                text-decoration: underline;
+            }
+            a:hover {
+                color: #6D4100;
+                text-decoration: underline;
+              }
+              div.body h1,
+              div.body h2,
+              div.body h3,
+              div.body h4,
+              div.body h5,
+              div.body h6 {
+                  font-family: 'Garamond', 'Georgia', serif;
+                  font-weight: normal;
+                  margin: 30px 0px 10px 0px;
+                  padding: 0;
+              }
         </style>
         <title>{{ provider }}</title>
     </head>
     <h1>{{ original_title }} ({{ year }})</h1>
     <body>
-        <img img class="imgleft" src={{ poster }} style="float:left" alt="cover" width="185" height="278">
+        <img class="floating" src={{ poster }} style="float:left" alt="cover" width="185" height="278">
         <p><b>Filmbeschreibung:</b></p>
         <p>
         {{ plot }}
