@@ -1,0 +1,9 @@
+[Core]
+Name = JSON
+Module = json
+
+[Documentation]
+Description = Converts the movie/person result to json.
+Author = Christoph Piechula
+Version = 1.0
+Website = n/a

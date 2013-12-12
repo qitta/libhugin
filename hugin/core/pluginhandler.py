@@ -109,6 +109,7 @@ class PluginHandler:
         for plugin in self._plugin_from_category[category]:
             plugin.plugin_object.name = plugin.name
             plugins.append(plugin.plugin_object)
+        print(category, plugins)
         return plugins
 
     def is_activated(self, category):
