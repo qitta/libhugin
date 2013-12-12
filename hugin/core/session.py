@@ -249,6 +249,9 @@ class Session:
         :param query: The query that belongs to the results given.
 
         """
+        if not len(results):
+            return results
+
         if query.remove_invalid:
             print('removing invalid results [items:{}].'.format(len(results)))
             results = [result for result in results if result._result_dict]
@@ -282,7 +285,6 @@ class Session:
     def _sort_by_ratio(self, results, query):
         """ Sort results by ratio between result and search params. """
         ratio_table = []
-        # TODO: KeyError because person has no imdbid
         qry_imdb = query.get('imdbid')
         for result in filter(lambda res: res._result_dict, results):
             ratio = 0.0
