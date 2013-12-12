@@ -1,0 +1,9 @@
+[Core]
+Name = HTML
+Module = html
+
+[Documentation]
+Description = Renders result with a beautiful html template.
+Author = Christoph Piechula
+Version = 1.0
+Website = n/a
