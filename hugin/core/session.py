@@ -271,11 +271,13 @@ class Session:
     def _results_flat_strategy(self, results, query):
         """ Return results proccessed with flat strategy. """
         result_map = defaultdict(list)
+        # group by provider
         for result in results:
             result_map[result.provider].append(result)
 
-        for result in result_map.values():
-            result = self._sort_by_ratio(result, query)
+        # sort by ratio
+        for provider, results in result_map.items():
+            result_map[provider] = self._sort_by_ratio(results, query)
 
         results = list(
             filter(None, reduce(add, zip_longest(*result_map.values())))
