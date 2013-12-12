@@ -16,11 +16,12 @@ class ResultDictTrimmer(provider.IPostprocessing):
             'providerid', 'tagline', 'outline'
         ])
         self._listattrs = set([
-            'alternative_titles', 'directors', 'writers', 'countries', 'genre',
+            'directors', 'writers', 'countries', 'genre',
             'genre_norm', 'collection', 'studios', 'keywords'
         ])
         self._tuplestrattrs = set([
-            'fanart', 'crew', 'actors', 'poster', 'fanart', 'trailers'
+            'fanart', 'crew', 'actors', 'poster', 'fanart', 'trailers',
+            'alternative_titles'
         ])
 
     def trim_result(self, result):
