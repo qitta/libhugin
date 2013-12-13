@@ -5,7 +5,6 @@
 from parse import parse
 from urllib.parse import urlencode, quote_plus
 import json
-import os
 
 #hugin
 from hugin.utils.stringcompare import string_similarity_ratio
@@ -66,7 +65,7 @@ class OMDBMovie(provider.IMovieProvider):
     def _parse_search_module(self, result, search_params):
         similarity_map = []
         for result in result['Search']:
-            if result['Type'] == 'movie':
+            if result['Type'] == 'movie' or result['Type'] == 'N/A':
                 ratio = string_similarity_ratio(
                     result['Title'],
                     search_params.title
