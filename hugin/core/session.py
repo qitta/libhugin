@@ -249,13 +249,11 @@ class Session:
         :param query: The query that belongs to the results given.
 
         """
-        if not len(results):
-            return results
-
         if query.remove_invalid:
-            print('removing invalid results [items:{}].'.format(len(results)))
             results = [result for result in results if result._result_dict]
-            print('removing invalid results [items:{}].'.format(len(results)))
+
+        if len(results) == 0:
+            return results
 
         if query.strategy == 'deep':
             return self._results_deep_strategy(results, query)
@@ -292,10 +290,27 @@ class Session:
             ratio = 0.0
             if qry_imdb and qry_imdb == result._result_dict['imdbid']:
                 ratio = 1.0
-            elif query.get('title') and result._result_dict['title']:
-                ratio = string_similarity_ratio(
+            elif query.get('title'):
+                ratio_a = string_similarity_ratio(
+                    query.title, result._result_dict['original_title']
+                )
+                ratio_b = string_similarity_ratio(
                     query.title, result._result_dict['title']
                 )
+                ratio = max(ratio_a or 0.0, ratio_b or 0.0)
+                # TODO: Fix first time wrong results. Maybe sort by year?
+                if query.get('year') and result._result_dict['year']:
+                    a, b = query.get('year'), result._result_dict['year']
+
+                    # lets assume base is the highest value
+                    base = max(a, b)
+
+                    # calculate the abs diff betweeen two years
+                    diff = lambda a, b: abs(base - abs(base - (a - b)))
+
+                    # devide by base to normalize, get pently by sub from 1
+                    pently = 1 - (diff(a, b) / base)
+                    ratio *= pently
 
             ratio_entry = {'result': result, 'ratio': ratio}
             ratio_table.append(ratio_entry)
@@ -370,30 +385,30 @@ class Session:
             jobs.append(job)
         return jobs
 
-    def providers(self, category=None):
-        """ List available providers. """
-        if category and category in self._provider_types:
-            return self._provider_types[category]
-        else:
-            return self._provider_types
-
     def _categorize(self, provider):
         """ Cagegorizes providers according to its type. """
         self._provider_types[provider.identify_type()].append(
             {'name': provider, 'supported_attrs': provider.supported_attrs}
         )
 
-    def postprocessing_plugins(self):
-        """ Return prostprocessing filters, this is for test purposes only. """
-        return self._postprocessing
+    def postprocessing_plugins(self, pluginname=None):
+        return self._get_plugin(self._postprocessing, pluginname)
 
-    def converter_plugins(self):
+    def converter_plugins(self, pluginname=None):
         """ Return converters, this is for test purposes only. """
-        return self._converter
+        return self._get_plugin(self._converter, pluginname)
 
-    def provider_plugins(self):
+    def provider_plugins(self, pluginname=None):
         """ Return converters, this is for test purposes only. """
-        return self._provider
+        return self._get_plugin(self._provider, pluginname)
+
+    def _get_plugin(self, plugins, pluginname=None):
+        if pluginname is None:
+            return plugins
+        else:
+            for plugin in plugins:
+                if pluginname.upper() in plugin.name.upper():
+                    return plugin
 
     def clean_up(self):
         """ Do a clean up on keyboard interrupt or submit cancel. """

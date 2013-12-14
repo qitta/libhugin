@@ -4,6 +4,7 @@
 *.pyc
 *.toc
 *.pdf
+*.json
 docs/_build
 doc/_build
 tmp
