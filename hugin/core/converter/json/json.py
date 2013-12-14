@@ -14,7 +14,8 @@ class Json(provider.IOutputConverter):
         print('Json converter loaded.')
 
     def convert(self, results):
-        return [json.dumps(j._result_dict, sort_keys=True) for j in results if j._result_dict]
-
-    def __repr__(self):
-        return self.name
+        return [
+            json.dumps(
+                j._result_dict, sort_keys=True
+            ) for j in results if j._result_dict
+        ]

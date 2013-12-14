@@ -12,46 +12,59 @@
                 margin: 0;
                 padding: 0;
             }
+            #cover {
+                position: relative;
+                left: 9px; top: 9px;
+
+            }
+            #beschreibung{
+                position: relative;
+                height: auto; width: 800px;
+                left: 9px; top: 19px;
+            }
+            #actors {
+                position: absolute;
+                height: auto; width: auto;
+                margin-left: 200px;
+
+            }
             img.floating {
-                padding: 0 0 10px 10px;
-                float: left;
+                padding: 10px 10px 10px 10px;
+                float: right;
             }
-            a {
-                color: #004B6B;
-                text-decoration: underline;
+            div.body h1,
+            div.body h2,
+            div.body h3,
+            div.body h4,
+            div.body h5,
+            div.body h6 {
+                font-family: 'Garamond', 'Georgia', serif;
+                font-weight: normal;
+                margin: 30px 0px 10px 0px;
+                padding: 0;
             }
-            a:hover {
-                color: #6D4100;
-                text-decoration: underline;
-              }
-              div.body h1,
-              div.body h2,
-              div.body h3,
-              div.body h4,
-              div.body h5,
-              div.body h6 {
-                  font-family: 'Garamond', 'Georgia', serif;
-                  font-weight: normal;
-                  margin: 30px 0px 10px 0px;
-                  padding: 0;
-              }
         </style>
         <title>{{ provider }}</title>
     </head>
     <h1>{{ original_title }} ({{ year }})</h1>
     <body>
+        <div id="cover">
         <img class="floating" src={{ poster }} style="float:left" alt="cover" width="185" height="278">
+</div>
+        <div id="beschreibung">
         <p><b>Filmbeschreibung:</b></p>
         <p>
-        {{ plot }}
+        {{ plot }}</div>
         </p>
-        <p>
+
+        <div id="actors">
         <ul>
             {% for actor in actors %}
             <li>{{ actor }}</li>
             {% endfor %}
         </ul>
-        </p>
+</div>
+
     </body>
 </html>
 

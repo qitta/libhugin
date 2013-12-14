@@ -3,7 +3,7 @@ Name = JSON
 Module = json
 
 [Documentation]
-Description = Converts the movie/person result to json.
+Description = Converts result to json format.
 Author = Christoph Piechula
 Version = 1.0
 Website = n/a
