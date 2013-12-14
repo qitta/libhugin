@@ -84,6 +84,10 @@ class TMDBConfig:
                 images += self.get_image_url(
                     image_entry['file_path'], image_type[:-1]
                 )
+        else:
+            key = '_'.join([image_type[:-1], 'path'])
+            return self.get_image_url(response[key], image_type[:-1])
+
         return images
 
     def extract_keyvalue_attrs(self, data, key_a=None, key_b=None):

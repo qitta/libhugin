@@ -108,6 +108,7 @@ class PluginHandler:
         plugins = []
         for plugin in self._plugin_from_category[category]:
             plugin.plugin_object.name = plugin.name
+            plugin.plugin_object.description = plugin.description
             plugins.append(plugin.plugin_object)
         print(category, plugins)
         return plugins

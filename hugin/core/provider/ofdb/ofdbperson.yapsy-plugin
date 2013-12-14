@@ -1,9 +1,9 @@
 [Core]
-Name = OFDB
+Name = OFDBPerson
 Module = ofdbperson
 
 [Documentation]
-Description = Default ofdb person metadata provider
+Description = Default ofdb person metadata provider.
 Author = Christoph Piechula
 Version = 1.0
 Website = http://www.ofdbgw.org

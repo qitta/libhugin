@@ -169,9 +169,3 @@ class CustomProvider(provider.IPostprocessing):
             if imdbid is not None:
                 grouped_results[imdbid].append(result)
         return grouped_results
-
-    def __repr__(self):
-        return 'custom result postprocessing filter.'
-
-    def get_name(self):
-        return self.name

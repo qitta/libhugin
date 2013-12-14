@@ -1,5 +1,5 @@
 [Core]
-Name = RESULTTRIMMER
+Name = ResultTrimmer
 Module = resultdicttrimmer
 
 [Documentation]

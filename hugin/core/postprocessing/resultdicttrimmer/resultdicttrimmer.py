@@ -69,9 +69,6 @@ class ResultDictTrimmer(provider.IPostprocessing):
     def _trim_person_result(self, resultdict):
         pass
 
-    def __repr__(self):
-        return '{} I am a result dict trimmer.'.format(self.name)
-
 if __name__ == '__main__':
     rdt = ResultDictTrimmer()
     rd = {

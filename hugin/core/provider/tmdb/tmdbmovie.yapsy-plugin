@@ -1,9 +1,9 @@
 [Core]
-Name = TMDB
+Name = TMDBMovie
 Module = tmdbmovie
 
 [Documentation]
-Description = Default movie metadata provider
+Description = Default tmdb movie metadata provider.
 Author = Christoph Piechula
 Version = 1.0
 Website = http://docs.themoviedb.apiary.io/

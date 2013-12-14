@@ -1,9 +1,9 @@
 [Core]
-Name = OMDB
+Name = OMDBMovie
 Module = omdbmovie
 
 [Documentation]
-Description = Default movie metadata provider
+Description = Default omdb movie metadata provider.
 Author = Christoph Piechula
 Version = 1.0
 Website = http://www.omdbapi.com/

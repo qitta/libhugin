@@ -21,6 +21,7 @@ class IProvider(IPlugin):
     """
     def __init__(self):
         self.name = 'IProvider'
+        self.description = 'IProvider description'
 
     def build_url(self, search_params):
         """
@@ -188,13 +189,25 @@ class IPersonPictureProvider(IProvider):
 class IOutputConverter(IPlugin):
 
     """ A base class for output converter plugins.  """
+    def __init__(self):
+        self.name = 'IOutputConverter name placeholder'
+        self.description = 'IOutputConverter description placeholder'
 
-    pass
+    def __repr__(self):
+        return '{name} <{description}>'.format(
+            name=self.name, description=self.description
+        )
 
 
 #  postprocessing plugins
 class IPostprocessing(IPlugin):
 
     """ A base class postprocessing plugins.  """
+    def __init__(self):
+        self.name = 'IOutputConverter name placeholder'
+        self.description = 'IOutputConverter description placeholder'
 
-    pass
+    def __repr__(self):
+        return '{name} <{description}>'.format(
+            name=self.name, description=self.description
+        )
