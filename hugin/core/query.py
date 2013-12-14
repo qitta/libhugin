@@ -39,6 +39,7 @@ class Query(UserDict):
             self.data.pop('name', None)
         else:
             self.data.pop('title', None)
+            self.data.pop('year', None)
             self.data.pop('imdbid', None)
 
     def _check_params_contradictory(self, data):
