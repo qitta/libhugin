@@ -29,7 +29,7 @@ If you want to search for a movie, e.g. ``Only God Forgives``:
    from hugin.core import Session
 
    session = Session()  # Create a sesion.
-   query = session.create_query(title='Only God Fogrives')  # Create a query.
+   query = session.create_query(title='Only God Forgives')  # Create a query.
    results = session.submit(query)  # Search it!
 
    print(results)
@@ -91,7 +91,7 @@ Table of Contents
 
 .. toctree::
     :glob:
-    :maxdepth: 1
+    :maxdepth: 3
 
     developer_api/*
 

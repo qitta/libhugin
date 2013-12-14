@@ -115,44 +115,46 @@ class IProvider(IPlugin):
         return '{name} <{type}>'.format(name=self.name, type=types)
 
 
+#    """ a base class for movie metadata plugins.
+#    .. py:function:: attribute_format
+#
+#        :param title: was ist der title
+#        :type title: [str]
+
 class IMovieProvider(IProvider):
 
-    """ A base class for movie metadata plugins.
-<F3>
-    .. py:function:: attribute_format
+    """ a base class for movie metadata plugins.
 
-        :param title: Was ist der title
-        :type title: [str]
+        .. note:: The movie provider should fill the result dict according to the parameters listened below.
+
+        :param str title': Movie title.
+        :param str original_title': Original Movie title.
+        :param str plot': Movie overview.
+        :param int runtime': Runtime in minutes.
+        :param str imdbid': A imdbid if available.
+        :param int vote_count': A Vote count.
+        :param str rating': A uer rating.
+        :param str providerid': A Provider id.
+        :param list alternative_titles': Alternative titles list as (lang, title) tuple.
+        :param list directors': Movie directors.
+        :param list writers': Movie writers.
+        :param list crew': Movie crew as (position, name) tuple.
+        :param int year': Release date of the movie.
+        :param list poster': A Poster list as (size, url) tuple.
+        :param list fanart': A Fanart list as (size, url) tuple.
+        :param list countries': A list with production countries.
+        :param list genre': A genre list.
+        :param list genre_norm': A libhugin normalized genre list.
+        :param list collection': A list with collections movie belongs to.
+        :param list studios': A list with studios involved in movie production.
+        :param list trailers': A list with tuples (size, trailer url).
+        :param list actors': A actor list with tuples (rolename, name)
+        :param list keywords': A list with movie keywords if available.
+        :param str tagline': A tagline.
+        :param str outline': A outline.
 
     """
 
-    # movie attrs to be documented
-    #
-    #'title': str,
-    #'original_title': str,
-    #'plot': str,
-    #'runtime': int,
-    #'imdbid': str,
-    #'vote_count': int,
-    #'rating': str,
-    #'providerid': str,
-    #'alternative_titles': list,
-    #'directors': list,
-    #'writers': list,
-    #'crew': list,
-    #'year': int,
-    #'poster': list,
-    #'fanart': list,
-    #'countries': list,
-    #'genre': list,
-    #'genre_norm': list,
-    #'collection': list,
-    #'studios': list,
-    #'trailers': list,
-    #'actors': list,
-    #'keywords': list,
-    #'tagline': str,
-    #'outline': str
     pass
 
 
@@ -162,22 +164,24 @@ class IMoviePictureProvider(IProvider):
 
 class IPersonProvider(IProvider):
 
-    """ A base class for person metadata plugins. """
+    """ A base class for person metadata plugins.
 
-    # person attrs to be documented
-    #
-    #'name': str,
-    #'alternative_names': list,
-    #'photo': list,
-    #'birthday': str,
-    #'placeofbirth': str,
-    #'imdbid': str,
-    #'providerid': str,
-    #'homepage': list,
-    #'deathday': str,
-    #'popularity': str,
-    #'biography': str,
-    #'known_for': list
+    .. note:: The movie provider should fill the result dict according to the parameters listened below.
+
+    :param str name': Actor's name.
+    :param list alternative_names': Alternative actor names like 'artist name'.
+    :param list photo': A list with (size, photo url) tuples.
+    :param str birthday': A birthday date.
+    :param str placeofbirth': Place of birth.
+    :param str imdbid': The actors imdbid if available.
+    :param str providerid': The actors provider id.
+    :param list homepage': A list with actor homepages.
+    :param str deathday': A deathday date.
+    :param str popularity': A popularity indicator.
+    :param str biography': A actor biography.
+    :param list known_for': Movies actor is know for.
+
+    """
     pass
 
 
