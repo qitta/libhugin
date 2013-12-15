@@ -46,7 +46,15 @@ class Result:
         return self._result_dict
 
     def __repr__(self):
-        result = self._result_dict is not None and self._result_dict != []
-        return '{0} ==> {1}, Item found: {2}, Retries: {3}'.format(
-            self._provider, self._result_type, result, self._retries
-        )
+        #result = self._result_dict is not None and self._result_dict != []
+        #return '{0} ==> {1}, Item found: {2}, Retries: {3}'.format(
+        #    self._provider, self._result_type, result, self._retries
+        #)
+        if self._result_dict:
+            return '<{0} : {1} ({2})>'.format(
+                self._provider, self._result_dict['title'], self._result_dict['year']
+            )
+        else:
+            return '<{0} : {1}>'.format(
+                self._provider, 'No item found.'
+            )

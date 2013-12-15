@@ -1,7 +1,13 @@
+.. _pluginapi:
+
 Plugin API
 ==========
 
-All plugin providers should inherit from IProvider subclasses.
+.. note::
+
+   This section is for developers who wants to write plugins for libhugin. If
+   you just want to use the library as it is, see :ref:`usermanual`
+
 
 Developing a content provider plugin
 ------------------------------------

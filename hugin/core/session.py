@@ -9,6 +9,7 @@ from collections import defaultdict
 from itertools import zip_longest
 from functools import reduce
 from operator import add
+import math
 import types
 import signal
 import queue
@@ -27,27 +28,16 @@ class Session:
     """
     Create a hugin session object, the entry point to use libhugin core.
 
-    Usage:
+    Example Usage:
 
     .. code-block:: python
 
         >>> import  hugin
         >>> s = hugin.Session()
-        >>> query = s.create_query(title='Sin City', type='movie', amount=3)
+        >>> query = s.create_query(title='Sin City', amount=1)
         >>> results = s.submit(query)
         >>> print(results)
-        ... [TMDB <picture, movie> ==> movie, Item found: True, Retries: 0,
-        ... OFDB <movie> ==> movie, Item found: True, Retries: 0,
-        ... OMDB <movie> ==> movie, Item found: True, Retries: 0]
-
-
-    .. autosummary::
-
-        create_query
-        submit
-        submit_async
-        cancel
-        clean_up
+        ... [TMDB <picture, movie> : Sin City (2005)>]
 
     """
     def __init__(
@@ -110,31 +100,35 @@ class Session:
 
     def create_query(self, **kwargs):
         """
-        Return a query object build of user given kwargs.
+        Validate params and return a :class:`hugin.core.query.Query` object build from user given kwargs.
+
+        The following parameters are possible (default value inside brackets):
 
         Movie specific:
 
-            title=<string> - Movie title.
-            year=<number> - Movie release date.
-            imdbid=<string> - The imdbid.
+        :param str title: Movie title.
+        :param int year: Movie release date.
+        :param str imdbid: The imdbid.
 
         Person specific:
 
-            name=<string> - Person name.
+        :param str name: Person name.
 
         General:
 
-            type=<string> - Metadata type movie or person (default=movie).
-            search=<string> - Search textual, picture or both metadata (default=text).
-            search_pictures=<boolean> - Search picture metadata (default=True).
-            strategy=<string> - Search strategy deep or flat (default=flat).
-            cache=<boolean> - Use local cache (default=True).
-            retries=<number> - Number of retries to be used (default=5).
-            amount=<number> - Amount of items yout want to get (default=3).
-            providers=<list> - A list with provider name strings (default=all).
-            language=<string> - Language ISO 639-1 Format (default='')
+        :param str search: Search textual, picture or both [text].
+        :param str strategy: Search strategy deep or flat [flat].
+        :param bool cache: Use local cache [True].
+        :param int retries: Number of retries per request [5].
+        :param int amount: Number of Items yout want to get [3].
+        :param list providers: A list with provider name strings [all].
+        :param str language: Language `ISO 639-1 <http://en.wikipedia.org/wiki/ISO_639>`_ Format ['']
 
-        All invalid key parameters will be filtered.
+        .. note::
+
+            All invalid key parameters will be filtered.  If there are missing
+            or inconsistent values a KeyError exception will be raised by the
+            Query.
 
         """
         return Query(kwargs)
@@ -302,15 +296,8 @@ class Session:
                 if query.get('year') and result._result_dict['year']:
                     a, b = query.get('year'), result._result_dict['year']
 
-                    # lets assume base is the highest value
-                    base = max(a, b)
-
-                    # calculate the abs diff betweeen two years
-                    diff = lambda a, b: abs(base - abs(base - (a - b)))
-
-                    # devide by base to normalize, get pently by sub from 1
-                    pently = 1 - (diff(a, b) / base)
-                    ratio *= pently
+                    penalty = math.sqrt(1 - (abs(a - b) / max(a, b)))
+                    ratio *= penalty
 
             ratio_entry = {'result': result, 'ratio': ratio}
             ratio_table.append(ratio_entry)

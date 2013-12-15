@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-""" Interface definition for provider, converter and postprocessing plugins."""
+""" This module provides the Interface definition for provider, converter and
+postprocessing plugins.
+
+"""
 
 from yapsy.IPlugin import IPlugin
 
@@ -11,7 +14,9 @@ __all__ = ['IMovieProvider', 'IPersonProvider', 'IPictureProvider',
 
 class IProvider(IPlugin):
 
-    """ This abstract interface to be implemented by all provider plugins.
+    """ Abstract provider base class for movie and person subclasses.
+
+    All content providers have to implement the following two methods:
 
     .. autosummary::
 
@@ -25,22 +30,22 @@ class IProvider(IPlugin):
 
     def build_url(self, search_params):
         """
-        Build a url out of given search params, entry point of all providers.
+        Build a url from given search params.
 
 
-        The build url method builds a url according to the given search
+        The build_url method builds a url according to the given search
         parameters.  The build_url method has to return a list with URIs or
         None if building a search URIs fails.
 
-        :param search_params: A dictionary containing query parameters
-        :returns: A list with urls on success, else None
+        :param list search_params: A dictionary containing query parameters
+        :returns list: A list with urls on success, else None
 
         """
         raise NotImplementedError
 
     def parse_response(self, url_response, search_params):
         """
-        Parse a url-http_response list with tuples.
+        Parse a previously requested http response.
 
         The provider itself is responsible for parsing its previously requested
         items.
@@ -125,7 +130,10 @@ class IMovieProvider(IProvider):
 
     """ a base class for movie metadata plugins.
 
-        .. note:: The movie provider should fill the result dict according to the parameters listened below.
+        .. note::
+
+            The movie provider should fill the result dict according to the
+            parameters listened below.
 
         :param str title': Movie title.
         :param str original_title': Original Movie title.
