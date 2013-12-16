@@ -3,10 +3,10 @@
 Libhugin usage
 ==============
 
-.. _clientusage:
+.. _cmdtool:
 
-Using libhugin Client
----------------------
+Using libhugin commandline tool
+--------------------------------
 
 Client to be developed.
 

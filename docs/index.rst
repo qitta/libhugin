@@ -34,9 +34,9 @@ For a short demo - let's search for the movie **Sin City**:
 
    >>> print(results)
 
-   ... [<TMDBMovie <picture, movie> : Sin City (2005)>,
-   ...  <OFDBMovie <movie> : Sin City (2005)>,
-   ...  <OMDBMovie <movie> : Sin City (2005)>]
+   [<TMDBMovie <picture, movie> : Sin City (2005)>,
+   <OFDBMovie <movie> : Sin City (2005)>,
+   <OMDBMovie <movie> : Sin City (2005)>]
 
 
 Easy as pie - isn't it?
@@ -45,43 +45,10 @@ The same way you can search for person metadata. It is also possible to search
 by *imdb* movie id. For more information about library usage see:
 :ref:`libraryusage`.
 
-For simple scripting task or console usage there is also a minmalistic client
-available, see: :ref:`clientusage`.
-
-.. _core:
-
-libhugin core
-~~~~~~~~~~~~~
-
-The libhugin core part is responsible for fetching metadata from different
-webservices like
-
-    * `TMDB <http://www.themoviedb.org/documentation/api>`_
-    * `OFDB <http://www.ofdbgw.org>`_
-    * `OMDB <http://www.omdbapi.com>`_
-
-to search for movie and person metadata including pictures.
-
-As libhugin is a modular library, you can write a content provider yourself and
-extend libhugins search horizon. For provider plugin development see developer
-section: :ref:`pluginapi`
+For simple scripting task or console usage there is also a minmalistic console
+tool available, see: :ref:`cmdtool`.
 
 
-.. _analyze:
-
-libhugin analyze
-~~~~~~~~~~~~~~~~
-
-Currently, the analyze part's purpose is to identify missing or invalid metadata
-to improve the quality of a existing movie collection.  For more information
-about libhugins analyze part see: `libhugin analyze.`
-
-The analyze part of the library might be extended to analyse and harvest new
-information from your movie collection anytime soon. This could be done by using
-different data mining algorithms and do stuff like:
-
-    * extracting plot keywords
-    * analyse similary of movies by genre, director, etc...
 
 
 Table of Contents
