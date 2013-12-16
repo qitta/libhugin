@@ -10,9 +10,6 @@ import hugin.core.provider as provider
 
 class Json(provider.IOutputConverter):
 
-    def __init__(self):
-        print('Json converter loaded.')
-
     def convert(self, results):
         return [
             json.dumps(

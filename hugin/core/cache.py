@@ -37,7 +37,7 @@ class Cache:
             if not os.path.exists(path):
                 os.mkdir(path)
             self._cache = shelve.open(full_path)
-            print('cache opened.')
+            # print('cache opened.')
 
     def read(self, key):
         """ Read data from cache at position of key.
@@ -71,7 +71,7 @@ class Cache:
         else:
             self._cache.sync()
             self._cache.close()
-            print('cache closed.')
+            # print('cache closed.')
             self._cache = None
 
 if __name__ == '__main__':

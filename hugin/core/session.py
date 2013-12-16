@@ -140,7 +140,7 @@ class Session:
 
         """
         if query.cache:
-            print('enabling cache.')
+            # print('enabling cache.')
             query.cache = self._cache
         else:
             query.cache = None
@@ -409,9 +409,9 @@ class Session:
                     future.cancel()
             print('waiting for remaining futures to complete.')
             self._async_executor.shutdown(wait=True)
-            print('closing cache.')
+            # print('closing cache.')
             self._cache.close()
-            print('cache closed.')
+            # print('cache closed.')
 
     def cancel(self):
         """ Cancel the currently running session. """
