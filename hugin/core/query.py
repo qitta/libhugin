@@ -29,7 +29,7 @@ class Query(UserDict):
         self._check_params_contradictory(user_data)
 
         for key, value in user_data.items():
-            if key in self.data:
+            if key in self.data and value:
                 self.data[key] = value
 
         self._cleanup_params()
