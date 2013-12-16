@@ -14,12 +14,32 @@ class Html(provider.IOutputConverter):
     def __init__(self):
         self._templateLoader = FileSystemLoader('hugin/core/converter/html')
         self._templateEnv = Environment(loader=self._templateLoader)
-        self._template = self._templateEnv.get_template('template.html')
+        self._movie_template = self._templateEnv.get_template('mtemplate.html')
+        self._person_template = self._templateEnv.get_template('ptemplate.html')
+        self.file_ext = '.html'
 
     def convert(self, result):
         if not isinstance(result, Result):
             return None
 
+        if result._result_type == 'person':
+            return self._convert_person(result)
+
+        if result._result_type == 'movie':
+            return self._convert_movie(result)
+
+    def _convert_person(self, result):
+        data = {'provider': result.provider}
+        data.update(result._result_dict)
+        if data['photo']:
+            size, photo = data.get('photo').pop()
+            data['photo'] = photo
+        else:
+            data['photo'] = 'http://img.ofdb.de/film/na.gif'
+        print('inside person')
+        return self._person_template.render(data)
+
+    def _convert_movie(self, result):
         data = {'provider': result.provider}
         data.update(result._result_dict)
         if data['poster']:
@@ -28,4 +48,4 @@ class Html(provider.IOutputConverter):
         else:
             data['poster'] = 'http://img.ofdb.de/film/na.gif'
         data['actors'] = [a[1] for a in data['actors']]
-        return self._template.render(data)
+        return self._movie_template.render(data)

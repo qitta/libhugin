@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <style type="text/css">
+            <!-- Taken from the flask theme https://github.com/mitsuhiko/flask-sphinx-themes/blob/master/flask/static/flasky.css_t
+            body {
+                font-family: 'Georgia', serif;
+                font-size: 17px;
+                background-color: white;
+                color: #000;
+                margin: 0;
+                padding: 0;
+            }
+            #cover {
+                position: relative;
+                left: 9px; top: 9px;
+
+            }
+            #beschreibung{
+                position: relative;
+                height: auto; width: 800px;
+                left: 9px; top: 19px;
+            }
+            #actors {
+                position: absolute;
+                height: auto; width: auto;
+                margin-left: 200px;
+
+            }
+            img.floating {
+                padding: 10px 10px 10px 10px;
+                float: right;
+            }
+            div.body h1,
+            div.body h2,
+            div.body h3,
+            div.body h4,
+            div.body h5,
+            div.body h6 {
+                font-family: 'Garamond', 'Georgia', serif;
+                font-weight: normal;
+                margin: 30px 0px 10px 0px;
+                padding: 0;
+            }
+        </style>
+        <title>{{ provider }}</title>
+    </head>
+    <h1>{{ name }}</h1>
+    <body>
+        <div id="cover">
+        <img class="floating" src={{ photo }} style="float:left" alt="cover" width="185" height="278">
+</div>
+        <div id="beschreibung">
+        <p><b>Biografie:</b></p>
+        <p>
+        {{ biography }}</div>
+        </p>
+
+    </body>
+</html>
+
