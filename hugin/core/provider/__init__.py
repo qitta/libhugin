@@ -205,6 +205,15 @@ class IOutputConverter(IPlugin):
         self.name = 'IOutputConverter name placeholder'
         self.description = 'IOutputConverter description placeholder'
 
+    def convert(self, result):
+        """ Convert a single result object.
+
+        :param result: A result object with a valid result_dict.
+        :returns: A to the output coverter specified string repr of the result.
+
+        """
+        raise NotImplementedError
+
     def __repr__(self):
         return '{name} <{description}>'.format(
             name=self.name, description=self.description
@@ -218,6 +227,15 @@ class IPostprocessing(IPlugin):
     def __init__(self):
         self.name = 'IOutputConverter name placeholder'
         self.description = 'IOutputConverter description placeholder'
+
+    def process(self, result):
+        """ Convert a single result object.
+
+        :param result: A result object with a valid result_dict.
+        :returns: A to the output coverter specified string repr of the result.
+
+        """
+        raise NotImplementedError
 
     def __repr__(self):
         return '{name} <{description}>'.format(

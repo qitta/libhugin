@@ -25,7 +25,7 @@ class CustomProvider(provider.IPostprocessing):
         # attrs to be merged on auto merge
         self._mergable_attrs = ['title', 'plot']
 
-    def create_custom_result(self, results, profile=None):
+    def process(self, results, profile=None):
         """
         Merge results to fill gaps or create results defined by profile.
 

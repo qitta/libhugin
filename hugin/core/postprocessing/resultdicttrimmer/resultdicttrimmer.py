@@ -24,7 +24,7 @@ class ResultDictTrimmer(provider.IPostprocessing):
             'alternative_titles'
         ])
 
-    def trim_result(self, result):
+    def process(self, result):
         if result._result_dict:
             if result._result_type == 'movie':
                 self._trim_movie_result(result._result_dict)
