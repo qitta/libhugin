@@ -139,11 +139,14 @@ if __name__ == '__main__':
     if args['--imdbid'] or args['--title']:
         if args['--year']:
             args['--year'] = int(args['--year'])
+        if args['--providers']:
+            providers = args['--providers'].pop().split(',')
         q = session.create_query(
             title=args['--title'],
             year=args['--year'],
             imdbid=args['--imdbid'],
             language=args['--language'],
+            providers=providers,
             amount=args['--amount']
         )
         results = session.submit(q)
