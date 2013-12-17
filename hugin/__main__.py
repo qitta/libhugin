@@ -4,7 +4,7 @@
 """Libhugin commandline tool.
 
 Usage:
-  cli.py (-t <title>) [-y <year>] [-a <amount>] [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>]
+  cli.py (-t <title>) [-y <year>] [-a <amount>] [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>] [-P=<pm>]
   cli.py (-i <imdbid>) [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>]
   cli.py (-n <name>) [--items <num>] [-p <providers>...] [-c <converter>] [-o <path>]
   cli.py list-provider
@@ -23,6 +23,7 @@ Options:
   -o, --output=<path>               Output folder for converter result [default: /tmp].
   -a, --amount=<amount>             Amount of items to retrieve.
   -l, --language=<lang>             Language in ISO 639-1 [default: de]
+  -P, --predator-mode               The magic 'fuzzy search' mode.
   -v, --version                     Show version.
   -h, --help                        Show this screen.
 
@@ -132,7 +133,6 @@ if __name__ == '__main__':
     import pprint
 
     args = docopt(__doc__, version="Libhugin 'gylfie' clitool v0.1")
-    print(args)
 
     session = Session()
 
@@ -140,13 +140,14 @@ if __name__ == '__main__':
         if args['--year']:
             args['--year'] = int(args['--year'])
         if args['--providers']:
-            providers = args['--providers'].pop().split(',')
+            args['--providers'] = args['--providers'].pop().split(',')
         q = session.create_query(
             title=args['--title'],
             year=args['--year'],
             imdbid=args['--imdbid'],
             language=args['--language'],
-            providers=providers,
+            providers=args['--providers'],
+            fuzzysearch=args['--predator-mode'],
             amount=args['--amount']
         )
         results = session.submit(q)

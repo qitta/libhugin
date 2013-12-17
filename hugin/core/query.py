@@ -12,7 +12,8 @@ class Query(UserDict):
     def __init__(self, user_data):
         self._query_attrs = [
             'title', 'year', 'name', 'imdbid', 'type', 'language', 'search',
-            'amount', 'cache', 'retries', 'strategy', 'providers'
+            'amount', 'cache', 'retries', 'strategy', 'providers',
+            'fuzzysearch'
         ]
 
         self.data = {key: None for key in self._query_attrs}
@@ -23,6 +24,7 @@ class Query(UserDict):
             'remove_invalid': True,
             'language': '',
             'retries': 5,
+            'fuzzysearch': False,
             'strategy': 'flat'
         })
 

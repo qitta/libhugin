@@ -14,6 +14,8 @@ import types
 import signal
 import queue
 import copy
+import requests
+import re
 
 # hugin
 from hugin.utils.stringcompare import string_similarity_ratio
@@ -145,6 +147,10 @@ class Session:
         else:
             query.cache = None
 
+        if query['fuzzysearch']:
+            self._fuzzy_search(query)
+
+
         downloadqueue = DownloadQueue(
             num_threads=self._config['download_threads'],
             timeout_sec=self._config['timeout_sec'],
@@ -234,6 +240,15 @@ class Session:
                 results.append(self._job_to_result(job, query))
             else:
                 downloadqueue.push(job)
+
+    def _fuzzy_search(self, query):
+        if query['title'] and query['imdbid'] is None:
+            fmt = 'http://www.google.com/search?q={title}+imdb&btnI=745'
+            url = requests.get(fmt.format(title=query['title'])).url
+            imdbids = re.findall('\/tt\d*/', url)
+            if imdbids:
+                query['imdbid'] = imdbids.pop().strip('/')
+
 
     def _select_results_by_strategy(self, results, query):
         """
