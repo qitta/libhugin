@@ -25,6 +25,14 @@ class ResultDictTrimmer(provider.IPostprocessing):
         ])
 
     def process(self, result):
+        if isinstance(result, list):
+            self.trim_result_list(result)
+        else:
+            self.trim_result(result)
+
+
+
+    def trim_result(self, result):
         if result._result_dict:
             if result._result_type == 'movie':
                 self._trim_movie_result(result._result_dict)

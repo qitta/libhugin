@@ -93,7 +93,8 @@ class TMDBMovie(provider.IMovieProvider, provider.IMoviePictureProvider):
         ]
         for keymap in strattr_keymap:
             key_result, key_response = keymap.split(':', maxsplit=1)
-            result_dict[key_result] = str(result[key_response])
+            if result[key_response]:
+                result_dict[key_result] = str(result[key_response])
 
         # list attrs
         crew = self._config.extract_keyvalue_attrs(

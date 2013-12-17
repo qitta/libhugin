@@ -23,7 +23,14 @@ class CustomProvider(provider.IPostprocessing):
 
     def __init__(self):
         # attrs to be merged on auto merge
-        self._mergable_attrs = ['title', 'plot']
+        self._mergable_attrs = ['title', 'plot', 'genre', 'genre_norm']
+        self._keys = [
+            'title', 'original_title', 'plot', 'runtime', 'imdbid',
+            'vote_count', 'rating', 'providerid', 'alternative_titles',
+            'directors', 'writers', 'crew', 'year', 'poster', 'fanart',
+            'countries', 'genre', 'genre_norm', 'collection', 'studios',
+            'trailers', 'actors', 'keywords', 'tagline', 'outline'
+        ]
 
     def process(self, results, profile=None):
         """
@@ -74,10 +81,12 @@ class CustomProvider(provider.IPostprocessing):
 
         :returns: A result object with custom provider labeling.
         """
+        result_dict = {key:None for key in self._keys}
+        result_dict.update(result.result_dict)
         return Result(
             provider=provider_name,
             query=result._search_params,
-            result=copy.deepcopy(result._result_dict),
+            result=result_dict,
             retries=0
         )
 
@@ -108,9 +117,11 @@ class CustomProvider(provider.IPostprocessing):
         :param left_result: Results left for automatic attrs filling.
 
         """
-        for left_result in left_results:
+        for result in left_results:
             for key, value in new_result._result_dict.items():
-                left_result = left_result._result_dict[key]
+                if not result._result_dict.get(key):
+                    continue
+                left_result = result._result_dict[key]
                 if key in self._mergable_attrs:
                     if not value:
                         new_result._result_dict[key] = value or left_result

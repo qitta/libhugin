@@ -4,8 +4,8 @@
 """Libhugin commandline tool.
 
 Usage:
-  cli.py (-t <title>) [-y <year>] [-a <amount>] [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>] [-P=<pm>]
-  cli.py (-i <imdbid>) [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>]
+  cli.py (-t <title>) [-y <year>] [-a <amount>] [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>] [-P <pm>]  [-r <processor>]
+  cli.py (-i <imdbid>) [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>] [-r <processor>]
   cli.py (-n <name>) [--items <num>] [-p <providers>...] [-c <converter>] [-o <path>]
   cli.py list-provider
   cli.py list-converter
@@ -20,6 +20,7 @@ Options:
   -i, --imdbid=<imdbid>             A imdbid prefixed with tt.
   -p, --providers=<providers>       Providers to be used.
   -c, --convert=<converter>         Converter to be used.
+  -r, --postprocess=<processor>     Postprocessor to be used.
   -o, --output=<path>               Output folder for converter result [default: /tmp].
   -a, --amount=<amount>             Amount of items to retrieve.
   -l, --language=<lang>             Language in ISO 639-1 [default: de]
@@ -65,9 +66,9 @@ def wrap_width(text, width=80):
         return textwrap.fill(text, width)
 
 
-def create_movie_cliout(movie):
+def create_movie_cliout(num, movie):
     fmt = """
-# Provider: {provider} ########################################################
+{num}) Provider: {provider} ########################################################
 
 * Title: {title} ({year}), imdbid: {imdbid}, raiting: {rating}
 * Cover Url: {poster}
@@ -80,6 +81,7 @@ Plot: {plot}
 
     """
     kwargs = movie._result_dict
+    kwargs.setdefault('num', num)
     kwargs.setdefault('provider', movie.provider)
     kwargs['poster'] = _get_image(kwargs['poster'])
     kwargs['plot'] = wrap_width(kwargs['plot'])
@@ -88,7 +90,7 @@ Plot: {plot}
 
 def create_person_cliout(person):
     fmt = """
-# Provider: {provider} ########################################################
+{num}) Provider: {provider} ########################################################
 
 Name: {name}
 Photo: {photo}
@@ -96,6 +98,7 @@ Biography: {biography}
 Known for: {known_for}
     """
     kwargs = person._result_dict
+    kwargs.setdefault('num', num)
     kwargs.setdefault(
         'biography', kwargs.get('biography') or 'No data found.'
     )
@@ -109,7 +112,13 @@ Known for: {known_for}
 
 
 def output(args, results, session):
-    for result in results:
+    if args['--postprocess']:
+        processor = session.postprocessing_plugins(args['--postprocess'])
+        if processor:
+            pp_result = processor.process(results)
+            if pp_result:
+                results += pp_result
+    for num, result in enumerate(results, start=1):
         if args['--convert']:
             converter = session.converter_plugins(args['--convert'])
             if not converter:
@@ -123,9 +132,9 @@ def output(args, results, session):
                     )
                     f.write(converter.convert(result))
         if result._result_type == 'person':
-            print(create_person_cliout(result))
+            print(create_person_cliout(num, result))
         else:
-            print(create_movie_cliout(result))
+            print(create_movie_cliout(num, result))
 
 
 if __name__ == '__main__':
@@ -135,12 +144,13 @@ if __name__ == '__main__':
     args = docopt(__doc__, version="Libhugin 'gylfie' clitool v0.1")
 
     session = Session()
-
     if args['--imdbid'] or args['--title']:
         if args['--year']:
             args['--year'] = int(args['--year'])
         if args['--providers']:
             args['--providers'] = args['--providers'].pop().split(',')
+        if args['--amount']:
+            args['--amount'] = int(args['--amount'])
         q = session.create_query(
             title=args['--title'],
             year=args['--year'],

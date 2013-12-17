@@ -162,8 +162,15 @@ class IMovieProvider(IProvider):
         :param str outline': A outline.
 
     """
-
-    pass
+    def __init__(self):
+        self._keys = [
+            'title', 'original_title', 'plot', 'runtime', 'imdbid',
+            'vote_count', 'rating', 'providerid', 'alternative_titles',
+            'directors', 'writers', 'crew', 'year', 'poster', 'fanart',
+            'countries', 'genre', 'genre_norm', 'collection', 'studios',
+            'trailers', 'actors', 'keywords', 'tagline', 'outline'
+        ]
+        raise NotImplementedError
 
 
 class IMoviePictureProvider(IProvider):
@@ -190,7 +197,13 @@ class IPersonProvider(IProvider):
     :param list known_for': Movies actor is know for.
 
     """
-    pass
+    def __init__(self):
+        self._keys = [
+            'name', 'alternative_names', 'photo', 'birthday', 'placeofbirth',
+            'imdbid', 'providerid', 'homepage', 'deathday', 'popularity',
+            'biography', 'known_for'
+        ]
+        raise NotImplementedError
 
 
 class IPersonPictureProvider(IProvider):
