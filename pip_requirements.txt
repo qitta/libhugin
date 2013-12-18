@@ -18,4 +18,7 @@ parse
 #: httplib2
 httplib2
 
+#: requests
+requests
+
 jinja2

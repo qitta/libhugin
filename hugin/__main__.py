@@ -4,8 +4,8 @@
 """Libhugin commandline tool.
 
 Usage:
-  gylfie (-t <title>) [-y <year>] [-a <amount>] [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>] [-P <pm>]  [-r <processor>]
-  gylfie (-i <imdbid>) [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>] [-r <processor>]
+  gylfie (-t <title>) [-y <year>] [-a <amount>] [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>] [-P <pm>]  [-r <processor>] [-f <pfile>]
+  gylfie (-i <imdbid>) [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>] [-r <processor>] [-f <pfile>]
   gylfie (-n <name>) [--items <num>] [-p <providers>...] [-c <converter>] [-o <path>]
   gylfie list-provider
   gylfie list-converter
@@ -25,6 +25,7 @@ Options:
   -a, --amount=<amount>             Amount of items to retrieve.
   -l, --language=<lang>             Language in ISO 639-1 [default: de]
   -P, --predator-mode               The magic 'fuzzy search' mode.
+  -f, --profile-file=<pfile>        User specified profile.
   -v, --version                     Show version.
   -h, --help                        Show this screen.
 
@@ -111,11 +112,19 @@ Known for: {known_for}
     return fmt.format(**person._result_dict)
 
 
+def _load_profile(filename):
+    with open(filename, 'r') as f:
+        return eval(f.read())
+
 def output(args, results, session):
     if args['--postprocess']:
         processor = session.postprocessing_plugins(args['--postprocess'])
         if processor:
-            pp_result = processor.process(results)
+            if args['--profile-file']:
+                profile = _load_profile(args['--profile-file'])
+                pp_result = processor.process(results=results, profile=profile)
+            else:
+                pp_result = processor.process(results)
             if pp_result:
                 results += pp_result
     for num, result in enumerate(results, start=1):
