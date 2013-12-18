@@ -1,6 +1,6 @@
 [Core]
-Name = CustomProvider
-Module = customprovider
+Name = Composer
+Module = composer
 
 [Documentation]
 Description = Postprocessing plugin to generate a custom user defined result.

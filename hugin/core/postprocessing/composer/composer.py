@@ -12,7 +12,7 @@ from hugin.core.provider.result import Result
 import hugin.core.provider as provider
 
 
-class CustomProvider(provider.IPostprocessing):
+class ResultProfiler(provider.IPostprocessing):
     """Create a custom result.
 
     .. autosummary::
@@ -47,6 +47,7 @@ class CustomProvider(provider.IPostprocessing):
             if profile is None:
                 new_result = self._merge_results_by_priority(results)
             else:
+                #print('here', results, profile)
                 new_result = self._merge_results_by_profile(
                     results, profile
                 )
@@ -163,7 +164,7 @@ class CustomProvider(provider.IPostprocessing):
 
         """
         for result in results:
-            if provider_name == result.provider.name:
+            if provider_name.upper() == result.provider.name.upper():
                 return result
 
     def _group_by_imdbid(self, results):
