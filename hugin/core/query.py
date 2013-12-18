@@ -20,7 +20,7 @@ class Query(UserDict):
         self.data.update({
             'amount': 3,
             'cache': True,
-            'search': 'text',
+            'search': 'both',
             'remove_invalid': True,
             'language': '',
             'retries': 5,
