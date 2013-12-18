@@ -125,6 +125,8 @@ class Session:
         :param int amount: Number of Items yout want to get [3].
         :param list providers: A list with provider name strings [all].
         :param str language: Language `ISO 639-1 <http://en.wikipedia.org/wiki/ISO_639>`_ Format ['']
+        :param bool fuzzysearch: Enable 'fuzzy search' mode.
+        :param str type: Type of metadata. person, movie.
 
         .. note::
 
@@ -244,7 +246,7 @@ class Session:
     def _fuzzy_search(self, query):
         if query['title'] and query['imdbid'] is None:
             fmt = 'http://www.google.com/search?hl=de&q={title}+imdb&btnI=745'
-            print(fmt.format(title=query['title']))
+            #print(fmt.format(title=query['title']))
             url = requests.get(fmt.format(title=query['title'])).url
             imdbids = re.findall('\/tt\d*/', url)
             if imdbids:
