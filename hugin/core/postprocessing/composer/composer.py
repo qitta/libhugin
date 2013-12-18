@@ -12,7 +12,7 @@ from hugin.core.provider.result import Result
 import hugin.core.provider as provider
 
 
-class ResultProfiler(provider.IPostprocessing):
+class Composer(provider.IPostprocessing):
     """Create a custom result.
 
     .. autosummary::
@@ -73,7 +73,7 @@ class ResultProfiler(provider.IPostprocessing):
                 multi_provider_genre.add(genre_list)
         return multi_provider_genre
 
-    def _create_result_copy(self, result, provider_name='result_profiler'):
+    def _create_result_copy(self, result, provider_name='Composer'):
         """
         Create a new result object.
 

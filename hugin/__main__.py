@@ -37,13 +37,14 @@ import os
 
 
 def _get_image(imagelist):
-    for imagetuple in imagelist:
-        try:
-            size, image = imagetuple
-            if size == 'original':
-                return image
-        except:
-            return None
+    if imagelist:
+        for imagetuple in imagelist:
+            try:
+                size, image = imagetuple
+                if size == 'original':
+                    return image
+            except:
+                return None
 
 
 def _role_movie_fmt(itemlist):
@@ -78,7 +79,7 @@ Plot: {plot}
 
 * Directors: {directors}
 * Genre: {genre}
-* Genre {{normlized}}: {genre_norm}
+* Genre {{normalized}}: {genre_norm}
 
     """
     kwargs = movie._result_dict
@@ -89,13 +90,15 @@ Plot: {plot}
     return fmt.format(**movie._result_dict)
 
 
-def create_person_cliout(person):
+def create_person_cliout(num, person):
     fmt = """
 {num}) Provider: {provider} ########################################################
 
 Name: {name}
 Photo: {photo}
+
 Biography: {biography}
+
 Known for: {known_for}
     """
     kwargs = person._result_dict
@@ -104,6 +107,7 @@ Known for: {known_for}
         'biography', kwargs.get('biography') or 'No data found.'
     )
     kwargs['biography'] = wrap_width(kwargs['biography'])
+    kwargs['photo'] = _get_image(kwargs['photo'])
     kwargs.setdefault('provider', person.provider)
     if kwargs['known_for']:
         kwargs['known_for'] = _role_movie_fmt(
@@ -167,7 +171,8 @@ if __name__ == '__main__':
             language=args['--language'],
             providers=args['--providers'],
             fuzzysearch=args['--predator-mode'],
-            amount=args['--amount']
+            amount=args['--amount'],
+
         )
         results = session.submit(q)
         output(args, results, session)
