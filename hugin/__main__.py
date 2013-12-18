@@ -4,14 +4,14 @@
 """Libhugin commandline tool.
 
 Usage:
-  cli.py (-t <title>) [-y <year>] [-a <amount>] [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>] [-P <pm>]  [-r <processor>]
-  cli.py (-i <imdbid>) [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>] [-r <processor>]
-  cli.py (-n <name>) [--items <num>] [-p <providers>...] [-c <converter>] [-o <path>]
-  cli.py list-provider
-  cli.py list-converter
-  cli.py list-postprocessing
-  cli.py -h | --help
-  cli.py --version
+  gylfie (-t <title>) [-y <year>] [-a <amount>] [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>] [-P <pm>]  [-r <processor>]
+  gylfie (-i <imdbid>) [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>] [-r <processor>]
+  gylfie (-n <name>) [--items <num>] [-p <providers>...] [-c <converter>] [-o <path>]
+  gylfie list-provider
+  gylfie list-converter
+  gylfie list-postprocessing
+  gylfie -h | --help
+  gylfie --version
 
 Options:
   -t, --title=<title>               Movie title.
