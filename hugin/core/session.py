@@ -28,18 +28,29 @@ from hugin.core.query import Query
 
 class Session:
     """
-    Create a hugin session object, the entry point to use libhugin core.
+    The hugin session is the enty point to use linhugin core.
 
     Example Usage:
 
     .. code-block:: python
 
-        >>> import  hugin
-        >>> s = hugin.Session()
-        >>> query = s.create_query(title='Sin City', amount=1)
+        >>> getting and intializing the session
+        >>> from hugin.core import Session
+        >>> session = Session()
+        >>>
+        >>> # fetching the movie *Sin City*
+        >>> query = session.create_query(title='Sin City')
         >>> results = s.submit(query)
-        >>> print(results)
-        ... [TMDB <picture, movie> : Sin City (2005)>]
+        [<TMDBMovie <movie, picture> : Sin City (2005)>,
+        <OFDBMovie <movie> : Sin City (2005)>,
+        <OMDBMovie <movie> : Sin City (2005)>]
+
+        >>> # fetching the person *Emily Browning*
+        >>> q = session.create_query(name='emily browning')
+        >>> result = session.submit(q)
+        >>> print(result)
+        [<TMDBPerson <person, picture> : Emily Browning>]
+
 
     """
     def __init__(
@@ -251,7 +262,6 @@ class Session:
             imdbids = re.findall('\/tt\d*/', url)
             if imdbids:
                 query['imdbid'] = imdbids.pop().strip('/')
-
 
     def _select_results_by_strategy(self, results, query):
         """

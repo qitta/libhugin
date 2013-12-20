@@ -380,5 +380,5 @@ intersphinx_mapping = {
 }
 
 # Make __init__ and Class.__doc__ visible:
-autoclass_content = 'init'
+autoclass_content = 'both'
 autodoc_member_order='bysource'
