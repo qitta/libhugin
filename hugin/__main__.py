@@ -63,23 +63,23 @@ def list_plugins(plugins):
         )
 
 
-def wrap_width(text, width=80):
+def wrap_width(text, width=72, subsequent_indent="              "):
     if text:
-        return textwrap.fill(text, width)
+        return textwrap.fill(text, width, subsequent_indent=subsequent_indent,fix_sentence_endings=True)
 
 
 def create_movie_cliout(num, movie):
     fmt = """
-{num}) Provider: {provider} ########################################################
+{num}) Provider: {provider}
 
-* Title: {title} ({year}), imdbid: {imdbid}, raiting: {rating}
-* Cover Url: {poster}
+Title       : {title} ({year}), imdbid: {imdbid}, raiting: {rating}
+Cover Url   : {poster}
 
-Plot: {plot}
+Plot        : {plot}
 
-* Directors: {directors}
-* Genre: {genre}
-* Genre {{normalized}}: {genre_norm}
+Directors   : {directors}
+Genre       : {genre}
+Genre [norm]: {genre_norm}
 
     """
     kwargs = movie._result_dict
@@ -92,14 +92,14 @@ Plot: {plot}
 
 def create_person_cliout(num, person):
     fmt = """
-{num}) Provider: {provider} ########################################################
+{num}) Provider: {provider}
 
-Name: {name}
-Photo: {photo}
+Name        : {name}
+Photo       : {photo}
 
-Biography: {biography}
+Biography   : {biography}
 
-Known for: {known_for}
+Known for   : {known_for}
     """
     kwargs = person._result_dict
     kwargs.setdefault('num', num)
