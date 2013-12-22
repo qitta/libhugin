@@ -30,27 +30,6 @@ class Session:
     """
     The hugin session is the enty point to use linhugin core.
 
-    Example Usage:
-
-    .. code-block:: python
-
-        >>> getting and intializing the session
-        >>> from hugin.core import Session
-        >>> session = Session()
-        >>>
-        >>> # fetching the movie *Sin City*
-        >>> query = session.create_query(title='Sin City')
-        >>> results = s.submit(query)
-        [<TMDBMovie <movie, picture> : Sin City (2005)>,
-        <OFDBMovie <movie> : Sin City (2005)>,
-        <OMDBMovie <movie> : Sin City (2005)>]
-
-        >>> # fetching the person *Emily Browning*
-        >>> q = session.create_query(name='emily browning')
-        >>> result = session.submit(q)
-        >>> print(result)
-        [<TMDBPerson <person, picture> : Emily Browning>]
-
 
     """
     def __init__(

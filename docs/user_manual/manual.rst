@@ -1,7 +1,9 @@
 .. _cmdtool:
 
+###############################
 libhugin commandline tool usage
-===============================
+###############################
+
 
 
 Libhugin has the small commandline tool that is meant to be used for *library
@@ -89,10 +91,10 @@ Searching by title and year
 
 Well, seeing the result from the output above, we probably want to search for
 the original release from 2003, not the remake. This can easily be done by
-adding the realease date to the search query.
+adding the release date to the search query.
 
-This time without amount limit, but we limit the results to be only from tmdb
-and ofdb provider:
+This time without amount limit, but we limit the results to be only from
+tmdbmovie and ofdbmovie provider:
 
 ::
 
@@ -118,8 +120,8 @@ Searching by imdbid
 ~~~~~~~~~~~~~~~~~~~
 
 Sometimes it is useful if there is the possibility to search by imdb id. This
-might also be good for automated tasks or scripts if you want just to update a
-exsiting movie metadata database. In this case searching for the movie title and
+might also be good for automated scripting tasks if you want just to update a
+existing movie metadata database. In this case searching for the movie title and
 year might also give you invalid results if there are two movies with equal
 title and year.
 
@@ -127,7 +129,7 @@ Let's just search for the movie *Drive*, released in 2011:
 
 ::
 
-    $ gylfie -t drive -y 2011
+    $ gylfie --title drive --year 2011
 
     Provider: OFDBMovie <movie>
 
@@ -153,13 +155,13 @@ Let's just search for the movie *Drive*, released in 2011:
     Genre       : ['Drama', 'Kinder-/Familienfilm']
 
 
-As you can see, there seems to be another movie, well a shortmovie with the same
-title and release date which was delivered by the ofdb movie provider. To
-minimalize this problem while updatating a existing database with libhugin, you
+As you can see, there seems to be another movie, well a short movie with the same
+title and release date which was delivered by the ofdbmovie provider. To
+minimize this problem while updating a existing database with libhugin, you
 may want to search by imdbid which should give you exact results.
 
 Searching for movie *Drive (2011)* by imdbid *tt0780504*, taken from above
-search output. This time we use the language flag set to neatherlands, to get
+search output. This time we use the language flag set to Netherlands, to get
 the metadata in this language. Currently only tmdbmovie provider is able to
 deliver multilanguage results.
 
@@ -197,11 +199,11 @@ Searching for a person
 
 .. note::
 
-    Currently the postprocessing composer plugin is limited to movies. There is
-    also no imdb id person search, as this is not supported by the used
+    Currently the postprocessing composer plugin is limited to movies only.
+    There is also no imdbid person search, as this is not supported by the used
     webservices.
 
-Searchig for a person can be done analogue to the movie search. You just have to
+Searching for a person can be done analogue to the movie search. You just have to
 use the *-n, --name* parameter.
 
 Searching for the person *Emma Stone*:
@@ -229,16 +231,17 @@ Searching for the person *Emma Stone*:
     Biography: None found.
 
 
-Using postprocessing filter with the commandline tool
-=====================================================
+Using postprocessing plugins with the commandline tool
+======================================================
 
 Composing your own movie results
 --------------------------------
 
 A result delivered by a specific provider might not always be what you want.
-There might be missing data or maybe you just want to get your default metadata
-from provider TMDB, but your plot always from the OFDB provider. This is the
-point where postprocessing provider comes into play.
+There might be missing some attributes or maybe you just want to get your
+default metadata from provider TMDBmovie, but your plot always from the
+OFDBmovie provider. This is the point where the postprocessing plugins comes
+into play.
 
 
 Automatic result composing
@@ -247,7 +250,8 @@ Automatic result composing
 Currently there is a Composer provider, which allows you to compose your result
 by your own needs.
 
-The auto fill mode of the composer plugin:
+The auto fill mode of the composer plugin is triggered if there is no user
+specified profile file given:
 
 ::
 
@@ -284,13 +288,19 @@ The auto fill mode of the composer plugin:
     Genre       : ['Drama']
 
 
-The automatic mode of the composer creates the composer result by provider
-priority. Currently the provider with the highest priority fills in the composer
-result first. As you see in this case, there is missing the plot metadata
-attribute of the tmdb provider. This gets automatically filled in by the next
-available plot from a lower priority provider. To fill all metadata found in the
-current query, the composer fills in the missing tmdb gap with the plot of the
-omdb movie provider.
+The automatic mode of the composer creates the composer result according  to the
+provider priority. Currently the priority is a constant value.
+
+    * TMDBmovie priority = 90
+    * OMDBmovie priority = 80
+    * OFDBmovie priority = 70
+
+The provider with the highest priority fills in the composer result first. As
+you see in this case, there is missing the plot metadata attribute of the
+tmdbmovie provider. This gets automatically filled in by the next available plot
+from a lower priority provider. To fill all metadata found in the current query,
+the composer fills in the missing tmdbmovie gap with the plot of the omdbmovie
+provider data.
 
 
 User specified result composing
@@ -300,6 +310,16 @@ Another feature is to tell the composer how to fill in the composer result. This
 can be achieved by using a userprofile file formatted according to a python
 dictionary.
 
+
+User profiles
+~~~~~~~~~~~~~
+
+A user profile is formatted like a python dictionary. It has a *default* key,
+which specifies a list with movie providers. The first available provider result
+according to that list will be copied to be the composer result base. Besides
+the default key you can specify movie attribute keys with a list of providers as
+value. Those attributes will be filled in according to the same schema.
+
 Creating a simple user profile for the composer postprocessing plugin:
 
 ::
@@ -307,8 +327,16 @@ Creating a simple user profile for the composer postprocessing plugin:
     # lets create a profile first. tmdb should be the main supplier and
     # the plot should always come from ofdbmovie
 
-    echo "{'default':['tmdbmovie'], 'plot':['ofdbmovie']}" > userprofile
+    echo "{'default':['tmdbmovie', 'ofdbmovie'], 'plot':['omdbmovie', 'ofdbmovie']}" > userprofile
 
+This profile will copy the tmdbmovie result and fill in it's plot with the
+omdbmovie provider result attribute. If there is no tmdbmovie provider result,
+the ofdbmovie provider result is copied. If the ofdbmovie plot attribute is
+empty, the omdbmovie attribute will be filled in.
+
+If there is no default provider available, no composer result will be created.
+If the plot of the ofdbmovie and omdbmovie provider is missing, the plot
+attribute will remain unchanged.
 
 Now let's run the query with our beautiful profile:
 
@@ -348,32 +376,17 @@ Now let's run the query with our beautiful profile:
     Genre       : ['Action', 'Krimi', 'Drama', 'Thriller']
 
 
-User specified profiles
-~~~~~~~~~~~~~~~~~~~~~~~
-
-The attribute value in the profile is a list with providers that is proccesed
-from left to right. Lets inspect the following profile
-
-::
-
-    {'default':['tmdbmovie'], 'plot':[ofdbmovie, omdbmovie]}
-
-The main provider for the composer is tmdbmovie. The plot gets filled in by the
-ofdbmovie provider, if ofdbmovie provider has no plot, than the omdbmovie plot
-is taken. The default key may also be a list with different providers. As its
-possible hat a query will not return a valid tmdbmovie result if there is
-nothing in the tmdbmovie database.
-
-
 Using output converter plugins
-------------------------------
+==============================
 
 It is also possible to use output converter plugins. This plugins are
 responsible for formatting your result according to a specific manner. Currently
-there are two *'proof of concept'* output converter for json and html avaliable.
-You can combine those converters with a output dir flag. Lets do a more
-'complete' example. This query gets a single result from the provider tmdbmovie,
-formatting the result to json and writing it to the current path:
+there are two basic output converter for json and html avaliable to demonstrate
+how things work. You can combine those converters with a output directory.
+
+Lets do a more *'complete'* example. This query gets a single result from the
+provider tmdbmovie, formatting the result to json and writing it to the current
+path:
 
 ::
 
@@ -391,8 +404,72 @@ formatting the result to json and writing it to the current path:
 
 .. _libraryusage:
 
+######################
 Library usage tutorial
-----------------------
+######################
+
+
+This tutorial describes how to use the library.
+
+
+Session usage
+=============
+
+First of all, you have to create a Session. This is the way to *communicate*
+with the hugin library.
+
+Creating a Session:
+
+
+.. code-block:: python
+
+    >>> # getting and intializing the session
+    >>> from hugin.core import Session
+    >>> session = Session()
+
+There are some Session values e.g. the 'user-agent' to be used that may be
+parametrized.
+
+.. code-block:: python
+
+    >>> session = Session(user_agent='ravenlib/1.0')
+
+The session above will use the user agent *'ravenlib/1.0'*.
+
+For more information about session configuration see: :class:`hugin.core.session.Session` for available options.
+
+
+Query usage
+===========
+
+After creating a session, you will need a query. The query represents your
+*search* for a specific movie or person and may also be parametrized
+individually. the query may be build by hand, but it's recommended to use the
+session :class:`hugin.core.session.Session.create_query` method.
+
+.. code-block:: python
+
+    >>> query = session.create_query(title='Sin City')
+
+Submiting a query
+=================
+
+After creating a session and getting a query you have to submit it. This is the
+point where libhugin starts to querying the the content provider to retrieve
+the metadata you are searching for. :class:`hugin.core.session.Session.submit`
+blocks. The submit method will return a list with results found. The following
+code block illustrates the query usage:
+
+.. code-block:: python
+
+    >>> results = s.submit(query)
+    >>> print(result)
+    [<TMDBMovie <movie, picture> : Sin City (2005)>,
+    <OFDBMovie <movie> : Sin City (2005)>,
+    <OMDBMovie <movie> : Sin City (2005)>]
+
+You can also submit the query asynchronously by using the :class:`hugin.core.session.Session.submit` method.
+
 
 .. autoclass:: hugin.core.session.Session
-   :members: __init__, create_query,  submit, submit_async, cancel, clean_up, provider_plugins, postprocessing_plugins, converter_plugins
+   :members: create_query,  submit, submit_async, cancel, clean_up, provider_plugins, postprocessing_plugins, converter_plugins
