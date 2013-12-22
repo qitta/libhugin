@@ -47,10 +47,11 @@ class Composer(provider.IPostprocessing):
             if profile is None:
                 new_result = self._merge_results_by_priority(results)
             else:
-                #print('here', results, profile)
                 new_result = self._merge_results_by_profile(
                     results, profile
                 )
+                if new_result == []:
+                    return []
             normalized_multi_genre = self._create_multi_provider_genre(
                 results, 'genre_norm'
             )
@@ -138,6 +139,11 @@ class Composer(provider.IPostprocessing):
         # getting the default result provider
         for name in profile['default']:
             result_provider = self._get_result_by_providername(results, name)
+            if result_provider:
+                break
+
+        if result_provider is None:
+            return []
 
         custom_result = self._create_result_copy(result_provider)
 
@@ -147,7 +153,10 @@ class Composer(provider.IPostprocessing):
                 for provider_name in provider_list:
                     provider_result = self._get_result_by_providername(
                         results, provider_name
-                    )._result_dict[key]
+                    )
+                    if provider_result is None:
+                        break
+                    provider_result = provider_result._result_dict[key]
 
                     if provider_result:
                         custom_result._result_dict[key] = provider_result
