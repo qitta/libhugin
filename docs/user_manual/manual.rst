@@ -1,3 +1,5 @@
+.. currentmodule:: hugin.core.session
+
 .. _cmdtool:
 
 ###############################
@@ -427,38 +429,54 @@ Creating a Session:
     >>> from hugin.core import Session
     >>> session = Session()
 
-There are some Session values e.g. the 'user-agent' to be used that may be
-parametrized.
+There are some Session parameters e.g. the 'user-agent' that may be changed by
+the user.
+
+The following Session will use the user agent *'ravenlib/1.0'*.
 
 .. code-block:: python
 
     >>> session = Session(user_agent='ravenlib/1.0')
 
-The session above will use the user agent *'ravenlib/1.0'*.
 
-For more information about session configuration see: :class:`hugin.core.session.Session` for available options.
+For more information about session configuration parameters see: :class:`Session`.
 
 
-Query usage
-===========
+Creating a query
+================
 
-After creating a session, you will need a query. The query represents your
+After creating a :class:`Session`, you will need a query. The query represents your
 *search* for a specific movie or person and may also be parametrized
-individually. the query may be build by hand, but it's recommended to use the
-session :class:`hugin.core.session.Session.create_query` method.
+individually. The query may be build by hand, but it's recommended to use the
+session :meth:`Session.create_query` method. This method returns a validated
+query.
+
+The following query will search for the movie *Sin City*, the result amount is
+limited to a max number of five items. Download retries are set to two.
 
 .. code-block:: python
 
-    >>> query = session.create_query(title='Sin City')
+    >>> query = session.create_query(title='Sin City', amount=5, retries=2)
+    >>> # just to illustrate how a query looks like
+    >>> print(query)
+    {'year': None, 'type': 'movie', 'providers': None, 'remove_invalid': True,
+    'fuzzysearch': False, 'amount': 5, 'language': '', 'imdbid': None, 'retries': 2,
+    'cache': True, 'strategy': 'flat', 'search': 'both', 'title': 'Sin City'}
+
+
+You will just receive a dictionary representing the search values.  Depending on
+the metadata type there are different parameters to be used in a query. For all
+possible parameters see: :meth:`Session.create_query`.
 
 Submiting a query
 =================
 
-After creating a session and getting a query you have to submit it. This is the
-point where libhugin starts to querying the the content provider to retrieve
-the metadata you are searching for. :class:`hugin.core.session.Session.submit`
-blocks. The submit method will return a list with results found. The following
-code block illustrates the query usage:
+After creating a session and getting a query you have to submit it by using
+:meth:`Session.submit`. This is the point where libhugin starts to querying the
+content provider to retrieve the metadata you are searching for. The
+submit method will return a list with results found.
+
+The following code block illustrates the query usage:
 
 .. code-block:: python
 
@@ -468,7 +486,8 @@ code block illustrates the query usage:
     <OFDBMovie <movie> : Sin City (2005)>,
     <OMDBMovie <movie> : Sin City (2005)>]
 
-You can also submit the query asynchronously by using the :class:`hugin.core.session.Session.submit` method.
+The :meth:`Session.submit` method blocks. You can also submit the query
+asynchronously by using the :meth:`Session.submit_async` method.
 
 
 .. autoclass:: hugin.core.session.Session

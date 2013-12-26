@@ -100,17 +100,51 @@ class Session:
         Movie specific:
 
         :param str title: Movie title.
-        :param int year: Movie release date.
+        The movie title, this key will set the type key to 'movie'. The title
+        has to be set in single quotes.
+
+            Example::
+
+                title='Watchmen'
+                title='Only god forgives'
+
+        :param int year: Movie release date as 4-digit int.
+
+            Example::
+
+                year=2005
+
         :param str imdbid: The imdbid.
+
+            Example::
+
+                imdbid=tt0780504
 
         Person specific:
 
         :param str name: Person name.
+        The name key will set the type key to 'person'. Like movie titles,
+        person names has to be set into quotes.
+
+            Example:
+
+                name='Evangeline Lilly'
 
         General:
+        This parameters may be set on movie an person queries as they are not
+        specific to a single type.
 
         :param str search: Search textual, picture or both [text].
+        This parameter will influence the search by choosing provider that are
+        only able to search for textual metadata, pictures or both.
+
+            Example:
+
+                search='both' # will trigger textual and picture only provider
+
         :param str strategy: Search strategy deep or flat [flat].
+        The strategy..
+
         :param bool cache: Use local cache [True].
         :param int retries: Number of retries per request [5].
         :param int amount: Number of Items yout want to get [3].
