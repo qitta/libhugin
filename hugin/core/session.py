@@ -43,6 +43,7 @@ class Session:
         :param parallel_jobs: Number of simultaneous jobs to be used.
         :param parallel_downloads_per_job: Number of simultaneous downloads.
         :param timeout_sec: Timeout for http requests to be used.
+        :param user_agent: The user-agent string to be used.
 
         """
         signal.signal(signal.SIGINT, self._signal_handler)
