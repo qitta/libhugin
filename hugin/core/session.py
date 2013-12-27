@@ -143,17 +143,105 @@ class Session:
                 search='both' # will trigger textual and picture only provider
 
         :param str strategy: Search strategy deep or flat [flat].
-        When  limiting the search resluts to three, every provider is looking
-        for three results. After all providers are finished, the 'best' results
-        are choosen and returned according to the amount limit. How the results are choosen is 
+        When  limiting the search results to three, every provider is looking
+        for three results. After all providers are finished, the max amount of
+        results according to the amount limit is returned. The way results are
+        composed is defined by the strategy flag.
+
+        The table below illustrates a provider search with a amount limited to
+        five. The first provider has found four results, the second provider
+        only three and the third provider only found two results.
+
+        After the provider results are *collected*, only five results are
+        returned to the user, as the limit was set to five. How the results are
+        taken depends on the strategy. Every provider has a priority.  Priority
+        of 90 is the *highest priority* in this example. This means that the
+        provider with this priority is preferred.
+
+        Using the 'deep' strategy, the results are sorted by provider priority
+        and the first five results are taken. In our example the tmdb providers
+        result1 - result4 and the first result (result1) from ofdb provider are
+        taken. Choosing the 'flat' strategy the results are chosen by its
+        quality. This means that result1 of all three providers an result2 of
+        the first and second provider are returned.
+
+            ::
+
+              +------------------+---------+---------+---------+
+              | results/provider | #1 tmdb | #2 ofdb | #3 imdb |
+              |    priority ---> |   90    |   80    |   70    |
+              +------------------+---------+---------+---------+
+              | highest quality  | result1 | result1 | result1 |
+              +------------------+---------+---------+---------+
+              | ...              | result2 | result2 | result2 |
+              +------------------+---------+---------+---------+
+              | ...              | result3 | result3 |         |
+              +------------------+---------+---------+---------+
+              | ...              | result4 | result4 |         |
+              +------------------+---------+---------+---------+
+              | lowest quality   |         | result5 |         |
+              +------------------+---------+---------+---------+
 
         :param bool cache: Use local cache [True].
+        If set the local cache will be used on each query. Http responses are
+        cached. If a specific url response has already been cached previously
+        it will be returned from the cache. If url is not found in the cache, a
+        http request will be triggered. Only *valid* responses are cached.
+
         :param int retries: Number of retries per request [5].
-        :param int amount: Number of Items yout want to get [3].
+        If a http response timeout happens or a provider response is marked as
+        invalid but not finished a retry will be triggered. This parameters
+        limits the max possible retries.
+
+        :param int amount: Number of Items you want to get [3].
+        This parameter limits the amount of results to be returned by a submit.
+
         :param list providers: A list with provider name strings [all].
+        With the providers parameter you can limit the search to specific
+        providers by giving libhugin a list with providers you want to query.
+        To get the names of all available providers use the
+        :meth:`Session.provider_plugins` method.
+
+        ::
+
+            >>> providers = session.provider_plugins()
+            >>> for provider in providers:
+                    print(provider.name)
+            OFDBMovie
+            OFDBPerson
+            OMDBMovie
+            TMDBPerson
+            TMDBMovie
+
+
+
         :param str language: Language `ISO 639-1 <http://en.wikipedia.org/wiki/ISO_639>`_ Format ['']
+        The language you want to use for your query. Currently there is only
+        the tmdb provider that is multilingual. All other providers are limited
+        to a specific language e.g. English or German. The genre normalization
+        is currently also limited to German/English normalization only.
+
         :param bool fuzzysearch: Enable 'fuzzy search' mode.
+        Content providers are pretty fussy about the title or name you search
+        for. Therefor there is a fuzzy search mode implemented. This mode will
+        try to get the right results even if the title/person is pretty much
+        misspelled.
+
+        Looking for the movie 'Only god forgives' works pretty well if the
+        title is spelled correct, but if only a single word is misspelled like
+        'Only good forgives' no results will be found by the currently
+        implemented providers. The libhugin fuzzysearch is a simple workaround
+        that is provider independent but requires a provider to be able to do a
+        imdbid lookup. Enabling this mode libhugin will guess a imdbid for your
+        misspelled title and query the available providers with this id. The
+        downside is that currently only exact results for the guessed imdbid
+        are returned. The fuzzysearch will even work if you misspell the title
+        like 'unly gut forgivs'.
+
+
         :param str type: Type of metadata. person, movie.
+        This parameter defines the type of metadata you want to search for, it
+        is currently set automatically and should be may be ignored.
 
         .. note::
 
@@ -167,7 +255,7 @@ class Session:
     def _init_download_queue(self, query):
         """ Return a downloadqueue configured with user specified parameters.
 
-        :retrun: A configured downloadqueue.
+        :return: A configured downloadqueue.
 
         """
         if query.cache:
