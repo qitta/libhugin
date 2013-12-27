@@ -143,7 +143,9 @@ class Session:
                 search='both' # will trigger textual and picture only provider
 
         :param str strategy: Search strategy deep or flat [flat].
-        The strategy..
+        When  limiting the search resluts to three, every provider is looking
+        for three results. After all providers are finished, the 'best' results
+        are choosen and returned according to the amount limit. How the results are choosen is 
 
         :param bool cache: Use local cache [True].
         :param int retries: Number of retries per request [5].

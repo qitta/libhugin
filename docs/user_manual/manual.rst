@@ -445,8 +445,8 @@ For more information about session configuration parameters see: :class:`Session
 Creating a query
 ================
 
-After creating a :class:`Session`, you will need a query. The query represents your
-*search* for a specific movie or person and may also be parametrized
+After creating a :class:`Session`, you will need a query. The query represents
+your *search* for a specific movie or person and may also be parametrized
 individually. The query may be build by hand, but it's recommended to use the
 session :meth:`Session.create_query` method. This method returns a validated
 query.
