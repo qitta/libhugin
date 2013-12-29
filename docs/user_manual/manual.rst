@@ -2,9 +2,9 @@
 
 .. _cmdtool:
 
-###############################
-libhugin commandline tool usage
-###############################
+################
+Commandline tool
+################
 
 
 
@@ -65,7 +65,7 @@ Searching by title
 
 Searching for the movie *Oldboy*, limiting the amount of results to two:
 
-::
+.. code-block:: sh
 
     $ gylfie --title oldboy --amount 2
 
@@ -98,7 +98,7 @@ adding the release date to the search query.
 This time without amount limit, but we limit the results to be only from
 tmdbmovie and ofdbmovie provider:
 
-::
+.. code-block:: sh
 
     $ gylfie --title oldboy --year 2003 --providers ofdbmovie,tmdbmovie
 
@@ -129,7 +129,7 @@ title and year.
 
 Let's just search for the movie *Drive*, released in 2011:
 
-::
+.. code-block:: sh
 
     $ gylfie --title drive --year 2011
 
@@ -168,7 +168,7 @@ the metadata in this language. Currently only tmdbmovie provider is able to
 deliver multilanguage results.
 
 
-::
+.. code-block:: sh
 
     $ gylfie -i tt0780504 --language nl
 
@@ -210,7 +210,7 @@ use the *-n, --name* parameter.
 
 Searching for the person *Emma Stone*:
 
-::
+.. code-block:: sh
 
     $ gylfie --name 'Emma Stone'
 
@@ -233,8 +233,8 @@ Searching for the person *Emma Stone*:
     Biography: None found.
 
 
-Using postprocessing plugins with the commandline tool
-======================================================
+Using postprocessing plugins
+============================
 
 Composing your own movie results
 --------------------------------
@@ -255,7 +255,7 @@ by your own needs.
 The auto fill mode of the composer plugin is triggered if there is no user
 specified profile file given:
 
-::
+.. code-block:: sh
 
     $  gylfie -i tt1937390 -r composer
 
@@ -324,7 +324,7 @@ value. Those attributes will be filled in according to the same schema.
 
 Creating a simple user profile for the composer postprocessing plugin:
 
-::
+.. code-block:: sh
 
     # lets create a profile first. tmdb should be the main supplier and
     # the plot should always come from ofdbmovie
@@ -342,7 +342,7 @@ attribute will remain unchanged.
 
 Now let's run the query with our beautiful profile:
 
-::
+.. code-block:: sh
 
     $ gylfie -i tt0780504 -r composer -f userprofile
 
@@ -390,7 +390,7 @@ Lets do a more *'complete'* example. This query gets a single result from the
 provider tmdbmovie, formatting the result to json and writing it to the current
 path:
 
-::
+.. code-block:: sh
 
     $  gylfie -t oldboy -y 2003 -a 1 -p tmdbmovie -c json -o .
 
@@ -403,92 +403,3 @@ path:
     Directors   : ['Chan-wook Park']
 
 
-
-.. _libraryusage:
-
-######################
-Library usage tutorial
-######################
-
-
-This tutorial describes how to use the library.
-
-
-Session usage
-=============
-
-First of all, you have to create a Session. This is the way to *communicate*
-with the hugin library.
-
-Creating a Session:
-
-
-.. code-block:: python
-
-    >>> # getting and intializing the session
-    >>> from hugin.core import Session
-    >>> session = Session()
-
-There are some Session parameters e.g. the 'user-agent' that may be changed by
-the user.
-
-The following Session will use the user agent *'ravenlib/1.0'*.
-
-.. code-block:: python
-
-    >>> session = Session(user_agent='ravenlib/1.0')
-
-
-For more information about session configuration parameters see: :class:`Session`.
-
-
-Creating a query
-================
-
-After creating a :class:`Session`, you will need a query. The query represents
-your *search* for a specific movie or person and may also be parametrized
-individually. The query may be build by hand, but it's recommended to use the
-session :meth:`Session.create_query` method. This method returns a validated
-query.
-
-The following query will search for the movie *Sin City*, the result amount is
-limited to a max number of five items. Download retries are set to two.
-
-.. code-block:: python
-
-    >>> query = session.create_query(title='Sin City', amount=5, retries=2)
-    >>> # just to illustrate how a query looks like
-    >>> print(query)
-    {'year': None, 'type': 'movie', 'providers': None, 'remove_invalid': True,
-    'fuzzysearch': False, 'amount': 5, 'language': '', 'imdbid': None, 'retries': 2,
-    'cache': True, 'strategy': 'flat', 'search': 'both', 'title': 'Sin City'}
-
-
-You will just receive a dictionary representing the search values.  Depending on
-the metadata type there are different parameters to be used in a query. For all
-possible parameters see: :meth:`Session.create_query`.
-
-Submiting a query
-=================
-
-After creating a session and getting a query you have to submit it by using
-:meth:`Session.submit`. This is the point where libhugin starts to querying the
-content provider to retrieve the metadata you are searching for. The
-submit method will return a list with results found.
-
-The following code block illustrates the query usage:
-
-.. code-block:: python
-
-    >>> results = s.submit(query)
-    >>> print(result)
-    [<TMDBMovie <movie, picture> : Sin City (2005)>,
-    <OFDBMovie <movie> : Sin City (2005)>,
-    <OMDBMovie <movie> : Sin City (2005)>]
-
-The :meth:`Session.submit` method blocks. You can also submit the query
-asynchronously by using the :meth:`Session.submit_async` method.
-
-
-.. autoclass:: hugin.core.session.Session
-   :members: create_query,  submit, submit_async, cancel, clean_up, provider_plugins, postprocessing_plugins, converter_plugins
