@@ -27,23 +27,63 @@ from hugin.core.query import Query
 
 
 class Session:
-    """
-    The hugin session is the enty point to use linhugin core.
 
-
-    """
     def __init__(
-        self, cache_path='/tmp', parallel_jobs=2, parallel_downloads_per_job=8,
+        self, cache_path='/tmp', parallel_jobs=1, parallel_downloads_per_job=8,
         timeout_sec=5, user_agent='libhugin/1.0'
     ):
         """
         Init a session object with user specified parameters.
 
+        Creating a Session:
+
+
+        .. code-block:: python
+
+            # getting and intializing the session
+            from hugin.core import Session
+            session = Session()
+
+        There are some Session parameters like the 'user-agent' that may be
+        changed by the user. The following example will create a Session that
+        uses the user agent *'ravenlib/1.0'*, the cache will be stored at
+        */tmp/hugincache/*, two job threads will be used, each job will have
+        four simultanous *download threds* and the timeout for each http
+        response will be ten seconds.
+
+        Example:
+
+        .. code-block:: python
+
+            session = Session(
+                user_agent='ravenlib/1.0',
+                cache_path='/tmp/hugincache',
+                parallel_jobs=2,
+                parallel_downloads_per_job=4,
+                timeout_sec=10
+            )
+
+
+        The following parameters are customizable by the user:
+
         :param cache_path: Path of cache to be written to.
+        This is the path where the *cache container* should be saved. Currently
+        the cache is a python shleeve storing valid  http responses.
+
         :param parallel_jobs: Number of simultaneous jobs to be used.
+        This parameter is used to set the number of simultaneous jobs. The
+        default value is 1, as there is not much performance gain because of
+        the gil. The main purpose if of threads in this case is to make
+        asynchronous submit execution possible.
+
         :param parallel_downloads_per_job: Number of simultaneous downloads.
+        This parameter sets the number of parallel donwload jobs. Each job will
+        use this number of parallel jobs.
+
         :param timeout_sec: Timeout for http requests to be used.
-        :param user_agent: The user-agent string to be used.
+        This timeout will be use for *every* http response.
+
+        :param user_agent: The user-agent string to be used for metadata downloading.
 
         """
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -93,133 +133,239 @@ class Session:
 
     def create_query(self, **kwargs):
         """
-        Validate params and return a :class:`hugin.core.query.Query` object build from user given kwargs.
+        Validate params and return a Query.
+
+        This function returns a Query object build of the given kwagrs. Keys
+        are validated and default or missing values are set by the
+        :class:`hugin.core.query.Query`.
+
+        .. note::
+
+            All invalid key parameters will be filtered.  If there are missing
+            or inconsistent values a KeyError exception will be raised by the
+            Query.
+
+        The following query will search for the movie *Sin City*, the result amount is
+        limited to a max number of five items. Download retries are set to two.
+
+
+        Example code snippet:
+
+        .. code-block:: python
+
+            query = session.create_query(title='Sin City', amount=5, retries=2)
+            # just to illustrate how a query looks like
+            print(query)
+            {'year': None, 'type': 'movie', 'providers': None,
+            'remove_invalid': True, 'fuzzysearch': False, 'amount': 5,
+            'language': '', 'imdbid': None, 'retries': 2, 'cache': True,
+            'strategy': 'flat', 'search': 'both', 'title': 'Sin City'}
+
+
+        You will just receive a dictionary representing the search values.
+        Depending on the metadata type there are different parameters to be
+        used in a query.
 
         The following parameters are possible (default value inside brackets):
 
         Movie specific:
 
         :param str title: Movie title.
+
         The movie title, this key will set the type key to 'movie'. The title
         has to be set in single quotes.
 
-            Example::
+        Example:
 
-                title='Watchmen'
-                title='Only god forgives'
+        .. code-block:: python
 
-        :param int year: Movie release date as 4-digit int.
+            # get a query for the movie watchmen, everythin is intialized
+            # with default values
+            query = session.create_query(title='Watchmen')
+            [...]
 
-            Example::
+            # building another query, movie title with whitspaces
+            query = session.create_query(title='Only god forgives')
+            [...]
 
-                year=2005
+        :param int year: Movie year.
+
+        In most cases the movie release date as 4-digit int.
+
+        Example:
+
+        .. code-block:: python
+
+            # appending a release date to the query
+            query = session.create_query(title='Sin City', year=2005)
+            [...]
+
 
         :param str imdbid: The imdbid.
 
-            Example::
+        You can also search by imdbid, like movie titles the value has to be
+        quoted.
 
-                imdbid=tt0780504
+        Example:
+
+        .. code-block:: python
+
+            # building a query from imdbid (Drive (2011))
+            query = session.create_query(imdbid='tt0780504')
+
 
         Person specific:
 
         :param str name: Person name.
+
         The name key will set the type key to 'person'. Like movie titles,
         person names has to be set into quotes.
 
-            Example:
+        Example:
 
-                name='Evangeline Lilly'
+        .. code-block:: python
+
+            query = session.create_query(name='Evangeline Lilly')
+
 
         General:
         This parameters may be set on movie an person queries as they are not
         specific to a single type.
 
         :param str search: Search textual, picture or both [text].
+
         This parameter will influence the search by choosing provider that are
         only able to search for textual metadata, pictures or both.
 
-            Example:
+        Example:
 
-                search='both' # will trigger textual and picture only provider
+        .. code-block:: python
+
+            # will trigger textual and picture only provider
+            query = session.create_query(title='Sin City', search='both')
 
         :param str strategy: Search strategy deep or flat [flat].
+
         When  limiting the search results to three, every provider is looking
         for three results. After all providers are finished, the max amount of
         results according to the amount limit is returned. The way results are
         composed is defined by the strategy flag.
 
+        Example:
+
+        .. code-block:: python
+
+            # invoking flat search
+            query = session.create_query(title='Sin City', strategy='flat', amount=5)
+            [...]
+
+            # invoking deep search
+            query = session.create_query(title='Sin City', strategy='deep', amount=5)
+            [...]
+
         The table below illustrates a provider search with a amount limited to
         five. The first provider has found four results, the second provider
         only three and the third provider only found two results.
 
+            Exemplar result table:
+
+            +------------------+---------------+---------------+-------------+
+            | results/provider | #1 tmdb       | #2 ofdb       | #3 imdb     |
+            |    priority ---> |   90          |   80          |   70        |
+            +------------------+---------------+---------------+-------------+
+            | highest quality  | result1 (f,d) | result1 (f,d) | result1 (f) |
+            +------------------+---------------+---------------+-------------+
+            | ...              | result2 (f,d) | result2 (f)   | result2     |
+            +------------------+---------------+---------------+-------------+
+            | ...              | result3 (d)   | result3       |             |
+            +------------------+---------------+---------------+-------------+
+            | ...              | result4 (d)   | result4       |             |
+            +------------------+---------------+---------------+-------------+
+            | lowest quality   |               | result5       |             |
+            +------------------+---------------+---------------+-------------+
+
         After the provider results are *collected*, only five results are
-        returned to the user, as the limit was set to five. How the results are
-        taken depends on the strategy. Every provider has a priority.  Priority
-        of 90 is the *highest priority* in this example. This means that the
-        provider with this priority is preferred.
+        returned to the user as amount is five.
+
+        How the results are picked depends on the strategy. Every provider has a
+        priority.  Priority of 90 is the *highest priority* in this example.
+        Providers with a higher priority are preferred.
 
         Using the 'deep' strategy, the results are sorted by provider priority
-        and the first five results are taken. In our example the tmdb providers
-        result1 - result4 and the first result (result1) from ofdb provider are
-        taken. Choosing the 'flat' strategy the results are chosen by its
-        quality. This means that result1 of all three providers an result2 of
-        the first and second provider are returned.
+        and the first five results (marked with 'd') are taken.
+        Choosing the 'flat' strategy the results are chosen by its quality.
+        This means that result1 of all three providers an result2 (marked with
+        'f') of the first and second provider are returned.
 
-            ::
-
-              +------------------+---------+---------+---------+
-              | results/provider | #1 tmdb | #2 ofdb | #3 imdb |
-              |    priority ---> |   90    |   80    |   70    |
-              +------------------+---------+---------+---------+
-              | highest quality  | result1 | result1 | result1 |
-              +------------------+---------+---------+---------+
-              | ...              | result2 | result2 | result2 |
-              +------------------+---------+---------+---------+
-              | ...              | result3 | result3 |         |
-              +------------------+---------+---------+---------+
-              | ...              | result4 | result4 |         |
-              +------------------+---------+---------+---------+
-              | lowest quality   |         | result5 |         |
-              +------------------+---------+---------+---------+
 
         :param bool cache: Use local cache [True].
+
         If set the local cache will be used on each query. Http responses are
         cached. If a specific url response has already been cached previously
         it will be returned from the cache. If url is not found in the cache, a
         http request will be triggered. Only *valid* responses are cached.
 
         :param int retries: Number of retries per request [5].
+
         If a http response timeout happens or a provider response is marked as
         invalid but not finished a retry will be triggered. This parameters
         limits the max possible retries.
 
         :param int amount: Number of Items you want to get [3].
+
         This parameter limits the amount of results to be returned by a submit.
 
+        .. code-block:: python
+
+            # this query will return a max of 2 results
+            query = session.create_query(title='Sin City', amount=2)
+            [...]
+
         :param list providers: A list with provider name strings [all].
+
         With the providers parameter you can limit the search to specific
         providers by giving libhugin a list with providers you want to query.
+
+        Example:
+
+        .. code-block:: python
+
+            # this query will only trigger the omdbmovie and tmdbmovie
+            # provier
+            q = session.create_query(
+                title='Sin', providers=['omdbmovie', 'tmdbmovie']
+            )
+            [...]
+
         To get the names of all available providers use the
         :meth:`Session.provider_plugins` method.
 
-        ::
+        .. code-block:: python
 
-            >>> providers = session.provider_plugins()
-            >>> for provider in providers:
-                    print(provider.name)
+            providers = session.provider_plugins()
+            for provider in providers:
+                print(provider.name)
             OFDBMovie
             OFDBPerson
             OMDBMovie
             TMDBPerson
             TMDBMovie
 
-
-
         :param str language: Language `ISO 639-1 <http://en.wikipedia.org/wiki/ISO_639>`_ Format ['']
         The language you want to use for your query. Currently there is only
         the tmdb provider that is multilingual. All other providers are limited
         to a specific language e.g. English or German. The genre normalization
         is currently also limited to German/English normalization only.
+
+        Example:
+
+        .. code-block:: python
+
+            # this query will return german language attrs if a the movie
+            # provider is multilingual, otherwise the providers default
+            # language will be returned
+            query = session.create_query(title='Sin City', language='de')
+            [...]
 
         :param bool fuzzysearch: Enable 'fuzzy search' mode.
         Content providers are pretty fussy about the title or name you search
@@ -238,16 +384,32 @@ class Session:
         are returned. The fuzzysearch will even work if you misspell the title
         like 'unly gut forgivs'.
 
+        Example:
+
+        .. code-block:: python
+
+            # searching for misspelled Sin City title, will return nothing
+            query = session.create_query(title='Sun Sity')
+            results = session.submit(query)
+            print(result)
+            []
+            [...]
+
+            # searching for misspelled Sin City title, with enabled
+            # fuzzysearch will return movies found by using the Sin City
+            # imdbid tt0401792
+            query = session.create_query(title='Sun Sity', fuzzysearch=True)
+            results = session.submit(query)
+            print(result)
+            [<OFDBMovie <movie> : Sin City (2005)>,
+            <OMDBMovie <movie> : Sin City (2005)>,
+            <TMDBMovie <movie, picture> : Sin City (2005)>]
+            [...]
+
 
         :param str type: Type of metadata. person, movie.
         This parameter defines the type of metadata you want to search for, it
         is currently set automatically and should be may be ignored.
-
-        .. note::
-
-            All invalid key parameters will be filtered.  If there are missing
-            or inconsistent values a KeyError exception will be raised by the
-            Query.
 
         """
         return Query(kwargs)
@@ -325,6 +487,19 @@ class Session:
         """
         Submit a synchronous search query that blocks until finished.
 
+        The following code block illustrates the query usage:
+
+        .. code-block:: python
+
+            results = s.submit(query) # blocks
+            print(result)
+            [<TMDBMovie <movie, picture> : Sin City (2005)>,
+            <OFDBMovie <movie> : Sin City (2005)>,
+            <OMDBMovie <movie> : Sin City (2005)>]
+
+        The :meth:`Session.submit` method blocks. You can also submit the query
+        asynchronously by using the :meth:`Session.submit_async` method.
+
         :param query: Query object with search parameters.
         :returns: A list with result objects.
 
@@ -335,7 +510,20 @@ class Session:
             return self._submit(query)
 
     def submit_async(self, query):
-        """ Invoke :func:`submit` asynchronously. """
+        """ Invoke :meth:`submit` asynchronously.
+
+        The following code block illustrates the query usage:
+
+        .. code-block:: python
+
+            results_q1 = s.submit_async(query_one) # dosen't block
+            results_q2 = s.submit_async(query_two) # dosen't block
+            [...]
+
+        :param query: Query object with search parameters.
+        :returns: A future object objects.
+
+        """
         future = self._async_executor.submit(
             self.submit,
             query
@@ -510,16 +698,32 @@ class Session:
             {'name': provider, 'supported_attrs': provider.supported_attrs}
         )
 
+
+    def provider_plugins(self, pluginname=None):
+        """ Return provider plugins.
+
+
+        :param pluginname: Name of a specific provider.
+        Passing a provider plugin name will only return a single provider.
+
+        :returns: Provider plugins list or specific provider if valid name is given.
+
+        """
+        return self._get_plugin(self._provider, pluginname)
+
     def postprocessing_plugins(self, pluginname=None):
+        """ Return postprocessing plugins.
+
+        See analogue: :meth:`provider_plugins`
+        """
         return self._get_plugin(self._postprocessing, pluginname)
 
     def converter_plugins(self, pluginname=None):
-        """ Return converters, this is for test purposes only. """
-        return self._get_plugin(self._converter, pluginname)
+        """ Return converter plugins.
 
-    def provider_plugins(self, pluginname=None):
-        """ Return converters, this is for test purposes only. """
-        return self._get_plugin(self._provider, pluginname)
+        See analogue: :meth:`provider_plugins`
+        """
+        return self._get_plugin(self._converter, pluginname)
 
     def _get_plugin(self, plugins, pluginname=None):
         if pluginname is None:
@@ -530,7 +734,12 @@ class Session:
                     return plugin
 
     def clean_up(self):
-        """ Do a clean up on keyboard interrupt or submit cancel. """
+        """ Do a clean up on keyboard interrupt or submit cancel.
+
+        This method needs to be triggered after a cancel. It will block until
+        ready.
+
+        """
         if self._cleanup_triggered is False:
             self._cleanup_triggered = True
             print('You pressed Ctrl+C!')
@@ -546,7 +755,12 @@ class Session:
             # print('cache closed.')
 
     def cancel(self):
-        """ Cancel the currently running session. """
+        """ Cancel the currently running session.
+
+        The cancel method will set a shutdown flag inside the :meth:`Session`.
+        All running jobs will be finished, pending jobs will be canceled.
+
+        """
         self._shutdown_session = True
 
     def _signal_handler(self, signal, frame):
