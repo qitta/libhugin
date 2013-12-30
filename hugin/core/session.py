@@ -40,7 +40,7 @@ class Session:
 
         .. code-block:: python
 
-            # getting and intializing the session
+            # importing the session
             from hugin.core import Session
             session = Session()
 

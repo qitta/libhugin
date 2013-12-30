@@ -37,6 +37,10 @@ descrption:
    for provider in providers:
        print('{}\\n{}\\n\\n'.format(provider.name, provider.description))
 
+Output:
+
+::
+
    OFDBPerson
    Default ofdb person metadata provider.
 
@@ -56,32 +60,6 @@ descrption:
 .. automethod:: hugin.core.session.Session.postprocessing_plugins
 .. automethod:: hugin.core.session.Session.converter_plugins
 
-Canceling and cleaning up a Session
------------------------------------
-
-A :class:`Session` has to be *cleaned up* after being cancelled. To do so you
-will need the two methods :meth:`cancel` and :meth:`clean_up`.
-
-.. code-block:: python
-
-   results = []
-   session = Session()
-   results += session.submit_async(
-       session.create_query(title='Sin', amount=100)
-    )
-   result += session.sunmit_async(
-       session.create_query(title='Cat', amount=100)
-    )
-
-    # huh?... title Cat? ... I mean Fishcat - let's cancel.
-    session.cancel()  # this sets a flag, running jobs will be finished, pending
-                      # cancelled
-    session.clean_up() # this will clean up everything left, like cancelling
-                       # running futures and closing the internal threadpoolexecutor
-
-
-.. automethod:: hugin.core.session.Session.cancel
-.. automethod:: hugin.core.session.Session.clean_up
 
 Creating a query
 ================
@@ -114,3 +92,31 @@ Asynchronous usage
 ------------------
 
 .. automethod:: hugin.core.session.Session.submit_async
+
+
+Canceling and cleaning up a Session
+-----------------------------------
+
+A :class:`Session` has to be *cleaned up* after being cancelled. To do so you
+will need the two methods :meth:`cancel` and :meth:`clean_up`.
+
+.. code-block:: python
+
+   results = []
+   session = Session()
+   results += session.submit_async(
+       session.create_query(title='Sin', amount=100)
+    )
+   result += session.sunmit_async(
+       session.create_query(title='Cat', amount=100)
+    )
+
+    # huh?... title Cat? ... I mean Fishcat - let's cancel.
+    session.cancel()  # this sets a flag, running jobs will be finished, pending
+                      # cancelled
+    session.clean_up() # this will clean up everything left, like cancelling
+                       # running futures and closing the internal threadpoolexecutor
+
+
+.. automethod:: hugin.core.session.Session.cancel
+.. automethod:: hugin.core.session.Session.clean_up
