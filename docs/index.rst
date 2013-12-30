@@ -50,7 +50,6 @@ tool available, see: :ref:`cmdtool`.
 
 
 
-
 Table of Contents
 -----------------
 
@@ -74,7 +73,7 @@ Table of Contents
 
 .. toctree::
     :glob:
-    :maxdepth: 3
+    :maxdepth: 2
 
     developer_api/*
 
