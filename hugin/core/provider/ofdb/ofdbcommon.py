@@ -38,7 +38,7 @@ class OFDBCommon:
         try:
             url, response = url_response.pop()
             return 'ok', (None, None), url, json.loads(response).get('ofdbgw')
-        except (ValueError, AttributeError):
+        except (ValueError, AttributeError, TypeError):
             response = self._try_sanitize(response)
             if response is False:
                 return 'critical', (None, True), url, response
