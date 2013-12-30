@@ -66,24 +66,24 @@ class Session:
 
         The following parameters are customizable by the user:
 
-        :param cache_path: Path of cache to be written to.
+        :param str cache_path: Path of cache to be written to.
         This is the path where the *cache container* should be saved. Currently
-        the cache is a python shleeve storing valid  http responses.
+        the cache is a python shelve storing valid  http responses.
 
         :param parallel_jobs: Number of simultaneous jobs to be used.
         This parameter is used to set the number of simultaneous jobs. The
         default value is 1, as there is not much performance gain because of
-        the gil. The main purpose if of threads in this case is to make
+        the GIL. The main purpose if of threads in this case is to make
         asynchronous submit execution possible.
 
-        :param parallel_downloads_per_job: Number of simultaneous downloads.
-        This parameter sets the number of parallel donwload jobs. Each job will
-        use this number of parallel jobs.
+        :param int parallel_downloads_per_job: Number of simultaneous
+        downloads. This parameter sets the number of parallel download jobs.
+        Each job will use this number of parallel jobs.
 
-        :param timeout_sec: Timeout for http requests to be used.
+        :param int timeout_sec: Timeout for http requests to be used.
         This timeout will be use for *every* http response.
 
-        :param user_agent: The user-agent string to be used for metadata downloading.
+        :param str user_agent: User-agent to be used for metadata downloading.
 
         """
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -135,7 +135,7 @@ class Session:
         """
         Validate params and return a Query.
 
-        This function returns a Query object build of the given kwagrs. Keys
+        This function returns a Query object build of the given kwargs. Keys
         are validated and default or missing values are set by the
         :class:`hugin.core.query.Query`.
 
@@ -145,8 +145,9 @@ class Session:
             or inconsistent values a KeyError exception will be raised by the
             Query.
 
-        The following query will search for the movie *Sin City*, the result amount is
-        limited to a max number of five items. Download retries are set to two.
+        The following query will search for the movie *Sin City*, the result
+        amount is limited to a max number of five items. Download retries are
+        set to two.
 
 
         Example code snippet:
@@ -179,12 +180,12 @@ class Session:
 
         .. code-block:: python
 
-            # get a query for the movie watchmen, everythin is intialized
+            # get a query for the movie watchmen, everything is initialized
             # with default values
             query = session.create_query(title='Watchmen')
             [...]
 
-            # building another query, movie title with whitspaces
+            # building another query, movie title with whitespace
             query = session.create_query(title='Only god forgives')
             [...]
 
@@ -227,7 +228,6 @@ class Session:
 
             query = session.create_query(name='Evangeline Lilly')
 
-
         General:
         This parameters may be set on movie an person queries as they are not
         specific to a single type.
@@ -256,11 +256,15 @@ class Session:
         .. code-block:: python
 
             # invoking flat search
-            query = session.create_query(title='Sin City', strategy='flat', amount=5)
+            query = session.create_query(
+                title='Sin City', strategy='flat', amount=5
+            )
             [...]
 
             # invoking deep search
-            query = session.create_query(title='Sin City', strategy='deep', amount=5)
+            query = session.create_query(
+                title='Sin City', strategy='deep', amount=5
+            )
             [...]
 
         The table below illustrates a provider search with a amount limited to
@@ -287,8 +291,8 @@ class Session:
         After the provider results are *collected*, only five results are
         returned to the user as amount is five.
 
-        How the results are picked depends on the strategy. Every provider has a
-        priority.  Priority of 90 is the *highest priority* in this example.
+        How the results are picked depends on the strategy. Every provider has
+        a priority.  Priority of 90 is the *highest priority* in this example.
         Providers with a higher priority are preferred.
 
         Using the 'deep' strategy, the results are sorted by provider priority
@@ -331,7 +335,7 @@ class Session:
         .. code-block:: python
 
             # this query will only trigger the omdbmovie and tmdbmovie
-            # provier
+            # provider
             q = session.create_query(
                 title='Sin', providers=['omdbmovie', 'tmdbmovie']
             )
@@ -345,13 +349,19 @@ class Session:
             providers = session.provider_plugins()
             for provider in providers:
                 print(provider.name)
+
+        Output:
+
+        ::
+
             OFDBMovie
             OFDBPerson
             OMDBMovie
             TMDBPerson
             TMDBMovie
 
-        :param str language: Language `ISO 639-1 <http://en.wikipedia.org/wiki/ISO_639>`_ Format ['']
+        :param str language: Language \
+                `ISO 639-1 <http://en.wikipedia.org/wiki/ISO_639>`_ Format ['']
         The language you want to use for your query. Currently there is only
         the tmdb provider that is multilingual. All other providers are limited
         to a specific language e.g. English or German. The genre normalization
@@ -361,7 +371,7 @@ class Session:
 
         .. code-block:: python
 
-            # this query will return german language attrs if a the movie
+            # this query will return German language attributes if the movie
             # provider is multilingual, otherwise the providers default
             # language will be returned
             query = session.create_query(title='Sin City', language='de')
@@ -376,12 +386,12 @@ class Session:
         Looking for the movie 'Only god forgives' works pretty well if the
         title is spelled correct, but if only a single word is misspelled like
         'Only good forgives' no results will be found by the currently
-        implemented providers. The libhugin fuzzysearch is a simple workaround
+        implemented providers. The libhugin fuzzy search is a simple workaround
         that is provider independent but requires a provider to be able to do a
         imdbid lookup. Enabling this mode libhugin will guess a imdbid for your
         misspelled title and query the available providers with this id. The
         downside is that currently only exact results for the guessed imdbid
-        are returned. The fuzzysearch will even work if you misspell the title
+        are returned. The fuzzy search will even work if you misspell the title
         like 'unly gut forgivs'.
 
         Example:
@@ -396,7 +406,7 @@ class Session:
             [...]
 
             # searching for misspelled Sin City title, with enabled
-            # fuzzysearch will return movies found by using the Sin City
+            # fuzzy search will return movies found by using the Sin City
             # imdbid tt0401792
             query = session.create_query(title='Sun Sity', fuzzysearch=True)
             results = session.submit(query)
@@ -428,7 +438,6 @@ class Session:
 
         if query['fuzzysearch']:
             self._fuzzy_search(query)
-
 
         downloadqueue = DownloadQueue(
             num_threads=self._config['download_threads'],
@@ -698,7 +707,6 @@ class Session:
             {'name': provider, 'supported_attrs': provider.supported_attrs}
         )
 
-
     def provider_plugins(self, pluginname=None):
         """ Return provider plugins.
 
@@ -706,7 +714,7 @@ class Session:
         :param pluginname: Name of a specific provider.
         Passing a provider plugin name will only return a single provider.
 
-        :returns: Provider plugins list or specific provider if valid name is given.
+        :returns: Provider plugin list or specific provider.
 
         """
         return self._get_plugin(self._provider, pluginname)
