@@ -71,13 +71,57 @@ libhuin project structure
 
 .. _pluginsys:
 
-libhugin plugin system
+Libhugin plugin system
 ======================
 
 Currently the plugin system is based on yapsy, so you will need to define a
-*.yapsy-plugin*-file according to the yapsy plugin convention, see `Yapsy plugin manager doc <https://yapsy.readthedocs.org/en/latest/PluginManager.html>`_
+*.yapsy-plugin*-file according to the yapsy plugin convention.
+
+In the following snippet, you see examplar the converter dicionary. No matter if
+a content provider, output converter or postprocessing plugin the structure is
+like seen in the following example:
+
+::
+
+    hugin
+    ├── core
+    │   ├── cache.py
+    │   ├── converter           <-- converter plugin folder.
+    │   │   └── json            <-- json plugin, a module containing the implementation and a yapsy plugin description file.
+    │   │       ├── __init__.py
+    │   │       ├── json.py
+    │   │       └── json.yapsy-plugin
+
+
+The plugin itself is located in a folder with a __init__.py to make it act as a
+module. The plugin itself in this case is the json.py file, in this case this is
+a class inheriting from the postprocessing interface implementing the needed
+methods. The *'*.yapsy-plugin'* file is a description file that should name and
+describe the plugin precisely.
+
+Json yapsy description examlple:
+
+::
+
+    [Core]
+    Name = JSON    # plugin name used by libhugin.
+    Module = json  # name of the plugin implementation without py ending.
+
+    [Documentation]
+    Description = Converts result object to json format.  # description used by libhugin.
+    Author = Christoph Piechula
+    Version = 1.0
+    Website = n/a
+
+
+The name attrubute inside the yapsy plugin file is the name the plugin will be
+available at libhugin. The description is the description of the plugin that
+will be used als description inside libhugin too.
+
+For more information about yapsy plugin shema, see `Yapsy plugin manager doc <https://yapsy.readthedocs.org/en/latest/PluginManager.html>`_
 for general information and `Yapsy plugin info file convention <https://yapsy.readthedocs.org/en/latest/PluginManager.html#plugin-info-file-format>`_
 for plugin description file.
+
 
 
 .. _providerapi:
@@ -127,3 +171,27 @@ The parse reponse method
 ========================
 
 .. automethod:: hugin.core.provider.IProvider.parse_response
+
+
+.. _postprocessingapi:
+
+##################################
+Developing a postprocessing plugin
+##################################
+
+All postprocessing plugins have to inherit from :class:`IPostprocessing` and
+implement the following method:
+
+.. automethod:: hugin.core.provider.IPostprocessing.process
+
+
+.. _outputconverterapi:
+
+####################################
+Developing a output converter plugin
+####################################
+
+All output converter plugins have to inherit from :class:`IOutputConverter` and
+im implement the following method:
+
+.. automethod:: hugin.core.provider.IOutputConverter.convert
