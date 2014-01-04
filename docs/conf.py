@@ -376,9 +376,10 @@ epub_copyright = '2013, Christoph Piechula'
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'python': ('http://python.readthedocs.org/en/latest/', None),
-    'sphinx': ('http://sphinx.readthedocs.org/en/latest/', None)
+    'sphinx': ('http://sphinx.readthedocs.org/en/latest/', None),
+    'yapsy': ('https://yapsy.readthedocs.org/en/latest/', None)
 }
 
 # Make __init__ and Class.__doc__ visible:
 autoclass_content = 'init'
-autodoc_member_order='bysource'
+autodoc_member_order = 'bysource'
