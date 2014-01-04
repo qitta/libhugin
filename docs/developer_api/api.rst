@@ -1,7 +1,11 @@
+.. currentmodule:: hugin.core.provider
+
 .. _pluginapi:
 
-Plugin API
-==========
+############
+Introduction
+############
+
 
 .. note::
 
@@ -9,9 +13,12 @@ Plugin API
    you just want to use the library as it is, see :ref:`usermanual`
 
 
-Introduction
-============
+To write plugins for libhugin you need to get to know the project structure
+first. Here is a overview of the structure where provider, prostprocessing and
+converter plugins are located. The overview is shortened.
 
+libhuin project structure
+=========================
 
 .. code-block:: sh
 
@@ -22,10 +29,7 @@ Introduction
   * │   ├── converter    <-- converter plugin folder
     │   │   ├── html
     │   │   │   ├── html.py
-    │   │   │   ├── html.yapsy-plugin
-    │   │   │   ├── __init__.py
-    │   │   │   ├── mtemplate.html
-    │   │   │   └── ptemplate.html
+    │   │   │   └── [...]
     │   │   └── json
     │   │       ├── __init__.py
     │   │       ├── json.py
@@ -39,36 +43,23 @@ Introduction
     │   │   │   ├── composer.yapsy-plugin
     │   │   │   └── __init__.py
     │   │   └── resultdicttrimmer
-    │   │       ├── __init__.py
-    │   │       ├── resultdicttrimmer.py
-    │   │       └── resultdicttrimmer.yapsy-plugin
+    │   │       └── [...]
   * │   ├── provider    <-- provider plugin folder
   * │   │   ├── genrefiles <-- provider subfolder with genre norm data
     │   │   │   ├── normalized_genre.dat
-    │   │   │   ├── ofdb.genre
-    │   │   │   ├── omdb.genre
-    │   │   │   └── tmdb.genre
-    │   │   ├── genrenorm.py
+    │   │   │   ├── tmdb.genre
+    │   │   │   └── [...]
     │   │   ├── __init__.py
-    │   │   ├── ofdb
-    │   │   │   ├── __init__.py
-    │   │   │   ├── ofdbcommon.py
-    │   │   │   ├── ofdbmovie.py
-    │   │   │   ├── ofdbmovie.yapsy-plugin
-    │   │   │   ├── ofdbperson.py
-    │   │   │   └── ofdbperson.yapsy-plugin
+    │   │   ├── genrenorm.py
+    │   │   ├── result.py
     │   │   ├── omdb
     │   │   │   ├── __init__.py
     │   │   │   ├── omdbmovie.py
     │   │   │   └── omdbmovie.yapsy-plugin
-    │   │   ├── result.py
+    │   │   ├── ofdb
+    │   │   │   └── [...]
     │   │   └── tmdb
-    │   │       ├── __init__.py
-    │   │       ├── tmdbcommon.py
-    │   │       ├── tmdbmovie.py
-    │   │       ├── tmdbmovie.yapsy-plugin
-    │   │       ├── tmdbperson.py
-    │   │       └── tmdbperson.yapsy-plugin
+    │   │       └── [...]
     │   ├── query.py
     │   └── session.py
     ├── __init__.py
@@ -78,42 +69,61 @@ Introduction
         ├── logutil.py
         └── stringcompare.py
 
+.. _pluginsys:
+
+libhugin plugin system
+======================
+
+Currently the plugin system is based on yapsy, so you will need to define a
+*.yapsy-plugin*-file according to the yapsy plugin convention, see `Yapsy plugin manager doc <https://yapsy.readthedocs.org/en/latest/PluginManager.html>`_
+for general information and `Yapsy plugin info file convention <https://yapsy.readthedocs.org/en/latest/PluginManager.html#plugin-info-file-format>`_
+for plugin description file.
+
+
 .. _providerapi:
 
+####################################
 Developing a content provider plugin
-------------------------------------
+####################################
 
-.. automodule:: hugin.core.provider
-   :members: IProvider
+Developing a content provider you will have to write a module according to the
+yapsy specification, see :ref:`pluginsys`
 
+Currently there are two types of metadata supported by libhugin. Movie- and
+person metadata. All movie content provider have to inherit from
+:class:`IMovieProvider` and all person provider from :class:`IPersonProvider`.
 
-Developing a movie content provider
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+IMovieProvider
+==============
 
-.. automodule:: hugin.core.provider
-   :members: IMovieProvider, IMoviePictureProvider
+.. autoclass:: hugin.core.provider.IMovieProvider
 
+IPersonProvider
+===============
 
-Developing a person content provider
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. automodule:: hugin.core.provider
-   :members: IPersonProvider, IPersonPictureProvider
-
-
-.. _postprocessingapi:
-
-Developing a postprocessing plugin
-----------------------------------
-
-.. automodule:: hugin.core.provider
-   :members: IPostprocessing
+.. autoclass:: hugin.core.provider.IPersonProvider
 
 
-.. _outputconverterapi:
+Whether a content provider supports only textual metadata or is also able to
+fetch provider picture metadata, you may need to inherit from the
+*PictureProvider* class too. If your provider will be able to search for art
+metadata or even  art metadata only. To achieve this movie content provider have
+to additionally inherit from :class:`IMoviePictureProvider` and person content
+provider from :class:`IPersonPictureProvider`.
 
-Developing a output converter plugin
-------------------------------------
 
-.. automodule:: hugin.core.provider
-   :members: IOutputConverter
+Content provider methods
+========================
+
+All content provider plugins have to implement at least the two methods
+:meth:`IProvider.build_url` and :meth:`IProvider.parse_response`.
+
+The build url method
+====================
+
+.. automethod:: hugin.core.provider.IProvider.build_url
+
+The parse reponse method
+========================
+
+.. automethod:: hugin.core.provider.IProvider.parse_response
