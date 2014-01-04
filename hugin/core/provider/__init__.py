@@ -18,11 +18,6 @@ class IProvider(IPlugin):
 
     All content providers have to implement the following two methods:
 
-    .. autosummary::
-
-        build_url
-        parse_response
-
     """
     def __init__(self):
         self.name = 'IProvider'
@@ -37,8 +32,11 @@ class IProvider(IPlugin):
         parameters.  The build_url method has to return a list with URIs or
         None if building a search URIs fails.
 
-        :param list search_params: A dictionary containing query parameters
-        :returns list: A list with urls on success, else None
+        :param dict search_params: A dictionary containing query parameters.
+        For more information about search possible search parameters see
+        :meth:`hugin.core.session.Session.create_query`.
+
+        :returns list list: A list with urls on success, else None
 
         """
         raise NotImplementedError
@@ -50,33 +48,55 @@ class IProvider(IPlugin):
         The provider itself is responsible for parsing its previously requested
         items.
 
-        Possible result return values are:
+        The method returns a *tuple* containing a *result* and a *flag* that
+        indicates if provider is done. If the flag is True, than there is
+        nothing to do left, otherwise the query is not ready yet.
 
-            * list with urls to fetch next
-            * a empty list if nothing found
-            * a finished result_dict
-            * None if parsing fails
 
-        The method returns a  tuple containing a flag that indicates if
-        provider is done. If the flag is True, than there is nothing to do
-        left, otherwise the query is not ready yet.
+        The following return values, *tuple combinations* are possible:
 
-        Possible combinations  ::
+        **on valid http response:**
 
-            * on valid response:     => ([[url_a, url_b, ...],...], False)
-                                        ([], True)
-                                        (result, True)
-                                        (None, False)
-
-            * on invalid response:   => (None, True)
+        +----------------------------------------+-------+
+        | result                                 | flag  |
+        +========================================+=======+
+        | A list with url lists:                 |       |
+        | [[url_a, url_b,...],...])              | False |
+        +----------------------------------------+-------+
+        | A empty list: []                       | True  |
+        +----------------------------------------+-------+
+        | result_dict, with attributes formatted | True  |
+        | accourding to :class:`IMovieProvider`  |       |
+        | or :class:`IPersonProvider`            |       |
+        +----------------------------------------+-------+
+        | None                                   | False |
+        +----------------------------------------+-------+
 
         The (None, False) case is for provider that may get a valid response
         which tells that the database/server had a timeout. In this case just
         return (None, False) and a retry will be triggered.
 
-        :param url_response: A url-response tuple list.
-        :type url_response: list
-        :param search_params: See :func: `core.provider.IProvider.search`.
+
+        **on invalid http response:**
+
+        +----------------------------------------+-------+
+        | result                                 | flag  |
+        +========================================+=======+
+        | None                                   | True  |
+        +----------------------------------------+-------+
+
+        :param list url_response: A url-response tuple list.
+
+        This parameter is a list with tuples containing the url and the http
+        response downloaded from this url source.
+
+        :param dict search_params: Search parameters from query.
+
+        This dict contains all the search paramesters from the query. Not all
+        parameters might be relevant for the content provider. For a list with
+        all possible query parameters see
+        :meth:`hugin.core.session.Session.create_query`.
+
         :returns: A tuple containing a data and a state flag.
 
         """
@@ -120,15 +140,9 @@ class IProvider(IPlugin):
         return '{name} <{type}>'.format(name=self.name, type=types)
 
 
-#    """ a base class for movie metadata plugins.
-#    .. py:function:: attribute_format
-#
-#        :param title: was ist der title
-#        :type title: [str]
-
 class IMovieProvider(IProvider):
 
-    """ a base class for movie metadata plugins.
+    """ A base class for movie metadata plugins.
 
         .. note::
 
@@ -143,7 +157,7 @@ class IMovieProvider(IProvider):
         :param int vote_count': A Vote count.
         :param str rating': A uer rating.
         :param str providerid': A Provider id.
-        :param list alternative_titles': Alternative titles list as (lang, title) tuple.
+        :param list alternative_titles': Alternative titles list.
         :param list directors': Movie directors.
         :param list writers': Movie writers.
         :param list crew': Movie crew as (position, name) tuple.
@@ -181,7 +195,10 @@ class IPersonProvider(IProvider):
 
     """ A base class for person metadata plugins.
 
-    .. note:: The movie provider should fill the result dict according to the parameters listened below.
+    .. note::
+
+        The person provider should fill the result dict according to the
+        parameters listened below.
 
     :param str name': Actor's name.
     :param list alternative_names': Alternative actor names like 'artist name'.
