@@ -17,6 +17,8 @@ To write plugins for libhugin you need to get to know the project structure
 first. Here is a overview of the structure where provider, prostprocessing and
 converter plugins are located. The overview is shortened.
 
+.. _libhugin_project_structure:
+
 libhuin project structure
 =========================
 
@@ -137,10 +139,98 @@ Currently there are two types of metadata supported by libhugin. Movie- and
 person metadata. All movie content provider have to inherit from
 :class:`IMovieProvider` and all person provider from :class:`IPersonProvider`.
 
+
 IMovieProvider
 ==============
 
 .. autoclass:: hugin.core.provider.IMovieProvider
+
+.. _genrenorm:
+
+Genre *'normalization'*
+-----------------------
+
+By using different webservices, you probably will also get different tagged
+data. As movie genre attributes are not standardized a webservice A may retrun
+for the movie like Star Trek the genre *Science Fiction*, another webservice
+will return for the same movie the genre *SciFi*, or *Sci-Fi* oder even
+*Science-Fiction*.
+
+This should't be a problem at first, but if you want to compare movies or
+grouping them by genre to select a Science Fiction movie for your movie night,
+this might get a problem if movies are tagged with different provider metadata.
+
+As genre is a importent criteria for movie grouping and comparsion, libhugin
+offers a simple genre normalization possibilty.
+
+Inside the provider folder there is a genrefiles folder, see: :ref:`libhugin_project_structure`.
+This folder contains a normalized_genre.dat file, which contains a global genre
+using the following structure:
+
+::
+
+    0, Abenteuer, Adventure
+    [...]
+    20, Katastrophenfilm, Disaster
+    [...]
+    25, Lovestory, Romance
+    [...]
+    32, Science Fiction, Science Fiction
+    [...]
+    40, Western, Western
+
+The first value is a index representing the global genre, the second and third
+value is the genre name, in currently in german and english language.
+
+If you want to have a unique genre accros all content provider, your provider
+will have to implement the genre normalization. A complete genre normalization
+implementation for a provider is only possible if you know all the genre names a
+webservice will deliver.
+
+Let's assume your provider all genre names your provider is able to deliver are:
+
+.. _genreexample:
+
+.. code-block:: sh
+
+    Sci-Fi
+    Liebesfilm
+    Katastropen-Film
+
+An you want this provider specific genres to be normalized, so you will have to
+write a providername.genre file and place it inside the genrefiles folder. In
+this case the provider specific genre mapping file would look like this:
+
+.. _genregenre:
+
+.. code-block:: sh
+
+    # global index, provider specific genre
+
+    32, Sci-Fi
+    25, Liebesfilm
+    20, Katastropen-Film
+
+
+Now using this mapping the genre using the genre nomalization would be mapped
+like this:
+
+
+.. code-block:: sh
+
+   # mapping when using language de
+   Sci-Fi -> Science Fiction
+   Liebesfilm -> Lovestory
+   Katestrophen-Film -> Katastrophenfilm
+
+   # mapping when using language de
+   Sci-Fi -> Science Fiction
+   Liebesfilm -> Romance
+   Katestrophen-Film -> Disaster
+
+A complete more complete example using genre nomalization: :ref:`exemplar_movieplugin`.
+
+.. _exemplar_movieplugin:
 
 Exemplar Movie Provider Implementation
 ======================================
@@ -179,6 +269,9 @@ tsmd and creating a __init__.py file inside of it. After doing this we create a
 tsmdmovie.py (the provider implementation) and a tsmdmovie.py (the plugin
 description) file, which is needed by yapsy, see :ref:`pluginsys`.
 
+As we want to use genre normalization (:ref:`genrenorm`), we will also create a
+tsmd.genre file.
+
 Creating our provider skeleton files:
 
 .. code-block:: sh
@@ -186,6 +279,7 @@ Creating our provider skeleton files:
     $touch hugin/provider/__init__.py
     $touch hugin/provider/tsmdmovie.py
     $touch hugin/provider/tsmdmovie.yapsy-plugin
+    $touch hugin/provider/genrefiles/tsmd.genre
 
 
 Lets check our structure:
@@ -198,8 +292,13 @@ Lets check our structure:
    -rw-r--r-- 1 christoph users 0 Jan  5 15:53 tsmdmovie.py
    -rw-r--r-- 1 christoph users 0 Jan  5 15:53 tsmdmovie.yapsy-plugin
 
+   $ls -l hugin/provider/genrefiles
+   total 0
+   -rw-r--r-- 1 christoph users 0 Jan  5 15:53 normalized_genre.dat
+   -rw-r--r-- 1 christoph users 0 Jan  5 15:53 tsmd.genre
 
-Filling in the *'*.yapsy-plugin'* file with content:
+
+Filling in the *'.yapsy-plugin'* file with content:
 
 ::
 
@@ -213,6 +312,10 @@ Filling in the *'*.yapsy-plugin'* file with content:
     Version = 1.0
     Website = www.tsmd-webservice.org/api/  # webservice api documentation
 
+
+We assume that our provider is able to deliver the same genre attributes as seen
+in the genre normalization example: :ref:`genreexample`, so the content of our
+tsmd.genre file looks like this example: :ref:`genregenre`.
 
 Filling in the *tsmdmovie.py* file with content:
 
@@ -236,10 +339,13 @@ Filling in the *tsmdmovie.py* file with content:
             # our api url
             self._base_url = 'http://www.tsmd-webservice.org/api/{stype}/{query}'
 
-            # enabling genre normalization
+            # enabling genre normalization telling the normalizer which file to
+            # be used
             self._genrenorm = GenreNormalize('tmsd.genre')
 
-            # setting provider priority to 50
+            # setting provider priority to 50, there is currently no rule for
+            # this, higher priority provider will be definitly prefered when
+            # picking results
             self._priority = 50
 
             # lets define all attributes our webservice will deliver
@@ -291,6 +397,8 @@ Filling in the *tsmdmovie.py* file with content:
                 result_dict['plot'] = response['Plot']
                 result_dict['imdbid'] = response['ImdbID']
                 result_dict['genre'] = response['Genre']
+
+                # telling the genre normalizer to give us a normalized genre
                 result_dict['genre_norm'] = self._genrenorm.normalize_genre_list(
                     result_dict['genre']
                 )
