@@ -37,7 +37,6 @@ class Session:
 
         Creating a Session:
 
-
         .. code-block:: python
 
             # importing the session
@@ -67,20 +66,24 @@ class Session:
         The following parameters are customizable by the user:
 
         :param str cache_path: Path of cache to be written to.
+
         This is the path where the *cache container* should be saved. Currently
         the cache is a python shelve storing valid  http responses.
 
         :param parallel_jobs: Number of simultaneous jobs to be used.
+
         This parameter is used to set the number of simultaneous jobs. The
         default value is 1, as there is not much performance gain because of
         the GIL. The main purpose if of threads in this case is to make
         asynchronous submit execution possible.
 
-        :param int parallel_downloads_per_job: Number of simultaneous
-        downloads. This parameter sets the number of parallel download jobs.
-        Each job will use this number of parallel jobs.
+        :param int parallel_downloads_per_job: Number of simultaneous downloads.
+
+        This parameter sets the number of parallel download jobs.  Each job
+        will use this number of parallel jobs.
 
         :param int timeout_sec: Timeout for http requests to be used.
+
         This timeout will be use for *every* http response.
 
         :param str user_agent: User-agent to be used for metadata downloading.
@@ -362,6 +365,7 @@ class Session:
 
         :param str language: Language \
                 `ISO 639-1 <http://en.wikipedia.org/wiki/ISO_639>`_ Format ['']
+
         The language you want to use for your query. Currently there is only
         the tmdb provider that is multilingual. All other providers are limited
         to a specific language e.g. English or German. The genre normalization
@@ -378,6 +382,7 @@ class Session:
             [...]
 
         :param bool fuzzysearch: Enable 'fuzzy search' mode.
+
         Content providers are pretty fussy about the title or name you search
         for. Therefor there is a fuzzy search mode implemented. This mode will
         try to get the right results even if the title/person is pretty much
@@ -418,6 +423,7 @@ class Session:
 
 
         :param str type: Type of metadata. person, movie.
+
         This parameter defines the type of metadata you want to search for, it
         is currently set automatically and should be may be ignored.
 
@@ -712,6 +718,7 @@ class Session:
 
 
         :param pluginname: Name of a specific provider.
+
         Passing a provider plugin name will only return a single provider.
 
         :returns: Provider plugin list or specific provider.

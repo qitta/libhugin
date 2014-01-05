@@ -61,6 +61,7 @@ Table of Contents
 
     architecture/*
 
+
 **User Manual**
 
 .. toctree::
@@ -68,6 +69,7 @@ Table of Contents
     :maxdepth: 2
 
     user_manual/*
+
 
 **Developer Section**
 

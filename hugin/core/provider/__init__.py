@@ -3,7 +3,6 @@
 
 """ This module provides the Interface definition for provider, converter and
 postprocessing plugins.
-
 """
 
 from yapsy.IPlugin import IPlugin
@@ -27,13 +26,12 @@ class IProvider(IPlugin):
         """
         Build a url from given search params.
 
-
         The build_url method builds a url according to the given search
         parameters.  The build_url method has to return a list with URIs or
         None if building a search URIs fails.
 
-        :param dict search_params: A dictionary containing query parameters.
-        For more information about search possible search parameters see
+        :param dict search_params: A dictionary containing query parameters. \
+        For more information about search possible search parameters see \
         :meth:`hugin.core.session.Session.create_query`.
 
         :returns list list: A list with urls on success, else None
