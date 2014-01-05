@@ -77,7 +77,7 @@ class Session:
         the GIL. The main purpose if of threads in this case is to make
         asynchronous submit execution possible.
 
-        :param int parallel_downloads_per_job: Number of simultaneous downloads.
+        :param int parallel_downloads_per_job: Number of parallel downloads.
 
         This parameter sets the number of parallel download jobs.  Each job
         will use this number of parallel jobs.
