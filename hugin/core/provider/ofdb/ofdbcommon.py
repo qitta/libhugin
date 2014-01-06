@@ -14,13 +14,13 @@ class OFDBCommon:
 
     def _try_sanitize(self, response):
         """ Try to sanitize a broken response containing a valid json doc. """
-        splited = response.splitlines()
-        response = ''
-        for item in splited:
-            if re.search('{\s*"ofdbgw"', item):
-                response = item
-                break
         try:
+            splited = response.splitlines()
+            response = ''
+            for item in splited:
+                if re.search('{\s*"ofdbgw"', item):
+                    response = item
+                    break
             return json.loads(response).get('ofdbgw')
         except (TypeError, ValueError):
             return False
