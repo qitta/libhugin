@@ -74,6 +74,10 @@ class Cache:
             # print('cache closed.')
             self._cache = None
 
+    def cache_keys(self):
+        if self._cache:
+            return self._cache.keys()
+
 if __name__ == '__main__':
     import unittest
 
