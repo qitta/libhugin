@@ -111,7 +111,8 @@ class OMDBMovie(provider.IMovieProvider):
         vote_count = result['imdbVotes'].replace(',', '')
         if vote_count.isnumeric():
             result_dict['vote_count'] = int(vote_count)
-        result_dict['year'] = int(result['Year'])
+        if result['Year'].isdecimal():
+            result_dict['year'] = int(result['Year'])
 
         return {key: self._filter_na(val) for key, val in result_dict.items()}
 
