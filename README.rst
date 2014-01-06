@@ -11,7 +11,7 @@ Current state:
 
 Libhugin is a modular movie metadata retrieval and analysis library.
 
-For more information see the documentation is loacated at http://libhugin.readthedocs.org/latest/.
+For more information see the documentation loacated at http://libhugin.readthedocs.org/latest/.
 
 Installation
 ============
