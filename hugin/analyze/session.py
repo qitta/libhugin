@@ -5,6 +5,7 @@ import os
 import sys
 import glob
 import xmltodict
+from collections import Counter
 
 #hugin
 from hugin.core.cache import Cache
@@ -67,8 +68,23 @@ if __name__ == '__main__':
         s = Session('movie.db')
         m = MovieFileWalker()
         m.walk(sys.argv[1])
+        c = Counter()
         for item in m.get_movies():
-            print(item._dictrepr.get('movie').get('title'))
+            if item._dictrepr and item._dictrepr.get('movie'):
+                title = item._dictrepr.get('movie').get('originaltitle')
+                year = item._dictrepr.get('movie').get('year')
+                foldername = '{0} ({1})'.format(title, year)
+                folder_old = os.path.basename(item.key)
+                if foldername == folder_old:
+                    c['gleich'] += 1
+                else:
+                    print('ungleich:', folder_old, ' ====> ', foldername)
+                    os.rename(
+                        os.path.join(sys.argv[1], folder_old),
+                        os.path.join(sys.argv[1], foldername)
+                    )
+                    c['ungleich'] += 1
+        print(c)
         s.database_shutdown()
 
     print('invalid or no path given.')
