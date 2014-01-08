@@ -3,88 +3,87 @@
 
 import os
 import sys
+import os
 import glob
+import shelve
 import xmltodict
+from guess_language import guess_language
 from collections import Counter
 
-#hugin
-from hugin.core.cache import Cache
+#nfo read helper
+def read_attrs(nfofile, mask):
+    try:
+        with open(nfofile, 'r') as f:
+            xml = xmltodict.parse(f.read())
+            attributes = {key: None for key in mask.keys()}
+            for key, filekey in mask.items():
+                attributes[key] = xml['movie'][filekey]
+            return attributes
+    except Exception as e:
+        print('Exception', e)
 
+MASK = {
+    'title': 'title',
+    'originaltitle': 'originaltitle',
+    'year': 'year',
+    'plot': 'plot',
+    'director': 'director',
+    'genre': 'genre'
+}
 
 class Session:
 
-    def __init__(self, database):
-        self._database = Cache()
-        self._database.open(cache_name=database)
+    def __init__(self, database, attrs=MASK):
+        self._dbname = database
+        self._database = shelve.open(self._dbname)
+        self._mask = attrs
 
-    def add(self, key, value):
-        self._database.write(key, value)
+    def add(self, nfofile):
+        if os.path.isdir(nfofile):
+            # there is no nfofile, so we get the directory
+            movie = Movie(nfofile, None, None)
+        else:
+            # we have a nfofile, so we can get the directory
+            attrs = read_attrs(nfofile, self._mask)
+            if attrs is None:
+                attrs = {key: None for key in self._mask.keys()}
+            movie = Movie(os.path.dirname(nfofile), nfofile, attrs)
+        self._database[movie.key] = movie
 
-    def get(self, key):
-        return self._database.read(key)
+    def stats(self):
+        return "Databse: {}, Entries: {}\n".format(
+            self._dbname, len(self._database.keys())
+        )
 
     def database_shutdown(self):
         self._database.close()
 
 
 class Movie:
-    def __init__(self, key):
+
+    def __init__(self, key, nfo, attributes):
         self.key = key
-        self._nfo = glob.glob1(key, '*.nfo')
-        self._dictrepr = self._load()
-
-    def _load(self):
-        if self._nfo:
-            try:
-                self._nfo = self._nfo.pop()
-                full_path = os.path.join(self.key, self._nfo)
-                with open(full_path, 'r') as f:
-                    return xmltodict.parse(f.read())
-            except Exception as e:
-                print(e)
-
-
-class MovieFileWalker:
-    def __init__(self):
-        self._path = None
-        self._movies = None
-        self._movie_objs = []
-
-    def walk(self, path):
-        self._path = path
-        self._movies = os.listdir(path)
-        for key in [os.path.join(self._path, m) for m in self._movies]:
-            self._movie_objs.append(Movie(key))
-
-    def get_movies(self):
-        return self._movie_objs
-
+        self.nfo = nfo
+        self._attributes = attributes
+        self._analyzer = {}
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print('no movie path given.')
+    s = Session('movie.db')
+    path = sys.argv[1]
+    c = Counter()
+    for moviefolder in os.listdir(path):
+        full_movie_path = os.path.join(path, moviefolder)
+        nfofile = glob.glob1(full_movie_path, '*.nfo')
+        if nfofile == []:
+            nfofile = full_movie_path
+            c['no_nfo'] += 1
+        else:
+            nfofile = os.path.join(full_movie_path, nfofile.pop())
+        s.add(nfofile)
 
-    if os.path.exists(sys.argv[1]):
-        s = Session('movie.db')
-        m = MovieFileWalker()
-        m.walk(sys.argv[1])
-        c = Counter()
-        for item in m.get_movies():
-            if item._dictrepr and item._dictrepr.get('movie'):
-                title = item._dictrepr.get('movie').get('originaltitle')
-                year = item._dictrepr.get('movie').get('year')
-                foldername = '{0} ({1})'.format(title, year)
-                folder_old = os.path.basename(item.key)
-                if foldername == folder_old:
-                    c['gleich'] += 1
-                else:
-                    print('ungleich:', folder_old, ' ====> ', foldername)
-                    os.rename(
-                        os.path.join(sys.argv[1], folder_old),
-                        os.path.join(sys.argv[1], foldername)
-                    )
-                    c['ungleich'] += 1
-        print(c)
-        s.database_shutdown()
-
-    print('invalid or no path given.')
+    import pprint
+    for item in dict(s._database).values():
+        if item._attributes and item._attributes.get('plot'):
+            c[guess_language(item._attributes['plot'])] +=1
+    print(s.stats(), c)
+    s.database_shutdown()
