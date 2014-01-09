@@ -1,0 +1,9 @@
+[Core]
+Name = MyAnalyzer
+Module = myanalyzer
+
+[Documentation]
+Description = analyzes something.
+Author = Christoph Piechula
+Version = 1.0
+Website = n/a

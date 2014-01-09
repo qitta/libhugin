@@ -1,0 +1,9 @@
+[Core]
+Name = MyModifier
+Module = mymodifier
+
+[Documentation]
+Description = modifies something.
+Author = Christoph Piechula
+Version = 1.0
+Website = n/a
