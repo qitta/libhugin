@@ -19,6 +19,7 @@ class GenreCmp(plugin.IAnalyzer):
             genre_distances.append((b, self._genre_distance(a, b)))
             if tmp is not a:
                 tmp.analyzer_data[self.name] = genre_distances
+                genre_distances = []
                 tmp = a
 
 
