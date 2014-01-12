@@ -1,0 +1,9 @@
+[Core]
+Name = KeywordExtractor
+Module = keywordextractor
+
+[Documentation]
+Description = Extracts significant keywords from plot using the rake (rapid automatic keyword extraction) algorithm.
+Author = Christoph Piechula
+Version = 1.0
+Website = n/a
