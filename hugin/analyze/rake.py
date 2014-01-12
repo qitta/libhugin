@@ -135,9 +135,6 @@ def extract_phrases(sentences, language_code, use_stemmer):
     phrases = deque()
     for sentence in sentences:
         phrases += phrase_iter(sentence.strip(), stopwords, language_stemmer)
-    print(20 * '===')
-    print(phrases)
-    print(20 * '===')
 
     return phrases
 
