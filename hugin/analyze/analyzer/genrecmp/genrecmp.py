@@ -10,19 +10,21 @@ class GenreCmp(plugin.IAnalyzer):
     def process_movie(self, movie_a, movie_b):
         pass
 
-    def process_database(self, database):
-        genre_distances = []
-        tmp = None
+    def process_database(self, database, threshold=0.51):
         for a, b in combinations(database.values(), 2):
-            if tmp is None:
-                tmp = a
-            genre_distances.append((b, self._genre_distance(a, b)))
-            if tmp is not a:
-                tmp.analyzer_data[self.name] = genre_distances
-                genre_distances = []
-                tmp = a
-
+            if a.attributes.get('genre') and b.attributes.get('genre'):
+                distance = self._genre_distance(a, b)
+                if distance > threshold:
+                    a.analyzer_data.setdefault(self.name, set()).add(
+                        (b, distance)
+                    )
+                    b.analyzer_data.setdefault(self.name, set()).add(
+                        (a, distance)
+                    )
 
     def _genre_distance(self, a, b):
-        if a.attributes.get('genre') and b.attributes.get('genre'):
-            return  len(set(a.attributes.get('genre')) & set(b.attributes.get('genre'))) / len(set(a.attributes.get('genre')))
+        """ Calculate the 'distance' between two genres
+
+        """
+        a, b = set(a.attributes.get('genre')), set(b.attributes.get('genre'))
+        return len(a & b) / max(len(a), len(b))
