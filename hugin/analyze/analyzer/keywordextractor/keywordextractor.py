@@ -7,14 +7,15 @@ import hugin.analyze as plugin
 
 class KeywordExtractor(plugin.IAnalyzer):
 
-    def process_movie(self, movie):
+    def process_movie(self, movie, score_threshold=1.0):
         if movie.attributes.get('plot'):
             lang, keywords = extract_keywords(
                 movie.attributes.get('plot'), use_stemmer=False
             )
             keywordlist = []
-            for keyword in keywords.keys():
-                keywordlist.append(list(keyword))
+            for keyword, score in keywords.items():
+                if score > score_threshold:
+                    keywordlist.append(list(keyword))
             movie.analyzer_data[self.name] = keywordlist
 
 
