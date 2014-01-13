@@ -148,12 +148,14 @@ def word_scores(phrases):
     freqs, degrees = Counter(), Counter()
 
     for phrase in phrases:
-        degree = len(phrase) - 1
+        degree = len(phrase)
         for word in phrase:
             freqs[word] += 1
             degrees[word] += degree
+        degrees[word] += degree
 
     # Calculate Word scores = deg(w) / freq(w)
+
     return {word: (degrees[word] + freq) / freq for word, freq in freqs.items()}
 
 
@@ -229,3 +231,4 @@ if __name__ == '__main__':
     lang, keywords_map = extract_keywords(text, use_stemmer=use_stemmer)
     for keywords, rating in keywords_map.items():
         print('{:>7.3f}: {}'.format(rating, keywords))
+    print(lang)
