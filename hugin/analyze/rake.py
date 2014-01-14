@@ -37,14 +37,16 @@ from collections import deque, Counter, OrderedDict
 from itertools import combinations
 
 
-# Internal:
-import hugin.analyze.stopwords
-
-
 # External:
 import Stemmer
 import guess_language
 guess_language.use_enchant(True)
+from pyxdameraulevenshtein import normalized_damerau_levenshtein_distance
+
+# Internal:
+import hugin.analyze.stopwords
+
+
 
 
 # This is a fallback for the case when no stemmer for a language was found:
@@ -146,17 +148,16 @@ def word_scores(phrases):
     :returns: A mapping from a word to it's score (degree(w) / freq(w))
     """
     freqs, degrees = Counter(), Counter()
+    echo = False
 
     for phrase in phrases:
         degree = len(phrase)
         for word in phrase:
             freqs[word] += 1
             degrees[word] += degree
-        degrees[word] += degree
 
     # Calculate Word scores = deg(w) / freq(w)
-
-    return {word: (degrees[word] + freq) / freq for word, freq in freqs.items()}
+    return {word: (degrees[word] ) / freq for word, freq in freqs.items()}
 
 
 def candidate_keywordscores(phrases, wordscore):
@@ -168,7 +169,7 @@ def candidate_keywordscores(phrases, wordscore):
     """
     candidates = {}
     for phrase in phrases:
-        candidates[frozenset(phrase)] = sum(wordscore[word] for word in phrase)
+        candidates[tuple(phrase)] = sum(wordscore[word] for word in phrase)
 
     return OrderedDict(sorted(
         candidates.items(),
@@ -179,24 +180,52 @@ def candidate_keywordscores(phrases, wordscore):
 
 def filter_subsets(keywords):
     """Remove keywordsets that are a subset of larger sets.
-
     This modifies it's input, but returns it for convinience.
-
     :returns: keywords, the modified input.
     """
     to_delete = deque()
-    for set_a, set_b in combinations(keywords.keys(), 2):
+    for keyword_a, keyword_b in combinations(keywords.keys(), 2):
+        set_a, set_b = frozenset(keyword_a), frozenset(keyword_b)
+
         if set_a.issubset(set_b):
-            to_delete.append(set_a)
+            to_delete.append(keyword_a)
         elif set_b.issubset(set_a):
-            to_delete.append(set_b)
+            to_delete.append(keyword_b)
+        #elif issubset_levenshtein(keyword_a, keyword_b):
+        #    to_delete.append(decide_which_to_delete(keyword_a, keyword_b))
 
     for sub_keywords in set(to_delete):
         del keywords[sub_keywords]
 
     return keywords
 
+def decide_which_to_delete(set_a, set_b):
+    """Return the longer of two sets, or if they have the same size, the one
+    with the shorter (and thus more comparable) words.
+    """
+    len_a, len_b = len(set_a), len(set_b)
+    if len_a < len_b:
+        return set_a
+    elif len_b < len_a:
+        return set_b
+    else:
+        sum_a = sum(len(w) for w in set_a)
+        sum_b = sum(len(w) for w in set_b)
+        return set_b if sum_a < sum_b else set_a
 
+def issubset_levenshtein(set_a, set_b, threshold=0.4):
+    """Compare two sets of strings, return True if b is a subset of a.
+    Strings are compared with levenshtein.  """
+    lev = normalized_damerau_levenshtein_distance
+    dist_sum = 0
+
+    smaller, larger = sorted((set_a, set_b), key=len)
+
+    for word_a in larger:
+        dist_sum += min(lev(word_b, word_a) for word_b in smaller)
+
+    distance = dist_sum / len(larger)
+    return distance <= 0.3
 def extract_keywords(text, use_stemmer=True):
     """Extract the keywords from a certain text.
 
