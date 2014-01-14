@@ -242,7 +242,7 @@ def extract_keywords(text, use_stemmer=True):
 
     scores = word_scores(phrases)
     keywords = candidate_keywordscores(phrases, scores)
-    return language_code, filter_subsets(keywords)
+    return language_code, keywords
 
 
 ###########################################################################
