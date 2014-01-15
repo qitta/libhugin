@@ -6,12 +6,14 @@ import os
 import sys
 import glob
 import xmltodict
+import json
 from guess_language import guess_language
 from collections import Counter
 
+
 MASK = {
-    'title': 'title', 'originaltitle': 'originaltitle', 'year': 'year', 'plot':
-    'plot', 'director': 'director', 'genre': 'genre'
+    'title': 'title', 'originaltitle': 'original_title', 'year': 'year', 'plot':
+    'plot', 'director': 'directors', 'genre': 'genre_norm'
 }
 
 
@@ -19,17 +21,17 @@ MASK = {
 def read_attrs(nfofile, mask):
     try:
         with open(nfofile, 'r') as f:
-            xml = xmltodict.parse(f.read())
+            #xml = xmltodict.parse(f.read())
+            xml = json.loads(f.read())
             attributes = {key: None for key in mask.keys()}
             for key, filekey in mask.items():
-                attributes[key] = xml['movie'][filekey]
+                attributes[key] = xml[filekey]
             return attributes
     except Exception as e:
         print('Exception', e)
 
 
 if __name__ == '__main__':
-
     s = Session('movie.db', attr_mask=MASK)
     path = sys.argv[1]
     c = Counter()
@@ -48,5 +50,4 @@ if __name__ == '__main__':
         if item.attributes and item.attributes.get('plot'):
             c[guess_language(item.attributes['plot'])] +=1
     print(s.stats(), c)
-
     s.database_shutdown()

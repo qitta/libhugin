@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 from itertools import combinations
+import math
 
 from guess_language import guess_language
 from collections import Counter
@@ -20,8 +21,13 @@ class KeywordCmp(plugin.IAnalyzer):
             keywords_b = b.analyzer_data.get('KeywordExtractor')
             if keywords_a and keywords_b:
                 rating = self._compare_keywords(keywords_a, keywords_b)
-                a.analyzer_data[self.name] = rating
-                b.analyzer_data[self.name] = rating
+                rating = sum(rating.values())/len(rating)
+                a.analyzer_data.setdefault(self.name, set()).add(
+                    (b, rating)
+                )
+                b.analyzer_data.setdefault(self.name, set()).add(
+                    (a, rating)
+               )
 
     def _compare_keywords(self, keywords_a, keywords_b):
         result = {}
@@ -32,9 +38,7 @@ class KeywordCmp(plugin.IAnalyzer):
             for cnt_b, group_b in grouped_b.items():
                 if cnt_a == cnt_b:
                     rating = self._compare(group_a, group_b, cnt_a)
-                    result[cnt_a] += rating/max(len(group_a), len(group_b))
-            if result[cnt_a] > 0:
-                print(result[cnt_a])
+                    result[cnt_a] += rating/min(len(group_a), len(group_b))
 
         return result
 
