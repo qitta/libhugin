@@ -13,9 +13,6 @@ class OFDBCommon:
     def __init__(self):
         self._urls = [
             'http://ofdbgw.home-of-root.de/{path}/{query}',
-            'http://ofdbgw.geeksphere.de/{path}/{query}',
-            'http://ofdbgw.metawave.ch/{path}/{query}',
-            'http://ofdbgw.h1915283.stratoserver.net/{path}/{query}',
             'http://ofdbgw.johann-scharl.de/{path}/{query}',
             'http://ofdbgw.geeksphere.de/{path}/{query}',
         ]

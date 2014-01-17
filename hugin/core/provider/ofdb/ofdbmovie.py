@@ -115,8 +115,8 @@ class OFDBMovie(provider.IMovieProvider):
         result_dict['rating'] = response['bewertung']['note']
 
         # number attrs
-        result_dict['vote_count'] = int(response['bewertung']['stimmen'])
-        result_dict['year'] = int(response['jahr'])
+        result_dict['vote_count'] = int(response['bewertung'].get('stimmen') or 0)
+        result_dict['year'] = int(response['jahr'] or 0)
 
         # list attrs
         result_dict['poster'] = [(None, response['bild'])]
@@ -124,7 +124,10 @@ class OFDBMovie(provider.IMovieProvider):
         result_dict['actors'] = self._extract_person(
             response['besetzung'], 'actors'
         )
-        result_dict['directors'] = [r['name'] for r in response['regie']]
+        try:
+            result_dict['directors'] = [r['name'] for r in response['regie']]
+        except:
+            print('invalid value')
         result_dict['writers'] = self._extract_person(
             response['drehbuch'], 'directors'
         )
