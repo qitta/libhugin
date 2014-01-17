@@ -37,7 +37,7 @@ class OFDBMovie(provider.IMovieProvider):
             path, query = 'imdb2ofdb_json', search_params.imdbid
         else:
             path, query = 'search_json', quote(search_params.title)
-        return [self._common.base_url.format(path=path, query=query)]
+        return [self._common.get_base_url().format(path=path, query=query)]
 
     def parse_response(self, url_response, search_params):
         # validate the response data

@@ -27,7 +27,7 @@ class OFDBPerson(provider.IPersonProvider):
     def build_url(self, search_params):
         if search_params.name:
             return [
-                self._common.base_url.format(
+                self._common.get_base_url().format(
                     path='searchperson_json',
                     query=quote(search_params.name))
             ]

@@ -6,11 +6,29 @@
 # stdlib
 import json
 import re
+from collections import deque
 
 
 class OFDBCommon:
     def __init__(self):
-        self.base_url = 'http://ofdbgw.home-of-root.de/{path}/{query}'
+        self._urls = [
+            'http://ofdbgw.home-of-root.de/{path}/{query}',
+            'http://ofdbgw.geeksphere.de/{path}/{query}',
+            'http://ofdbgw.metawave.ch/{path}/{query}',
+            'http://ofdbgw.h1915283.stratoserver.net/{path}/{query}',
+            'http://ofdbgw.johann-scharl.de/{path}/{query}',
+            'http://ofdbgw.geeksphere.de/{path}/{query}',
+        ]
+        self.base_url = self._get_url_iter(self._urls)
+
+    def _get_url_iter(self, urls):
+        url_list = deque(urls)
+        while True:
+            yield url_list[0]
+            url_list.rotate(1)
+
+    def get_base_url(self):
+        return next(self.base_url)
 
     def _try_sanitize(self, response):
         """ Try to sanitize a broken response containing a valid json doc. """
@@ -29,7 +47,7 @@ class OFDBCommon:
         """ Build list with urls out of given ids. """
         url_list = []
         for ofdbid in ids:
-            url = self.base_url.format(path=path, query=ofdbid)
+            url = self.get_base_url().format(path=path, query=ofdbid)
             url_list.append([url])
         return url_list
 
