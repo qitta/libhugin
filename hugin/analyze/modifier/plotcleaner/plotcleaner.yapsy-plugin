@@ -1,0 +1,9 @@
+[Core]
+Name = PlotCleaner
+Module = plotcleaner
+
+[Documentation]
+Description = Removes brackets e.g. brakets with actor name from plot.
+Author = Christoph Piechula
+Version = 1.0
+Website = n/a
