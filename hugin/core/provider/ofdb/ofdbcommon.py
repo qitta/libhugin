@@ -40,7 +40,7 @@ class OFDBCommon:
                     response = item
                     break
             return json.loads(response).get('ofdbgw')
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, AttributeError):
             return False
 
     def _build_urllist_from_idlist(self, ids, path):
