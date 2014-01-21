@@ -9,13 +9,13 @@ import re
 class PlotCleaner(plugin.IModifier):
 
     def __init__(self):
-        pass
+        self._pattern = '\s+\(.*?\)(\s*)'
 
-    def modify_movie(self, movie):
+    def process_movie(self, movie):
         plot = movie.attributes.get('plot')
         if plot:
-            movie.attributes['plot'] = re.sub('\s+\(.*?\),*\s+', ' ', plot)
+            movie.attributes['plot'] = re.sub(self._pattern, '\g<1>', plot)
 
-    def modify_database(self, db):
+    def process_database(self, db):
         for movie in db.values():
             self.movie(movie)
