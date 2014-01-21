@@ -47,15 +47,14 @@ class OMDBMovie(provider.IMovieProvider):
 
         try:
             url, response = url_response.pop()
+
             if response:
                 # some json docs from this provider have mysterious newlines.
                 response = response.replace('\n', '')
-            else:
-                return None, False
 
             response = json.loads(response)
         except (TypeError, ValueError) as e:
-            print('Execption in ofdbcommon while json loading.')
+            print('Unable to parse json response.', e)
             return None, True
 
         if 'Error' in response and response['Error'] in fail_states:
