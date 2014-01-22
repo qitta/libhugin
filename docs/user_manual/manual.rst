@@ -1,4 +1,4 @@
-.. currentmodule:: hugin.core.session
+.. currentmodule:: hugin.harvest.session
 
 .. _cmdtool:
 

@@ -1,4 +1,4 @@
-.. currentmodule:: hugin.core.session
+.. currentmodule:: hugin.harvest.session
 
 .. _libraryusage:
 
@@ -56,9 +56,9 @@ Output:
    OMDBMovie
    Default omdb movie metadata provider.
 
-.. automethod:: hugin.core.session.Session.provider_plugins
-.. automethod:: hugin.core.session.Session.postprocessing_plugins
-.. automethod:: hugin.core.session.Session.converter_plugins
+.. automethod:: hugin.harvest.session.Session.provider_plugins
+.. automethod:: hugin.harvest.session.Session.postprocessing_plugins
+.. automethod:: hugin.harvest.session.Session.converter_plugins
 
 
 Creating a query
@@ -72,7 +72,7 @@ session :meth:`Session.create_query` method. This method returns a validated
 query and its missing keys are initialized with default values.
 
 
-.. automethod:: hugin.core.session.Session.create_query
+.. automethod:: hugin.harvest.session.Session.create_query
 
 Submiting a query
 =================
@@ -86,12 +86,12 @@ submit method will return a list with results found.
 Synchronous usage
 -----------------
 
-.. automethod:: hugin.core.session.Session.submit
+.. automethod:: hugin.harvest.session.Session.submit
 
 Asynchronous usage
 ------------------
 
-.. automethod:: hugin.core.session.Session.submit_async
+.. automethod:: hugin.harvest.session.Session.submit_async
 
 
 Canceling and cleaning up a Session
@@ -118,5 +118,5 @@ will need the two methods :meth:`cancel` and :meth:`clean_up`.
                        # running futures and closing the internal threadpoolexecutor
 
 
-.. automethod:: hugin.core.session.Session.cancel
-.. automethod:: hugin.core.session.Session.clean_up
+.. automethod:: hugin.harvest.session.Session.cancel
+.. automethod:: hugin.harvest.session.Session.clean_up

@@ -1,4 +1,4 @@
-.. currentmodule:: hugin.core.provider
+.. currentmodule:: hugin.harvest.provider
 
 .. _pluginapi:
 
@@ -26,7 +26,7 @@ libhuin project structure
 
     hugin
     ├── analyze
-    ├── core
+    ├── harvest
     │   ├── cache.py
   * │   ├── converter    <-- converter plugin folder
     │   │   ├── html
@@ -86,7 +86,7 @@ is analogue to the following converter example:
 .. code-block:: sh
 
     hugin
-    ├── core
+    ├── harvest
     │   ├── cache.py
     │   ├── converter           <-- converter plugin folder.
     │   │   └── json            <-- json plugin, a module containing the
@@ -143,7 +143,7 @@ person metadata. All movie content provider have to inherit from
 IMovieProvider
 ==============
 
-.. autoclass:: hugin.core.provider.IMovieProvider
+.. autoclass:: hugin.harvest.provider.IMovieProvider
 
 .. _genrenorm:
 
@@ -328,8 +328,8 @@ Filling in the *tsmdmovie.py* file with content:
     import json
 
     #hugin
-    import hugin.core.provider as provider
-    from hugin.core.provider.genrenorm import GenreNormalize
+    import hugin.harvest.provider as provider
+    from hugin.harvest.provider.genrenorm import GenreNormalize
 
     # if our provider would also/only deliver picture content we would have to
     # inherit from *provider.IMoviePictureProvider* too.
@@ -411,7 +411,7 @@ Filling in the *tsmdmovie.py* file with content:
 IPersonProvider
 ===============
 
-.. autoclass:: hugin.core.provider.IPersonProvider
+.. autoclass:: hugin.harvest.provider.IPersonProvider
 
 Whether a content provider supports only textual metadata or is also able to
 fetch provider picture metadata, you may need to inherit from the
@@ -430,12 +430,12 @@ All content provider plugins have to implement at least the two methods
 The build url method
 ====================
 
-.. automethod:: hugin.core.provider.IProvider.build_url
+.. automethod:: hugin.harvest.provider.IProvider.build_url
 
 The parse reponse method
 ========================
 
-.. automethod:: hugin.core.provider.IProvider.parse_response
+.. automethod:: hugin.harvest.provider.IProvider.parse_response
 
 
 .. _postprocessingapi:
@@ -447,7 +447,7 @@ Developing a postprocessing plugin
 All postprocessing plugins have to inherit from :class:`IPostprocessing` and
 implement the following method:
 
-.. automethod:: hugin.core.provider.IPostprocessing.process
+.. automethod:: hugin.harvest.provider.IPostprocessing.process
 
 
 .. _outputconverterapi:
@@ -459,4 +459,4 @@ Developing a output converter plugin
 All output converter plugins have to inherit from :class:`IOutputConverter` and
 im implement the following method:
 
-.. automethod:: hugin.core.provider.IOutputConverter.convert
+.. automethod:: hugin.harvest.provider.IOutputConverter.convert

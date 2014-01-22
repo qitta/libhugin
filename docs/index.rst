@@ -13,7 +13,7 @@ Libhugin Introduction
 
 *Libhugin* is a modular movie metadata search and analysis library written in
 python. The goal is to provide webservice independent unique API for different
-kind of movie metadata. The library is divided into two parts, the :ref:`core`
+kind of movie metadata. The library is divided into two parts, the :ref:`harvest`
 part, which is responsible for fetching all the metadata and the :ref:`analyze`
 part for analyzing a existing movie collection to improve its quality by
 detecting missing metadata or extracting new information from the existing
@@ -26,7 +26,7 @@ For a short demo - let's search for the movie **Sin City**:
 
 .. code-block:: python
 
-   >>> from hugin.core import Session
+   >>> from hugin.harvest import Session
 
    >>> session = Session() # Create a sesion.
    >>> query = session.create_query(title='Sin City') # Create a query.

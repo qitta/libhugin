@@ -5,16 +5,16 @@ Architecture overview
     :width: 100%
 
 
-Libhugin is divided into two parts. A :ref:`core` and a :ref:`analyze` part. Both
+Libhugin is divided into two parts. A :ref:`harvest` and a :ref:`analyze` part. Both
 parts are modular and may be extended by plugins.
 
-.. _core:
+.. _harvest:
 
-libhugin core
+libhugin harvest
 =============
 
 
-The libhugin core part is responsible for fetching movie and person metadata
+The libhugin harvest part is responsible for fetching movie and person metadata
 from different webservices like
 
     * `The Movie Database <http://www.themoviedb.org/documentation/api>`_
@@ -25,7 +25,7 @@ As libhugin is a modular library, you can write a content provider yourself and
 extend libhugins search horizon. For provider plugin development see developer
 section: :ref:`pluginapi`
 
-libhugin core makes use of the following plugins types:
+libhugin harvest makes use of the following plugins types:
 
     * :ref:`provplugin`
     * :ref:`postplugin`
@@ -37,7 +37,7 @@ Plugins
 =======
 
 Libhugin is all about plugins. There are three different kinds of plugins that
-libhugin core makes use of.
+libhugin harvest makes use of.
 
 .. _provplugin:
 
@@ -46,7 +46,7 @@ Provider plugins
 
 Provider Plugins are content provider that are responsible for fetching the
 metadata from the web. This plugins act as ``proxy`` between a webservice  and
-libhugin core. A webservice might be e.g. the TMDB API:
+libhugin harvest. A webservice might be e.g. the TMDB API:
 
     * http://docs.themoviedb.apiary.io/
 
