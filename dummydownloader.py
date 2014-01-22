@@ -6,7 +6,7 @@ import os
 import sys
 import time
 
-from hugin.core.session import Session
+from hugin.harvest.session import Session
 
 if __name__ == '__main__':
     s = Session()

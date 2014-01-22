@@ -6,10 +6,10 @@ from urllib.parse import quote_plus
 from collections import defaultdict
 import os
 
-from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
+from hugin.harvest.provider.tmdb.tmdbcommon import TMDBConfig
 from hugin.utils.stringcompare import string_similarity_ratio
-from hugin.core.provider.genrenorm import GenreNormalize
-import hugin.core.provider as provider
+from hugin.harvest.provider.genrenorm import GenreNormalize
+import hugin.harvest.provider as provider
 
 
 class TMDBMovie(provider.IMovieProvider, provider.IMoviePictureProvider):

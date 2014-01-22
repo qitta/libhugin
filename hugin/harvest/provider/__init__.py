@@ -32,7 +32,7 @@ class IProvider(IPlugin):
 
         :param dict search_params: A dictionary containing query parameters. \
         For more information about search possible search parameters see \
-        :meth:`hugin.core.session.Session.create_query`.
+        :meth:`hugin.harvest.session.Session.create_query`.
 
         :returns list list: A list with urls on success, else None
 
@@ -93,7 +93,7 @@ class IProvider(IPlugin):
         This dict contains all the search paramesters from the query. Not all
         parameters might be relevant for the content provider. For a list with
         all possible query parameters see
-        :meth:`hugin.core.session.Session.create_query`.
+        :meth:`hugin.harvest.session.Session.create_query`.
 
         :returns: A tuple containing a data and a state flag.
 

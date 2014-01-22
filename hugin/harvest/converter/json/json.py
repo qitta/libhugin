@@ -5,7 +5,7 @@
 import json
 
 # hugin
-import hugin.core.provider as provider
+import hugin.harvest.provider as provider
 
 
 class Json(provider.IOutputConverter):

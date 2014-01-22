@@ -4,8 +4,8 @@
 """ Postprocessing module to create a custom result out of found results. """
 
 # hugin
-import hugin.core.provider as provider
-from hugin.core.provider.result import Result
+import hugin.harvest.provider as provider
+from hugin.harvest.provider.result import Result
 
 
 class ResultDictTrimmer(provider.IPostprocessing):

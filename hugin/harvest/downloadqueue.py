@@ -211,7 +211,7 @@ class DownloadQueue:
 
 
 if __name__ == '__main__':
-    from hugin.core.cache import Cache
+    from hugin.harvest.cache import Cache
     import json
     import unittest
     import types

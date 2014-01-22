@@ -5,14 +5,14 @@
 from jinja2 import FileSystemLoader, Environment
 
 # hugin
-import hugin.core.provider as provider
-from hugin.core.provider.result import Result
+import hugin.harvest.provider as provider
+from hugin.harvest.provider.result import Result
 
 
 class Html(provider.IOutputConverter):
 
     def __init__(self):
-        self._templateLoader = FileSystemLoader('hugin/core/converter/html')
+        self._templateLoader = FileSystemLoader('hugin/harvest/converter/html')
         self._templateEnv = Environment(loader=self._templateLoader)
         self._movie_template = self._templateEnv.get_template('mtemplate.html')
         self._person_template = self._templateEnv.get_template('ptemplate.html')

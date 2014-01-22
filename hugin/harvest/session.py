@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-""" Session handling for hugin core module. """
+""" Session handling for hugin harvest module. """
 
 # stdlib
 from concurrent.futures import ThreadPoolExecutor
@@ -19,11 +19,11 @@ import re
 
 # hugin
 from hugin.utils.stringcompare import string_similarity_ratio
-from hugin.core.pluginhandler import PluginHandler
-from hugin.core.downloadqueue import DownloadQueue
-from hugin.core.provider.result import Result
-from hugin.core.cache import Cache
-from hugin.core.query import Query
+from hugin.harvest.pluginhandler import PluginHandler
+from hugin.harvest.downloadqueue import DownloadQueue
+from hugin.harvest.provider.result import Result
+from hugin.harvest.cache import Cache
+from hugin.harvest.query import Query
 
 
 class Session:
@@ -40,7 +40,7 @@ class Session:
         .. code-block:: python
 
             # importing the session
-            from hugin.core import Session
+            from hugin.harvest import Session
             session = Session()
 
         There are some Session parameters like the 'user-agent' that may be
@@ -140,7 +140,7 @@ class Session:
 
         This function returns a Query object build of the given kwargs. Keys
         are validated and default or missing values are set by the
-        :class:`hugin.core.query.Query`.
+        :class:`hugin.harvest.query.Query`.
 
         .. note::
 

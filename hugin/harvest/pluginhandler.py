@@ -7,8 +7,8 @@
 from yapsy.PluginManager import PluginManager
 
 # hugin
-from hugin.core.provider import IOutputConverter, IPostprocessing
-from hugin.core.provider import IMovieProvider, IPersonProvider, IProvider
+from hugin.harvest.provider import IOutputConverter, IPostprocessing
+from hugin.harvest.provider import IMovieProvider, IPersonProvider, IProvider
 
 
 class PluginHandler:
@@ -45,9 +45,9 @@ class PluginHandler:
     def _collect_all_plugins(self):
         """ Collect all provider, converter and postprocessing plugins.  """
         self._plugin_manager.setPluginPlaces([
-            'hugin/core/provider',
-            'hugin/core/converter',
-            'hugin/core/postprocessing'
+            'hugin/harvest/provider',
+            'hugin/harvest/converter',
+            'hugin/harvest/postprocessing'
         ])
 
         # setting filter categories for pluginmanager

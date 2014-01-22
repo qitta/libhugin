@@ -6,8 +6,8 @@ from urllib.parse import quote
 
 # hugin
 from hugin.utils.stringcompare import string_similarity_ratio
-from hugin.core.provider.ofdb.ofdbcommon import OFDBCommon
-import hugin.core.provider as provider
+from hugin.harvest.provider.ofdb.ofdbcommon import OFDBCommon
+import hugin.harvest.provider as provider
 
 
 class OFDBPerson(provider.IPersonProvider):

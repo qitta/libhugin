@@ -151,7 +151,7 @@ def output(args, results, session):
 
 
 if __name__ == '__main__':
-    from hugin.core import Session
+    from hugin.harvest import Session
     import pprint
 
     args = docopt(__doc__, version="Libhugin 'gylfie' clitool v0.1")

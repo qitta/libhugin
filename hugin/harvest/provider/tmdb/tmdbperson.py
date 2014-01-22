@@ -4,8 +4,8 @@
 from urllib.parse import quote
 
 from hugin.utils.stringcompare import string_similarity_ratio
-from hugin.core.provider.tmdb.tmdbcommon import TMDBConfig
-import hugin.core.provider as provider
+from hugin.harvest.provider.tmdb.tmdbcommon import TMDBConfig
+import hugin.harvest.provider as provider
 
 
 class TMDBPerson(provider.IPersonProvider, provider.IPersonPictureProvider):

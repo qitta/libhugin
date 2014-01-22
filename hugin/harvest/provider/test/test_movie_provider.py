@@ -3,9 +3,9 @@
 
 """ Provider test module. """
 
-from hugin.core.provider.tmdb.tmdbmovie import TMDBMovie
-from hugin.core.provider.ofdb.ofdbmovie import OFDBMovie
-from hugin.core.provider.omdb.omdbmovie import OMDBMovie
+from hugin.harvest.provider.tmdb.tmdbmovie import TMDBMovie
+from hugin.harvest.provider.ofdb.ofdbmovie import OFDBMovie
+from hugin.harvest.provider.omdb.omdbmovie import OMDBMovie
 
 
 PROVIDER = {
@@ -41,7 +41,7 @@ PROVIDER = {
 
 if __name__ == '__main__':
     import unittest
-    from hugin.core.query import Query
+    from hugin.harvest.query import Query
 
     class TestMovie(unittest.TestCase):
 
@@ -86,11 +86,11 @@ if __name__ == '__main__':
             }
 
         def read_file(self, file_name):
-            path = 'hugin/core/testdata/{0}'.format(file_name)
+            path = 'hugin/harvest/testdata/{0}'.format(file_name)
             with open(path, 'r') as f:
                 return f.read()
 
-        # static search tests, see :func: `core.provider.IProvider.search`
+        # static search tests, see :func: `harvest.provider.IProvider.search`
         # specs for further information
         def test_search_title(self):
             for provider in self._providers:
@@ -136,7 +136,7 @@ if __name__ == '__main__':
                 else:
                     self.assertTrue(result is None)
 
-        ## static parse tests, see :func: `core.provider.IProvider.parse` specs
+        ## static parse tests, see :func: `harvest.provider.IProvider.parse` specs
         ## for further information
         def test_parse_search_response(self):
             """

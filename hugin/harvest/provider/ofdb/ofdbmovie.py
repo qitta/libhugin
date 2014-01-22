@@ -6,9 +6,9 @@ from urllib.parse import quote
 
 #hugin
 from hugin.utils.stringcompare import string_similarity_ratio
-from hugin.core.provider.ofdb.ofdbcommon import OFDBCommon
-from hugin.core.provider.genrenorm import GenreNormalize
-import hugin.core.provider as provider
+from hugin.harvest.provider.ofdb.ofdbcommon import OFDBCommon
+from hugin.harvest.provider.genrenorm import GenreNormalize
+import hugin.harvest.provider as provider
 
 
 class OFDBMovie(provider.IMovieProvider):

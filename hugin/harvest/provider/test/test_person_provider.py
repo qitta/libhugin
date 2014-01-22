@@ -3,8 +3,8 @@
 
 """ Provider test module. """
 
-from hugin.core.provider.tmdb.tmdbperson import TMDBPerson
-from hugin.core.provider.ofdb.ofdbperson import OFDBPerson
+from hugin.harvest.provider.tmdb.tmdbperson import TMDBPerson
+from hugin.harvest.provider.ofdb.ofdbperson import OFDBPerson
 
 
 PROVIDER = {
@@ -30,7 +30,7 @@ PROVIDER = {
 
 if __name__ == '__main__':
     import unittest
-    from hugin.core.query import Query
+    from hugin.harvest.query import Query
 
     class TestMovie(unittest.TestCase):
 
@@ -60,11 +60,11 @@ if __name__ == '__main__':
             }
 
         def read_file(self, file_name):
-            path = 'hugin/core/testdata/{0}'.format(file_name)
+            path = 'hugin/harvest/testdata/{0}'.format(file_name)
             with open(path, 'r') as f:
                 return f.read()
 
-        # static search tests, see :func: `core.provider.IProvider.search`
+        # static search tests, see :func: `harvest.provider.IProvider.search`
         # specs for further information
         def test_search_name(self):
             for provider in self._providers:
@@ -80,7 +80,7 @@ if __name__ == '__main__':
                 result = provider.build_url(self._params)
                 self.assertTrue(result is None)
 
-        # static parse tests, see :func: `core.provider.IProvider.parse` specs
+        # static parse tests, see :func: `harvest.provider.IProvider.parse` specs
         # for further information
         def test_parse_build_url(self):
             for provider in self._providers:

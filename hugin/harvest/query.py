@@ -6,7 +6,7 @@ from collections import UserDict
 
 class Query(UserDict):
     """
-    Represents a search query that is passed to the core submit method.
+    Represents a search query that is passed to the harvest submit method.
 
     """
     def __init__(self, user_data):

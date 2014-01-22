@@ -8,8 +8,8 @@ from collections import defaultdict
 import copy
 
 # hugin
-from hugin.core.provider.result import Result
-import hugin.core.provider as provider
+from hugin.harvest.provider.result import Result
+import hugin.harvest.provider as provider
 
 
 class Composer(provider.IPostprocessing):
