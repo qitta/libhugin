@@ -65,23 +65,15 @@ def list_plugins(plugins):
 
 def wrap_width(text, width=72, subsequent_indent="              "):
     if text:
-        return textwrap.fill(text, width, subsequent_indent=subsequent_indent,fix_sentence_endings=True)
+        return textwrap.fill(
+            text,
+            width,
+            subsequent_indent=subsequent_indent,
+            fix_sentence_endings=True
+        )
 
 
 def create_movie_cliout(num, movie):
-#    fmt = """
-#{num}) Provider: {provider}
-#
-#Title       : {title} ({year}), imdbid: {imdbid}, raiting: {rating}
-#Cover Url   : {poster}
-#
-#Plot        : {plot}
-#
-#Directors   : {directors}
-#Genre       : {genre}
-#Genre [norm]: {genre_norm}
-#
-#    """
     fmt = _load_profile('hugin/movie.mask')
     kwargs = movie._result_dict
     kwargs.setdefault('num', num)
