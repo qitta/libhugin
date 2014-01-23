@@ -69,19 +69,20 @@ def wrap_width(text, width=72, subsequent_indent="              "):
 
 
 def create_movie_cliout(num, movie):
-    fmt = """
-{num}) Provider: {provider}
-
-Title       : {title} ({year}), imdbid: {imdbid}, raiting: {rating}
-Cover Url   : {poster}
-
-Plot        : {plot}
-
-Directors   : {directors}
-Genre       : {genre}
-Genre [norm]: {genre_norm}
-
-    """
+#    fmt = """
+#{num}) Provider: {provider}
+#
+#Title       : {title} ({year}), imdbid: {imdbid}, raiting: {rating}
+#Cover Url   : {poster}
+#
+#Plot        : {plot}
+#
+#Directors   : {directors}
+#Genre       : {genre}
+#Genre [norm]: {genre_norm}
+#
+#    """
+    fmt = _load_profile('hugin/movie.mask')
     kwargs = movie._result_dict
     kwargs.setdefault('num', num)
     kwargs.setdefault('provider', movie.provider)
@@ -91,16 +92,7 @@ Genre [norm]: {genre_norm}
 
 
 def create_person_cliout(num, person):
-    fmt = """
-{num}) Provider: {provider}
-
-Name        : {name}
-Photo       : {photo}
-
-Biography   : {biography}
-
-Known for   : {known_for}
-    """
+    fmt = _load_profile('hugin/person.mask')
     kwargs = person._result_dict
     kwargs.setdefault('num', num)
     kwargs.setdefault(
