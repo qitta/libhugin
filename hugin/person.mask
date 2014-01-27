@@ -1,0 +1,10 @@
+"""
+{num}) Provider: {provider}
+
+Name        : {name}
+Photo       : {photo}
+
+Biography   : {biography}
+
+Known for   : {known_for}
+"""

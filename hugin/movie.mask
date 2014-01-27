@@ -1,0 +1,13 @@
+"""
+{num}) Provider: {provider}
+
+Title       : {title} ({year}), imdbid: {imdbid}, raiting: {rating}
+Cover Url   : {poster}
+
+Plot        : {plot}
+
+Directors   : {directors}
+Genre       : {genre}
+Genre [norm]: {genre_norm}
+
+"""
