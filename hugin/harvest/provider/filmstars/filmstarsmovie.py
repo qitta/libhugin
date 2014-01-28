@@ -41,26 +41,34 @@ class FILMSTARSMovie(provider.IMovieProvider):
             return None, True
 
         if 'suche' in url:
-            return self._parse_search_module(response, search_params), False
+            result = self._parse_search_module(response, search_params)
+            if result:
+                return result, False
 
         if 'kritiken' in url:
-            return self._parse_movie_module(response, search_params), True
+            result = self._parse_movie_module(response, search_params)
+            if result:
+                return result, True
 
         return None, True
 
     def _parse_search_module(self, result, search_params):
         similarity_map = []
-        for item in result.body.table.find_all("a"):
-            if item.get_text() and item.get("href"):
-                title = item.get_text().replace('\n', '')
-                url = item.get("href")
-                ratio = string_similarity_ratio(
-                    title,
-                    search_params.title
-                )
-                similarity_map.append(
-                    {'title': title, 'ratio': ratio, 'url': url}
-                )
+        try:
+            for item in result.body.table.find_all("a"):
+                if item.get_text() and item.get("href"):
+                    title = item.get_text().replace('\n', '')
+                    url = item.get("href")
+                    ratio = string_similarity_ratio(
+                        title,
+                        search_params.title
+                    )
+                    similarity_map.append(
+                        {'title': title, 'ratio': ratio, 'url': url}
+                    )
+        except AttributeError as e:
+            print(e)
+            return None
 
         similarity_map.sort(key=lambda value: value['ratio'], reverse=True)
         item_count = min(len(similarity_map), search_params.amount)
