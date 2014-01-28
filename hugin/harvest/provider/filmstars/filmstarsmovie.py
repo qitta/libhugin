@@ -82,7 +82,9 @@ class FILMSTARSMovie(provider.IMovieProvider):
         title, year = self._parse_title_year(result)
         result_dict['title'] = title
         result_dict['original_title'] = title
-        result_dict['plot'] = self._parse_plot(result).replace('\n', '')
+        plot = self._parse_plot(result)
+        if plot:
+            result_dict['plot'] = plot.replace('\n', '')
         result_dict['genre'] = self._parse_genre(result)
         result_dict['directors'] = self._parse_directors(result)
         result_dict['year'] = int(year)
