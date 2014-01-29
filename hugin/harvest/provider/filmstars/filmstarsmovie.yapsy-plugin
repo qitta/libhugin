@@ -1,0 +1,9 @@
+[Core]
+Name = FILMSTARSMovie
+Module = filmstarsmovie
+
+[Documentation]
+Description = Default filmstars movie metadata provider.
+Author = Christoph Piechula
+Version = 1.0
+Website = http://www.filmstars.de
