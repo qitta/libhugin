@@ -11,6 +11,7 @@ from threading import Lock
 # 3rd party
 import charade
 import httplib2
+from bs4 import BeautifulSoup
 
 
 class DownloadQueue:
@@ -156,6 +157,10 @@ class DownloadQueue:
             return byte_data.decode(encoding)
         except (TypeError, AttributeError, UnicodeError) as e:
             print('Error decoding bytes after charade  detection to utf-8.', e)
+        try:
+            return str(BeautifulSoup(byte_data).prettify())
+        except Exception as e:
+            print('Exception in downloadqueue while trying to encode with BeautifulSoup:', e)
 
     def push(self, job):
         """
