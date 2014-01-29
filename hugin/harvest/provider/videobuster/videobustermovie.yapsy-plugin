@@ -1,0 +1,9 @@
+[Core]
+Name = VIDEOBUSTERMovie
+Module = videobustermovie
+
+[Documentation]
+Description = Default videobuster movie metadata provider.
+Author = Christoph Piechula
+Version = 1.0
+Website = http://www.videobuster.de
