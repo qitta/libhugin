@@ -2,8 +2,6 @@
 # encoding: utf-8
 
 # stdlib
-import re
-from parse import parse
 from urllib.parse import quote_plus
 from bs4 import BeautifulSoup
 
@@ -58,7 +56,7 @@ class VIDEOBUSTERMovie(provider.IMovieProvider):
             for item in result.find_all("div", {"class":"name"}):
                 if item.get_text() and item.find("a").get("href"):
                     title = item.get_text()
-                    url, _ = item.find("a").get("href").split('?')
+                    url, _ = item.find("a").get("href").split('?', maxsplit=1)
                     ratio = string_similarity_ratio(
                         title,
                         search_params.title
