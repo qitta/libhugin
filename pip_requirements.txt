@@ -22,3 +22,6 @@ httplib2
 requests
 
 jinja2
+
+#: BeautifulSoup
+BeautifulSoup
