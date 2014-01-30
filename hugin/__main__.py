@@ -41,7 +41,7 @@ def _get_image(imagelist):
         for imagetuple in imagelist:
             try:
                 size, image = imagetuple
-                if size == 'original':
+                if size == 'original' or size is None:
                     return image
             except:
                 return None
