@@ -13,7 +13,7 @@ class Query(UserDict):
         self._query_attrs = [
             'title', 'year', 'name', 'imdbid', 'type', 'language', 'search',
             'amount', 'cache', 'retries', 'strategy', 'providers',
-            'fuzzysearch'
+            'fuzzysearch', 'id_title_lookup'
         ]
 
         self.data = {key: None for key in self._query_attrs}
@@ -25,7 +25,8 @@ class Query(UserDict):
             'language': '',
             'retries': 5,
             'fuzzysearch': False,
-            'strategy': 'flat'
+            'strategy': 'flat',
+            'id_title_lookup': True
         })
 
         self._check_params_contradictory(user_data)

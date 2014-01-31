@@ -442,6 +442,9 @@ class Session:
         else:
             query.cache = None
 
+        if query['id_title_lookup']:
+            self._imdbid_title_lookup(query)
+
         if query['fuzzysearch']:
             self._fuzzy_search(query)
 
@@ -564,11 +567,17 @@ class Session:
     def _fuzzy_search(self, query):
         if query['title'] and query['imdbid'] is None:
             fmt = 'http://www.google.com/search?hl=de&q={title}+imdb&btnI=745'
-            #print(fmt.format(title=query['title']))
             url = requests.get(fmt.format(title=query['title'])).url
             imdbids = re.findall('\/tt\d*/', url)
             if imdbids:
                 query['imdbid'] = imdbids.pop().strip('/')
+
+    def _imdbid_title_lookup(self, query):
+        if query['imdbid'] and query['title'] is None and query['year'] is None:
+            fmt = 'http://www.google.com/search?hl=de&q=imdb+{id}+imdb&btnI=745'
+            url = requests.get(fmt.format(id=query['imdbid'])).text
+            title, year = re.search('\>(.+?)\s*\((\d{4})', url).groups()
+            query['title'], query['year'] = title, int(year)
 
     def _select_results_by_strategy(self, results, query):
         """
