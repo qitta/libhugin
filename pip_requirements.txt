@@ -23,5 +23,5 @@ requests
 
 jinja2
 
-#: BeautifulSoup
-BeautifulSoup
+#: beautifulsoup4
+beautifulsoup4
