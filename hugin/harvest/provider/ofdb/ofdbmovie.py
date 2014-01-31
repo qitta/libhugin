@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 # stdlib
-from urllib.parse import quote
+from urllib.parse import quote_plus
 
 #hugin
 from hugin.utils.stringcompare import string_similarity_ratio
@@ -36,7 +36,7 @@ class OFDBMovie(provider.IMovieProvider):
         if search_params.imdbid:
             path, query = 'imdb2ofdb_json', search_params.imdbid
         else:
-            path, query = 'search_json', quote(search_params.title)
+            path, query = 'search_json', quote_plus(search_params.title)
         return [self._common.get_base_url().format(path=path, query=query)]
 
     def parse_response(self, url_response, search_params):
