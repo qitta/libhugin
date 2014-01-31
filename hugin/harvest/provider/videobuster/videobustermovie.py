@@ -27,7 +27,9 @@ class VIDEOBUSTERMovie(provider.IMovieProvider):
 
     def build_url(self, search_params):
         if search_params.title:
-            return [self._base_url.format(quote_plus(search_params.title))]
+            return [self._base_url.format(
+                quote_plus(search_params.title, encoding='latin-1')
+            )]
 
     def parse_response(self, url_response, search_params):
         try:
@@ -102,7 +104,9 @@ class VIDEOBUSTERMovie(provider.IMovieProvider):
             self._extract_item(result, 'Darsteller')
         )
         if actors:
-            actors = [(None, actor) for actor in self._strip_attr(actors.split(','))]
+            actors = [(None, actor) for actor in self._strip_attr(
+                actors.split(',')
+            )]
 
         result_dict['actors'] = actors
 
