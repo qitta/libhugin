@@ -110,10 +110,13 @@ def _format_result(num, result):
     }
     result_type = attrs[result._result_type]
     kwargs = {key: None for key in result_type['mask']}
-    fmt = _load_profile(result_type['prof'])
+    fmt = _read_mask(result_type['prof'])
     kwargs.update(result._result_dict)
     return fmt.format(**result_type['formatter'](kwargs))
 
+def _read_mask(filename):
+    with open(filename, 'r') as f:
+        return f.read()
 
 def _load_profile(filename):
     with open(filename, 'r') as f:
