@@ -442,7 +442,7 @@ class Session:
         else:
             query.cache = None
 
-        if query['id_title_lookup']:
+        if query['type'] == 'movie' and query['id_title_lookup']:
             self._imdbid_title_lookup(query)
 
         if query['fuzzysearch']:
