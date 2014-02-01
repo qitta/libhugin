@@ -1,10 +1,17 @@
 """
 {num}) Provider: {provider}
 
-Name        : {name}
+Name        : {name}, {imdbid}, {providerid}
+Birthday    : {birthday}, {placeofbirth}
+Deathday    : {deathday}
+Aliases     : {alternative_names}
+
+Popularity  : {popularity}
 Photo       : {photo}
 
+Homepage    : {homepage}
 Biography   : {biography}
 
-Known for   : {known_for}
+Known for the following movies:
+{known_for}
 """

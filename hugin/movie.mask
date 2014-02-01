@@ -2,6 +2,7 @@
 {num}) Provider: {provider}
 
 Title       : {title} ({year}), imdbid: {imdbid}, raiting: {rating}
+Original    : {original_title}
 Cover Url   : {poster}
 
 Plot        : {plot}
@@ -9,5 +10,10 @@ Plot        : {plot}
 Directors   : {directors}
 Genre       : {genre}
 Genre [norm]: {genre_norm}
+Keywords    : {keywords}
+Studios     : {studios}
+Countries   : {countries}
+
+Actors      : {actors}
 
 """
