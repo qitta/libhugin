@@ -31,29 +31,17 @@ Options:
 
 """
 
-from docopt import docopt
+# stdlib
+from collections import defaultdict
+import pprint
 import textwrap
 import os
 
+# 3rd party libs
+from docopt import docopt
 
-def _get_image(imagelist):
-    if imagelist:
-        for imagetuple in imagelist:
-            try:
-                size, image = imagetuple
-                if size == 'original' or size is None:
-                    return image
-            except:
-                return None
-
-
-def _role_movie_fmt(itemlist):
-    fmt = '{} in {}\n'
-    result = '\n'
-    for item in itemlist:
-        rolle, film = item
-        result += fmt.format(rolle, film)
-    return result
+# hugin
+import hugin.harvest.provider as hugin
 
 
 def list_plugins(plugins):
@@ -63,7 +51,14 @@ def list_plugins(plugins):
         )
 
 
-def wrap_width(text, width=72, subsequent_indent="              "):
+def _format_movie(kwargs):
+    kwargs['plot'] = _plot_wrap_width(kwargs['plot'])
+    kwargs['actors'] = _actor_format(kwargs['actors'])
+    kwargs['poster'] = _poster_format(kwargs['poster'])
+    return kwargs
+
+
+def _plot_wrap_width(text, width=72, subsequent_indent="              "):
     if text:
         return textwrap.fill(
             text,
@@ -73,36 +68,57 @@ def wrap_width(text, width=72, subsequent_indent="              "):
         )
 
 
-def create_movie_cliout(num, movie):
-    fmt = _load_profile('hugin/movie.mask')
-    kwargs = movie._result_dict
-    kwargs.setdefault('num', num)
-    kwargs.setdefault('provider', movie.provider)
-    kwargs['poster'] = _get_image(kwargs['poster'])
-    kwargs['plot'] = wrap_width(kwargs['plot'])
-    return fmt.format(**movie._result_dict)
+def _poster_format(imagelist):
+    images = defaultdict(list)
+    if imagelist:
+        for imagetuple in imagelist:
+            try:
+                size, image = imagetuple
+                images[str(size)].append(image)
+            except ValueError as e:
+                print(e)
+        return pprint.pformat(images)
 
 
-def create_person_cliout(num, person):
-    fmt = _load_profile('hugin/person.mask')
-    kwargs = person._result_dict
-    kwargs.setdefault('num', num)
-    kwargs.setdefault(
-        'biography', kwargs.get('biography') or 'No data found.'
-    )
-    kwargs['biography'] = wrap_width(kwargs['biography'])
-    kwargs['photo'] = _get_image(kwargs['photo'])
-    kwargs.setdefault('provider', person.provider)
-    if kwargs['known_for']:
-        kwargs['known_for'] = _role_movie_fmt(
-            kwargs.get('known_for')
-        ) or 'No data found.'
-    return fmt.format(**person._result_dict)
+def _actor_format(itemlist):
+    fmt = '{} ({}), '
+    result = ''
+    if itemlist:
+        for item in itemlist:
+            rolle, name = item
+            result += fmt.format(name, rolle)
+        return result
+
+
+def _format_person(kwargs):
+    kwargs['photo'] = pprint.pformat(kwargs['photo'])
+    return kwargs
+
+
+def _format_result(num, result):
+    attrs = {
+        'person': {
+            'mask': hugin.PERSON_ATTR_MASK,
+            'prof': 'hugin/person.mask',
+            'formatter': _format_person
+        },
+        'movie': {
+            'mask': hugin.MOVIE_ATTR_MASK,
+            'prof': 'hugin/movie.mask',
+            'formatter': _format_movie
+        }
+    }
+    result_type = attrs[result._result_type]
+    kwargs = {key: None for key in result_type['mask']}
+    fmt = _load_profile(result_type['prof'])
+    kwargs.update(result._result_dict)
+    return fmt.format(**result_type['formatter'](kwargs))
 
 
 def _load_profile(filename):
     with open(filename, 'r') as f:
         return eval(f.read())
+
 
 def output(args, results, session):
     if args['--postprocess']:
@@ -128,15 +144,14 @@ def output(args, results, session):
                         converter.file_ext, path)
                     )
                     f.write(converter.convert(result))
-        if result._result_type == 'person':
-            print(create_person_cliout(num, result))
-        else:
-            print(create_movie_cliout(num, result))
+
+        result._result_dict.setdefault('num', num)
+        result._result_dict.setdefault('provider', result.provider)
+        print(_format_result(num, result))
 
 
 if __name__ == '__main__':
     from hugin.harvest import Session
-    import pprint
 
     args = docopt(__doc__, version="Libhugin 'gylfie' clitool v0.1")
 
