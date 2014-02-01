@@ -22,10 +22,12 @@ class VIDEOBUSTERMovie(provider.IMovieProvider):
         self._movie_url = 'https://www.videobuster.de{}?content_type_idnr=1&tab=details'
         self._priority = 80
         self._attrs = {
-            'title', 'plot', 'directors', 'year', 'genre'
+            'title', 'plot', 'directors', 'actors', 'year', 'genre',
+            'keywords', 'countries', 'studios', 'original_title', 'poster'
         }
 
     def build_url(self, search_params):
+        print(search_params)
         if search_params.title:
             return [self._base_url.format(
                 quote_plus(search_params.title, encoding='latin-1')
@@ -38,6 +40,7 @@ class VIDEOBUSTERMovie(provider.IMovieProvider):
         except (TypeError, ValueError) as e:
             print('Unable to parse response.', e)
             return None, True
+
 
         if 'titlesearch.php' in url:
             result = self._parse_search_module(response, search_params)
@@ -78,28 +81,36 @@ class VIDEOBUSTERMovie(provider.IMovieProvider):
 
     def _parse_movie_module(self, result, search_params):
         result_dict = {k: None for k in self._attrs}
+
         result_dict['title'] = self._strip_attr(
-            self._extract_item(result, 'Originaltitel')
+            result.find("h1", {"class": "name"}).get_text()
         )
-        result_dict['plot'] = self._strip_attr(result.find(
-            "div", {"class": "txt movie_description"}).get_text()
+        result_dict['original_title'] = self._strip_attr(
+            self._strip_attr(self._extract_item(result, 'Originaltitel'))
         )
 
-        result_dict['original_title'] = self._strip_attr(result_dict['title'])
+        result_dict['plot'], *_ = self._strip_attr(result.find(
+            "div", {"class": "txt movie_description"}).get_text()
+        ).rsplit('\r', maxsplit=1)
+        result_dict['plot'] = str(result_dict['plot'])
+
 
         result_dict['genre'] = self._strip_attr(
             self._extract_item(result, 'genre').split(',')
         )
+
+        # parse director
         result_dict['directors'] = self._strip_attr(
             self._extract_item(result, 'regie').split(',')
         )
 
+        # parse country, year
         country, year = self._strip_attr(
             self._extract_item(result, 'produktion').rsplit(maxsplit=1)
         )
+        result_dict['year'], result_dict['countries'] = int(year), country.split(',')
 
-        result_dict['year'], result_dict['country'] = int(year), country
-
+        # parse actors
         actors = self._strip_attr(
             self._extract_item(result, 'Darsteller')
         )
@@ -107,21 +118,26 @@ class VIDEOBUSTERMovie(provider.IMovieProvider):
             actors = [(None, actor) for actor in self._strip_attr(
                 actors.split(',')
             )]
-
         result_dict['actors'] = actors
 
-        # ugly, I know
+        # get cover, ugly, I know
         poster, _ = result.find(
             "div", {"class": "title_cover_image_box"}
         ).find("a").get("href").split('?', 1)
         if poster:
             result_dict['poster'] = [(None, poster)]
-        print(result_dict['poster'])
-        result_dict['imdbid'] = "-"
-        result_dict['genre_norm'] = "-"
 
-        # to be done
-        result_dict['rating'] = "-"
+        # parse keywords
+        keywords = self._strip_attr(
+            self._extract_item(result, 'Schlagwörter')
+        )
+        if keywords:
+            result_dict['keywords'] = self._strip_attr(keywords.split(','))
+
+        studios = self._strip_attr(
+            self._extract_item(result, 'Studio')
+        )
+        result_dict['studios'] = self._strip_attr(studios.split(','))
 
         return result_dict
 
