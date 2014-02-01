@@ -10,6 +10,19 @@ from yapsy.IPlugin import IPlugin
 __all__ = ['IMovieProvider', 'IPersonProvider', 'IPictureProvider',
            'IOutputConverter', 'IPostprocessing', 'IProvider']
 
+MOVIE_ATTR_MASK = [
+            'title', 'original_title', 'plot', 'runtime', 'imdbid',
+            'vote_count', 'rating', 'providerid', 'alternative_titles',
+            'directors', 'writers', 'crew', 'year', 'poster', 'fanart',
+            'countries', 'genre', 'genre_norm', 'collection', 'studios',
+            'trailers', 'actors', 'keywords', 'tagline', 'outline'
+        ]
+
+PERSON_ATTR_MASK = [
+            'name', 'alternative_names', 'photo', 'birthday', 'placeofbirth',
+            'imdbid', 'providerid', 'homepage', 'deathday', 'popularity',
+            'biography', 'known_for'
+]
 
 class IProvider(IPlugin):
 
@@ -175,13 +188,7 @@ class IMovieProvider(IProvider):
 
     """
     def __init__(self):
-        self._keys = [
-            'title', 'original_title', 'plot', 'runtime', 'imdbid',
-            'vote_count', 'rating', 'providerid', 'alternative_titles',
-            'directors', 'writers', 'crew', 'year', 'poster', 'fanart',
-            'countries', 'genre', 'genre_norm', 'collection', 'studios',
-            'trailers', 'actors', 'keywords', 'tagline', 'outline'
-        ]
+        self._keys = MOVIE_ATTR_MASK
         raise NotImplementedError
 
 
@@ -213,11 +220,7 @@ class IPersonProvider(IProvider):
 
     """
     def __init__(self):
-        self._keys = [
-            'name', 'alternative_names', 'photo', 'birthday', 'placeofbirth',
-            'imdbid', 'providerid', 'homepage', 'deathday', 'popularity',
-            'biography', 'known_for'
-        ]
+        self._keys = PERSON_ATTR_MASK
         raise NotImplementedError
 
 
