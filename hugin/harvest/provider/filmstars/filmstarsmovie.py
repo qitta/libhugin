@@ -20,10 +20,10 @@ class FILMSTARSMovie(provider.IMovieProvider):
 
     def __init__(self):
         self._base_url = 'http://www.filmstarts.de/suche/?q={}'
-        self._movie_url = 'http://www.filmstarts.de/{}'
+        self._movie_url = 'http://www.filmstarts.de{}'
         self._priority = 80
         self._attrs = {
-            'title', 'plot', 'directors', 'year', 'genre'
+            'title', 'year', 'plot', 'directors', 'actors', 'genre', 'poster'
         }
 
     def build_url(self, search_params):
@@ -33,18 +33,19 @@ class FILMSTARSMovie(provider.IMovieProvider):
     def parse_response(self, url_response, search_params):
 
         response = self._identify_response(url_response)
+        print(response['url'])
 
-        if response['url_main'] is None:
+        if response['url'] is None:
             return None, True
 
-        if 'suche' in response['url_main']:
+        if 'suche' in response['url']:
             result = self._parse_search_module(
-                response['response_main'], search_params
+                response['main'], search_params
             )
             if result:
                 return result, False
 
-        if 'kritiken' in response['url_main']:
+        if 'kritiken' in response['url']:
             result = self._parse_movie_module(response, search_params)
             if result:
                 return result, True
@@ -52,34 +53,19 @@ class FILMSTARSMovie(provider.IMovieProvider):
         return None, True
 
     def _identify_response(self, url_response):
-        responses = {
-            'url_main': None,
-            'responses_crew': None,
-            'response_main' :None
-        }
-        try:
-            url_a, response_a = url_response.pop()
-            response_a = BeautifulSoup(response_a)
+        responses = {'url': None, 'crew': None, 'main': None}
 
-            if len(url_response) > 0:
-                url_b, response_b = url_response.pop()
-                response_b = BeautifulSoup(response_b)
+        for url, html in url_response:
+            try:
+                if 'castcrew' not in url or 'suche' in url:
+                    responses['main'] = BeautifulSoup(html)
+                    responses['url'] = url
+                if 'castcrew' in url:
+                    responses['crew'] = BeautifulSoup(html)
+            except (TypeError, ValueError) as e:
+                print('Exception in _identify_response filmstars.', e)
 
-                if 'castcrew' in url_b:
-                    responses['response_main'] = response_a
-                    responses['response_crew'] = response_b
-                    responses['url_main'] = url_a
-                else:
-                    responses['response_crew'] = response_a
-                    responses['response_main'] = response_b
-                    responses['url_main'] = url_a
-            else:
-                responses['response_main'] = response_a
-                responses['url_main'] = url_a
-            return responses
-
-        except (TypeError, ValueError) as e:
-            print('Unable to parse response.', e)
+        return responses
 
     def _parse_search_module(self, result, search_params):
         similarity_map = []
@@ -102,43 +88,40 @@ class FILMSTARSMovie(provider.IMovieProvider):
         similarity_map.sort(key=lambda value: value['ratio'], reverse=True)
         item_count = min(len(similarity_map), search_params.amount)
 
-        #return [self._movie_url.format(
-        #    item['url'])] for item in similarity_map[:item_count]
         return self._create_links(similarity_map[:item_count])
 
-    def _create_links(self, moviemap):
+    def _create_links(self, similarity_map):
         movielinks = []
-        for movie in moviemap:
-            tmp = []
-            tmp.append(self._movie_url.format(movie['url']))
-            tmp.append(self._movie_url.format(movie['url'].replace('.html', '/castcrew.html')))
-            movielinks.append(tmp)
-        print(movielinks)
+
+        for movie in similarity_map:
+            movie_links = []
+            movie_links.append(self._movie_url.format(movie['url']))
+            movie_links.append(
+                self._movie_url.format(
+                    movie['url'].replace('.html', '/castcrew.html')
+                )
+            )
+            movielinks.append(movie_links)
+
         return movielinks
-
-
 
     def _parse_movie_module(self, result, search_params):
         result_dict = {k: None for k in self._attrs}
 
-        title, year = self._parse_title_year(result['response_main'])
+        title, year = self._parse_title(result['main'])
         result_dict['title'] = title
-        result_dict['original_title'] = title
-        result_dict['plot'] = self._parse_plot(result['response_main'])
-        result_dict['genre'] = self._parse_genre(result['response_main'])
-        result_dict['directors'] = self._parse_directors(result['response_main'])
-        result_dict['year'] = int(year)
+        result_dict['year'] = year
 
-        result_dict['actors'] = self._parse_actors(result['response_crew'])
+        result_dict['plot'] = self._parse_plot(result['main'])
+        result_dict['genre'] = self._parse_genre(result['main'])
+        result_dict['directors'] = self._parse_directors(result['main'])
 
-        #to be done
-        result_dict['poster'] = "-"
-        result_dict['rating'] = "-"
-        result_dict['genre_norm'] = "-"
+        result_dict['actors'] = self._parse_actors(result['crew'])
+        result_dict['poster'] = self._parse_poster(result['main'])
 
         return result_dict
 
-    def _parse_title_year(self, response):
+    def _parse_title(self, response):
         try:
             pattern = re.compile(r"""   # '\nHer - Film 2013 - FILMSTARTS.de\n'
                             (.+?)\s*    # getting the title
@@ -146,14 +129,22 @@ class FILMSTARSMovie(provider.IMovieProvider):
                             \s*         #
                             (\d{4})     # movie release date """, re.X)
 
-            return re.search(pattern, response.title.string).groups()
+            title, year = re.search(pattern, response.title.string).groups()
+            return title.strip(), int(year)
         except Exception as e:
-            print('Unhandled parse_error exception in filmstars.', e)
+            print('Unhandled exception in filmstars _parse_title_year.', e)
 
     def _parse_plot(self, response):
         plot = response.find(itemprop="description")
         if plot:
             return plot.get_text().replace('\n', '')
+
+    def _parse_poster(self, response):
+        try:
+            poster_div = response.find("div", {"class": "poster"})
+            return [(None, poster_div.find("img").get("src"))]
+        except Exception as e:
+            print('Unhandeled exception in filmstars _parse_poster.', e)
 
     def _parse_genre(self, response):
         genres = []
@@ -173,8 +164,6 @@ class FILMSTARSMovie(provider.IMovieProvider):
             if actor.get("itemprop") == 'actors':
                 actors.append((None, actor.get_text().replace('\n', '')))
         return [(a, b.strip()) for a, b in actors]
-
-
 
     @property
     def supported_attrs(self):
