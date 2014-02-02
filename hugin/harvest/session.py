@@ -630,7 +630,7 @@ class Session:
                 ratio = 1.0
             elif query.get('title'):
                 ratio_a = string_similarity_ratio(
-                    query.title, result._result_dict['original_title']
+                    query.title, result._result_dict.get('original_title')
                 )
                 ratio_b = string_similarity_ratio(
                     query.title, result._result_dict['title']

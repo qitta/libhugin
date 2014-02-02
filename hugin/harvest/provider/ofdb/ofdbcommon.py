@@ -13,14 +13,16 @@ class OFDBCommon:
     def __init__(self):
         self._urls = [
 
+            # seems to be currently the only correct working mirror, other
+            # mirrors wont't find e.g. plot metadata, even if it exists
             'http://ofdbgw.geeksphere.de/{path}/{query}',
-            'http://ofdbgw.scheeper.de/{path}/{query}',
-            'http://ofdbgw.johann-scharl.de/{path}/{query}'
+            'http://ofdbgw.home-of-root.de/{path}/{query}'
 
             # those mirrors seems to be broken
+            #'http://ofdbgw.scheeper.de/{path}/{query}'
+            #'http://ofdbgw.johann-scharl.de/{path}/{query}'
             #'http://ofdbgw.org/{path}/{query}'
             #'http://ofdbgw.h1915283.stratoserver.net/{path}/{query}'
-            #'http://ofdbgw.home-of-root.de/{path}/{query}'
             #'http://ofdbgw.metawave.ch/{path}/{query}'
         ]
         self.base_url = self._get_url_iter(self._urls)
