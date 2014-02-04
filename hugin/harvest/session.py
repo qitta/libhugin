@@ -437,7 +437,6 @@ class Session:
 
         """
         if query.cache:
-            # print('enabling cache.')
             query.cache = self._cache
         else:
             query.cache = None
@@ -626,7 +625,7 @@ class Session:
         qry_imdb = query.get('imdbid')
         for result in filter(lambda res: res._result_dict, results):
             ratio = 0.0
-            if qry_imdb and qry_imdb == result._result_dict['imdbid']:
+            if qry_imdb and qry_imdb == result._result_dict.get('imdbid'):
                 ratio = 1.0
             elif query.get('title'):
                 ratio_a = string_similarity_ratio(
