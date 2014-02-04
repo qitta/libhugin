@@ -4,14 +4,27 @@
 import json
 import os
 import sys
-import time
 
 from hugin.harvest.session import Session
 
-if __name__ == '__main__':
-    s = Session()
+USAGE = """Usage:
+python dummydownloader <foldertosave> <filewithimdbids> <provider>
+"""
 
-    with open('imdbid_huge.txt', 'r') as f:
+if __name__ == '__main__':
+    if len(sys.argv) < 4:
+        print(USAGE)
+        sys.exit(1)
+
+    s = Session(parallel_jobs=4, parallel_downloads_per_job=2)
+
+    if os.path.exists(sys.argv[1]):
+        print('{}, already exists.'.format(sys.argv[1]))
+    else:
+        print('Creating {}.'.format(sys.argv[1]))
+        os.mkdir(sys.argv[1])
+
+    with open(sys.argv[2], 'r') as f:
         movieids = f.read().splitlines()
 
     length = len(movieids)
@@ -19,7 +32,7 @@ if __name__ == '__main__':
 
     for movieid in movieids:
         movie = s.submit(s.create_query(
-            imdbid=movieid, lang='de', providers=['tmdbmovie'])
+            imdbid=movieid, lang='de', providers=[sys.argv[3]], cache=True)
         )
         if movie == []:
             print(movieid, ' not found.')
@@ -29,7 +42,7 @@ if __name__ == '__main__':
         if '/' in title:
             title = title.replace('/', '|')
         moviefolder = '{0} ({1})'.format(title, movie.result_dict['year'])
-        moviepath = 'movies/{}'.format(moviefolder)
+        moviepath = '{}/{}'.format(sys.argv[1], moviefolder)
         if not os.path.exists(moviepath):
             os.mkdir(moviepath)
         else:
