@@ -47,14 +47,15 @@ class OMDBMovie(provider.IMovieProvider):
 
         try:
             url, response = url_response.pop()
+            if response is None:
+                return None, False
 
             if response:
                 # some json docs from this provider have mysterious newlines.
                 response = response.replace('\n', '')
-
             response = json.loads(response)
         except (TypeError, ValueError) as e:
-            print('Unable to parse json response.', e)
+            print('Exception in parse_response omdbmovie:', e)
             return None, True
 
         if 'Error' in response and response['Error'] in fail_states:
@@ -96,18 +97,17 @@ class OMDBMovie(provider.IMovieProvider):
 
         #str attrs
         result_dict['title'] = ''.join(result['Title'].split(','))
-        result_dict['original_title'] = result_dict['title']
+        result_dict['original_title'] = result_dict.get('title')
         result_dict['plot'] = ''.join(result['Plot'].split(','))
-        result_dict['imdbid'] = result['imdbID']
-        result_dict['rating'] = result['imdbRating']
+        result_dict['imdbid'] = result.get('imdbID')
+        result_dict['rating'] = result.get('imdbRating')
 
         #list attrs
-        result_dict['poster'] = [(None, result['Poster'])]
-        result_dict['actors'] = result['Actors'].split(',')
-        result_dict['actors'] = [(None, a) for a in result_dict['actors']]
-        result_dict['directors'] = result['Director'].split(',')
-        result_dict['writers'] = result['Writer'].split(',')
-        result_dict['genre'] = result['Genre'].split(',')
+        result_dict['poster'] = self._parse_poster(result)
+        result_dict['actors'] = self._parse_list_attr(result, 'Actors')
+        result_dict['directors'] = self._parse_list_attr(result, 'Director')
+        result_dict['writers'] = self._parse_list_attr(result, 'Writer')
+        result_dict['genre'] = self._parse_list_attr(result, 'Genre')
         result_dict['genre_norm'] = self._genrenorm.normalize_genre_list(
             result_dict['genre']
         )
@@ -122,11 +122,22 @@ class OMDBMovie(provider.IMovieProvider):
 
         return {key: self._filter_na(val) for key, val in result_dict.items()}
 
+    def _parse_poster(self, response):
+        poster = response.get('Poster')
+        if self._filter_na(poster):
+            return [(None, poster)]
+
+    def _parse_list_attr(self, response, person_type):
+        persons = response.get(person_type)
+        if self._filter_na(persons):
+            persons = persons.split(',')
+            if person_type == 'Actors':
+                return [(None, person.strip()) for person in persons]
+            return [person.strip() for person in persons]
+
     def _filter_na(self, value):
-        if value == 'N/A':
-            return ''
-        if value == ['N/A']:
-            return []
+        if value == 'N/A' or value == ['N/A']:
+            return None
         return value
 
     def _format_runtime(self, runtime):
