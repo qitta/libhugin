@@ -23,7 +23,8 @@ class VIDEOBUSTERMovie(provider.IMovieProvider):
         self._priority = 80
         self._attrs = {
             'title', 'plot', 'directors', 'actors', 'year', 'genre',
-            'keywords', 'countries', 'studios', 'original_title', 'poster'
+            'keywords', 'countries', 'studios', 'original_title', 'poster',
+            'tagline'
         }
 
     def build_url(self, search_params):
@@ -75,11 +76,16 @@ class VIDEOBUSTERMovie(provider.IMovieProvider):
         return [[self._movie_url.format(
             item['url'])] for item in similarity_map[:item_count]
         ]
+    def _parse_tagline(self, response):
+        tagline_tag = response.find("p", {"class":"long_name"})
+        if tagline_tag:
+            return self._strip_attr(tagline_tag.get_text())
 
     def _parse_movie_module(self, result, search_params):
         result_dict = {k: None for k in self._attrs}
 
         result_dict['title'] = self._parse_title(result)
+        result_dict['tagline'] = self._parse_tagline(result)
         result_dict['original_title'] = self._parse_attribute(
             result, 'Originaltitel'
         )
