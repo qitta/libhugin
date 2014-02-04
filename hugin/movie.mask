@@ -1,6 +1,7 @@
 {num}) Provider: {provider}
 
 Title       : {title} ({year}), imdbid: {imdbid}, raiting: {rating}
+Tagline     : {tagline}
 Original    : {original_title}
 Cover Url   : {poster}
 
