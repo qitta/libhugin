@@ -114,7 +114,7 @@ class Session:
             'OutputConverter'
         )
         self._cache = Cache()
-        self._cache.open()
+        self._cache.open(path=self._config['cache_path'])
         self._async_executor = ThreadPoolExecutor(
             max_workers=self._config['parallel_jobs']
         )
@@ -481,7 +481,6 @@ class Session:
             if not job.response:
                 results.append(self._job_to_result(job, query))
                 continue
-
             response = copy.deepcopy(job.response)
             # trigger provider to parse its request and process the result
             job.result, job.done = job.provider.parse_response(
@@ -573,10 +572,14 @@ class Session:
 
     def _imdbid_title_lookup(self, query):
         if query['imdbid'] and query['title'] is None and query['year'] is None:
-            fmt = 'http://www.google.com/search?hl=de&q=imdb+{id}+imdb&btnI=745'
-            url = requests.get(fmt.format(id=query['imdbid'])).text
-            title, year = re.search('\>(.+?)\s*\((\d{4})', url).groups()
-            query['title'], query['year'] = title, int(year)
+            fmt = 'http://www.google.com/search?&q={id}+imdb&btnI=745'
+            url = requests.get(fmt.format(id=query['imdbid']))
+            if not 'google' in url.url:
+                title, year = re.search('\>(.+?)\s*\((\d{4})', url.text).groups()
+                if year.isnumeric():
+                    query['title'], query['year'] = title, int(year)
+                else:
+                    query['title'], query['year'] = title, None
 
     def _select_results_by_strategy(self, results, query):
         """
