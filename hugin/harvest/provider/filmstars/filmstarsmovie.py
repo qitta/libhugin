@@ -33,7 +33,6 @@ class FILMSTARSMovie(provider.IMovieProvider):
     def parse_response(self, url_response, search_params):
 
         response = self._identify_response(url_response)
-        print(response['url'])
 
         if response['url'] is None:
             return None, True
@@ -56,34 +55,35 @@ class FILMSTARSMovie(provider.IMovieProvider):
         responses = {'url': None, 'crew': None, 'main': None}
 
         for url, html in url_response:
-            try:
-                if 'castcrew' not in url or 'suche' in url:
-                    responses['main'] = BeautifulSoup(html)
-                    responses['url'] = url
-                if 'castcrew' in url:
-                    responses['crew'] = BeautifulSoup(html)
-            except (TypeError, ValueError) as e:
-                print('Exception in _identify_response filmstars.', e)
-
+            if html is not None:
+                try:
+                    if html and 'castcrew' not in url or 'suche' in url:
+                        responses['main'] = BeautifulSoup(html)
+                        responses['url'] = url
+                    if html and 'castcrew' in url:
+                        responses['crew'] = BeautifulSoup(html)
+                except (TypeError, ValueError) as e:
+                    print('Exception in _identify_response filmstars.', e)
         return responses
 
     def _parse_search_module(self, result, search_params):
         similarity_map = []
-        try:
-            for item in result.body.table.find_all("a"):
-                if item.get_text() and item.get("href"):
-                    title = item.get_text().replace('\n', '')
-                    url = item.get("href")
-                    ratio = string_similarity_ratio(
-                        title,
-                        search_params.title
-                    )
-                    similarity_map.append(
-                        {'title': title, 'ratio': ratio, 'url': url}
-                    )
-        except AttributeError as e:
-            print(e)
-            return None
+        if result.body.table:
+            try:
+                for item in result.body.table.find_all("a"):
+                    if item.get_text() and item.get("href"):
+                        title = item.get_text().replace('\n', '')
+                        url = item.get("href")
+                        ratio = string_similarity_ratio(
+                            title,
+                            search_params.title
+                        )
+                        similarity_map.append(
+                            {'title': title, 'ratio': ratio, 'url': url}
+                        )
+            except AttributeError as e:
+                print('AttributeError in _parse_search_module, filmstars.', e)
+                return None
 
         similarity_map.sort(key=lambda value: value['ratio'], reverse=True)
         item_count = min(len(similarity_map), search_params.amount)
@@ -121,24 +121,13 @@ class FILMSTARSMovie(provider.IMovieProvider):
 
         return result_dict
 
-    #def _parse_title(self, response):
-    #    try:
-    #        pattern = re.compile(r"""   # '\nHer - Film 2013 - FILMSTARTS.de\n'
-    #                        (.+?)\s*    # getting the title
-    #                        \-\s* Film  # the part we want split away
-    #                        \s*         #
-    #                        (\d{4})     # movie release date """, re.X)
-
-    #        title, year = re.search(pattern, response.title.string).groups()
-    #        return title.strip(), int(year)
-    #    except Exception as e:
-    #        print('Unhandled exception in filmstars _parse_title_year.', e)
-    #        return None, None
     def _parse_year(self, response):
         try:
             pattern = re.compile('(\d{4})')
-            year, *_ = re.search(pattern, response.title.string).groups()
-            return int(year)
+            yearstring = re.search(pattern, response.title.string)
+            if yearstring:
+                year, *_ = yearstring.groups()
+                return int(year)
         except Exception as e:
             print('Exception in _parse_year filmstars.', e)
 
