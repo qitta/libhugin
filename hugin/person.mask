@@ -1,4 +1,3 @@
-"""
 {num}) Provider: {provider}
 
 Name        : {name}, {imdbid}, {providerid}
@@ -14,4 +13,3 @@ Biography   : {biography}
 
 Known for the following movies:
 {known_for}
-"""
