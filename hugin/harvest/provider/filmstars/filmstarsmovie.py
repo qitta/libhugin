@@ -108,9 +108,9 @@ class FILMSTARSMovie(provider.IMovieProvider):
     def _parse_movie_module(self, result, search_params):
         result_dict = {k: None for k in self._attrs}
 
-        title, year = self._parse_title(result['main'])
-        result_dict['title'] = title
-        result_dict['year'] = year
+        #title, year = self._parse_title(result['main'])
+        result_dict['title'] = result['main'].h1.get_text()
+        result_dict['year'] = self._parse_year(result['main'])
 
         result_dict['plot'] = self._parse_plot(result['main'])
         result_dict['genre'] = self._parse_genre(result['main'])
@@ -121,18 +121,26 @@ class FILMSTARSMovie(provider.IMovieProvider):
 
         return result_dict
 
-    def _parse_title(self, response):
-        try:
-            pattern = re.compile(r"""   # '\nHer - Film 2013 - FILMSTARTS.de\n'
-                            (.+?)\s*    # getting the title
-                            \-\s* Film  # the part we want split away
-                            \s*         #
-                            (\d{4})     # movie release date """, re.X)
+    #def _parse_title(self, response):
+    #    try:
+    #        pattern = re.compile(r"""   # '\nHer - Film 2013 - FILMSTARTS.de\n'
+    #                        (.+?)\s*    # getting the title
+    #                        \-\s* Film  # the part we want split away
+    #                        \s*         #
+    #                        (\d{4})     # movie release date """, re.X)
 
-            title, year = re.search(pattern, response.title.string).groups()
-            return title.strip(), int(year)
+    #        title, year = re.search(pattern, response.title.string).groups()
+    #        return title.strip(), int(year)
+    #    except Exception as e:
+    #        print('Unhandled exception in filmstars _parse_title_year.', e)
+    #        return None, None
+    def _parse_year(self, response):
+        try:
+            pattern = re.compile('(\d{4})')
+            year, *_ = re.search(pattern, response.title.string).groups()
+            return int(year)
         except Exception as e:
-            print('Unhandled exception in filmstars _parse_title_year.', e)
+            print('Exception in _parse_year filmstars.', e)
 
     def _parse_plot(self, response):
         plot = response.find(itemprop="description")
