@@ -147,18 +147,20 @@ class DownloadQueue:
         :returns: A unicode
 
         """
+
+        try:
+            encoding = charade.detect(byte_data).get('encoding')
+            return byte_data.decode(encoding)
+        except (TypeError, AttributeError, UnicodeError) as e:
+            print('Error decoding bytes with charade.', e)
+
         try:
             return byte_data.decode('utf-8')
         except (TypeError, AttributeError, UnicodeError) as e:
             print('Error decoding bytes to utf-8.', e)
 
         try:
-            encoding = charade.detect(byte_data).get('encoding')
-            return byte_data.decode(encoding)
-        except (TypeError, AttributeError, UnicodeError) as e:
-            print('Error decoding bytes after charade  detection to utf-8.', e)
-        try:
-            return str(BeautifulSoup(byte_data).prettify())
+            return str(BeautifulSoup(byte_data))
         except Exception as e:
             print('Exception in downloadqueue while trying to encode with BeautifulSoup:', e)
 
