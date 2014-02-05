@@ -1,0 +1,9 @@
+[Core]
+Name = MovieFileAnalyzer
+Module = moviefileanalyzer
+
+[Documentation]
+Description = Analayze movie files, extract video or audio information.
+Author = Christoph Piechula
+Version = 1.0
+Website = n/a
