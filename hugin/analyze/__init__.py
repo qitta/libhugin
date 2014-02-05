@@ -19,3 +19,8 @@ class IAnalyzer(IPlugin):
 
     def process_database(self, database):
         pass
+
+class IComparator(IPlugin):
+
+    def process(self, movie_a, movie_b):
+        pass
