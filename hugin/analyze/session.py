@@ -17,12 +17,16 @@ class Session:
         self._plugin_handler = PluginHandler()
         self._plugin_handler.activate_plugins_by_category('Analyzer')
         self._plugin_handler.activate_plugins_by_category('Modifier')
+        self._plugin_handler.activate_plugins_by_category('Comparator')
 
         self._modifier = self._plugin_handler.get_plugins_from_category(
             'Modifier'
         )
         self._analyzer = self._plugin_handler.get_plugins_from_category(
             'Analyzer'
+        )
+        self._comparator = self._plugin_handler.get_plugins_from_category(
+            'Comparator'
         )
 
     def add(self, nfofile, helper):
@@ -51,6 +55,9 @@ class Session:
 
     def modifier_plugins(self, pluginname=None):
         return self._get_plugin(self._modifier, pluginname)
+
+    def comparator_plugins(self, pluginname=None):
+        return self._get_plugin(self._comparator, pluginname)
 
     def _get_plugin(self, plugins, pluginname=None):
         if pluginname is None:
