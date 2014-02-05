@@ -8,7 +8,7 @@
 from yapsy.PluginManager import PluginManager
 
 # hugin
-from hugin.analyze import IAnalyzer, IModifier
+from hugin.analyze import IAnalyzer, IModifier, IComparator
 
 
 class PluginHandler:
@@ -17,11 +17,13 @@ class PluginHandler:
         self._plugin_manager = PluginManager()
         self._category_active = {
             'Modifier': False,
-            'Analyzer': False
+            'Analyzer': False,
+            'Comparator': False
         }
         self._plugin_from_category = {
             'Modifier': [],
-            'Analyzer': []
+            'Analyzer': [],
+            'Comparator': []
         }
         self._modifier_plugins = []
         self._analyzer_plugins = []
@@ -30,7 +32,8 @@ class PluginHandler:
     def _collect_all_plugins(self):
         self._plugin_manager.setPluginPlaces([
             'hugin/analyze/modifier',
-            'hugin/analyze/analyzer'
+            'hugin/analyze/analyzer',
+            'hugin/analyze/comparator'
         ])
 
         # setting filter categories for pluginmanager
@@ -38,6 +41,9 @@ class PluginHandler:
 
             # movie metadata provider
             'Modifier': IModifier,
+
+            # movie metadata provider
+            'Comparator': IComparator,
 
             # sub metadata provider
             'Analyzer': IAnalyzer

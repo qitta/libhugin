@@ -11,6 +11,7 @@ class Movie:
         self.nfo = nfo
         self.attributes = attributes
         self.analyzer_data = {}
+        self.comparator_data = {}
 
     def __repr__(self):
         head, tail = os.path.split(self.key)
