@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# hugin
-import hugin.analyze as plugin
 import subprocess
+from functools import reduce
 import os
+
+# 3rd party
 import yaml
 
+# hugin
+import hugin.analyze as plugin
 
-MOVIE_FILESIZE = (1*1024**2)
+
+MOVIE_FILESIZE = (1 * 1024 ** 2)
 
 
 class MovieFileAnalyzer(plugin.IAnalyzer):
@@ -19,7 +23,8 @@ class MovieFileAnalyzer(plugin.IAnalyzer):
             output = subprocess.check_output(
                 ['hachoir-metadata', '--raw', moviefile]
             )
-            file_metadata = (moviefile, yaml.load(output))
+            metadata_clean = self._concat_yaml_dict(yaml.load(output))
+            file_metadata = (moviefile, metadata_clean)
             movie_metadata.append(file_metadata)
         movie.analyzer_data[self.name] = movie_metadata
 
@@ -30,3 +35,11 @@ class MovieFileAnalyzer(plugin.IAnalyzer):
             if os.path.getsize(moviefile) > threshold:
                 movie_files.append(moviefile)
         return movie_files
+
+    def _concat_yaml_dict(self, yamldict):
+        for key, attr in yamldict.items():
+            yamldict[key] = self._concat_dicts(attr)
+        return yamldict
+
+    def _concat_dicts(self, attr):
+        return reduce(lambda x, y: dict(x, **y), attr)
