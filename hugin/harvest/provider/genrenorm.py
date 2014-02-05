@@ -166,8 +166,9 @@ class GenreNormalize:
     def normalize_genre_list(self, genre_list, output_lang='de'):
         """ A list wrapper for :func:`normalize_genre`. """
         normalized = []
-        for genre in genre_list:
-            normalized_genre = (self.normalize_genre(genre, output_lang))
-            if normalized_genre is not None:
-                normalized.append(normalized_genre)
-        return normalized
+        if genre_list is not None:
+            for genre in genre_list:
+                normalized_genre = (self.normalize_genre(genre, output_lang))
+                if normalized_genre is not None:
+                    normalized.append(normalized_genre)
+            return normalized
