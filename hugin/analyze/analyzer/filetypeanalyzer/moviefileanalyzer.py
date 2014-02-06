@@ -24,15 +24,17 @@ class MovieFileAnalyzer(plugin.IAnalyzer):
             output = subprocess.check_output(
                 ['hachoir-metadata', '--raw', moviefile]
             )
-            metadata_clean = self._concat_yaml_dict(yaml.load(output))
-            normalized_metadata = self._normalize(metadata_clean)
-            file_metadata = (moviefile, normalized_metadata)
-            movie_metadata.append(file_metadata)
+            normalized_metadata = self._normalize(
+                self._concat_yaml_dict(yaml.load(output))
+            )
+            movie_metadata.append((moviefile, normalized_metadata))
         movie.analyzer_data[self.name] = movie_metadata
 
     def process_database(self, db):
         for movie in db.values():
             self.process(movie)
+
+# -------------------------- Helper functions --------------------------------
 
     def _get_movie_files(self, path, threshold=MOVIE_FILESIZE):
         movie_files = []
@@ -43,22 +45,16 @@ class MovieFileAnalyzer(plugin.IAnalyzer):
         return movie_files
 
     def _normalize(self, attrs):
+        basic_map = {'language': 'language', 'codec': 'compression'}
+
         attr_map = {
-            'audio': {
-                'language': 'language',
-                'channels': 'nb_channel',
-                'codec': 'compression'
-            },
-            'video': {
-                'language': 'language',
-                'width': 'width',
-                'height': 'height',
-                'codec': 'compression'
-            },
-            'subtitle': {
-                'language': 'language'
-            }
+            'audio': {'channels': 'nb_channel'},
+            'video': {'width': 'width', 'height': 'height'},
+            'subtitle': {}
         }
+        attr_map['audio'].update(basic_map)
+        attr_map['video'].update(basic_map)
+        attr_map['subtitle'].update(basic_map)
 
         meta_grouped = {'audio': [], 'video': [], 'subtitle': []}
         for key, valuedict in attrs.items():
@@ -75,7 +71,7 @@ class MovieFileAnalyzer(plugin.IAnalyzer):
                 self._extract_attr(meta_grouped[key], key, attr_map[key])
             )
 
-        return reduce(lambda x, y: dict(x, **y), metadata)
+        return self._concat_dicts(metadata)
 
     def _extract_attr(self, data, s_type, attrs):
         a_streams = defaultdict(dict)
