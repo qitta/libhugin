@@ -29,6 +29,12 @@ class Session:
             'Comparator'
         )
 
+    def process_raw(self, plugin, attr, data):
+        attributes = {attr: data}
+        movie = Movie('/tmp', 'fakenfo', attributes)
+        plugin.process_movie(movie)
+        return movie.attributes[attr]
+
     def add(self, nfofile, helper):
         attrs_mask = {key: None for key in self._mask.keys()}
         if os.path.isdir(nfofile):
