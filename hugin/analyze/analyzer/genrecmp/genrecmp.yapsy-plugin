@@ -1,9 +1,0 @@
-[Core]
-Name = GenreCmp
-Module = genrecmp
-
-[Documentation]
-Description = Calculates genre distances between all movies in db.
-Author = Christoph Piechula
-Version = 1.0
-Website = n/a

@@ -1,9 +1,0 @@
-[Core]
-Name = KeywordCmp
-Module = keywordcmp
-
-[Documentation]
-Description = Compares keywords list and calculates a "similarity distance"
-Author = Christoph Piechula
-Version = 1.0
-Website = n/a
