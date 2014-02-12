@@ -5,6 +5,8 @@
 
 # stdlib
 from collections import defaultdict
+import difflib
+import math
 import copy
 
 # hugin
@@ -43,6 +45,8 @@ class Composer(provider.IPostprocessing):
         custom_results = []
         valid_results = [result for result in results if result.result_dict]
         grouped_results = self._group_by_imdbid(valid_results)
+        import pprint
+        pprint.pprint(grouped_results)
         for results in grouped_results.values():
             if profile is None:
                 new_result = self._merge_results_by_priority(results)
@@ -70,8 +74,9 @@ class Composer(provider.IPostprocessing):
         """
         multi_provider_genre = set()
         for result in results:
-            for genre_list in result._result_dict[genre_key]:
-                multi_provider_genre.add(genre_list)
+            if result._result_dict.get(genre_key):
+                for genre_list in result._result_dict[genre_key]:
+                    multi_provider_genre.add(genre_list)
         return multi_provider_genre
 
     def _create_result_copy(self, result, provider_name='Composer'):
@@ -184,9 +189,76 @@ class Composer(provider.IPostprocessing):
         :returns: Grouped results with imdbid as key
 
         """
+        no_imdbid = []
         grouped_results = defaultdict(list)
         for result in results:
-            imdbid = result._result_dict['imdbid']
+            imdbid = result._result_dict.get('imdbid')
             if imdbid is not None:
                 grouped_results[imdbid].append(result)
+            else:
+                no_imdbid.append(result)
+        self._try_set_imdbid(grouped_results, no_imdbid)
         return grouped_results
+
+    def _try_set_imdbid(self, grouped_results, no_imdbid_results):
+        sanitized_groups = []
+        for imdbid, result_list in grouped_results.items():
+            for id_result in result_list:
+                for noid_result in no_imdbid_results:
+                    if self._movie_similarity(id_result, noid_result):
+                        noid_result._result_dict['imdbid'] = imdbid
+                        sanitized_groups.append(noid_result)
+                        #result_list.pop(result_list.index(noid_result))
+        for movie in sanitized_groups:
+            grouped_results[movie._result_dict['imdbid']].append(movie)
+
+        import pprint
+        pprint.pprint(grouped_results)
+
+    def _movie_similarity(self, r1, r2):
+        titile_sim = self._compare_movie_title(
+            r1._result_dict['title'], r2._result_dict['title']
+        )
+        year_sim = self._compare_movie_year(
+            r1._result_dict['year'], r2._result_dict['year']
+        )
+        director_sim = self._cmp_director_list(
+            r1._result_dict['directors'], r2._result_dict['directors']
+        )
+        return ((titile_sim + year_sim + director_sim) / 3) >= 0.85
+
+    def _cmp_director_list(self, s1, s2):
+        if not s1 or not s2:
+            return 0.0
+
+        s1 = [' '.join(sorted(s.split())) for s in s1]
+        s2 = [' '.join(sorted(s.split())) for s in s2]
+
+        s1, s2 = sorted([s1, s2], key=len)
+        sim_sum = 0
+
+        for director in s2:
+            sim_sum += max([self.cmp_string(director, other) for other in s1])
+        return (sim_sum / len(s2))
+
+
+    def cmp_string(self, s1, s2):
+        return difflib.SequenceMatcher(None, s1.upper(), s2.upper()).ratio()
+
+    def _compare_movie_title(self, t1, t2):
+        if t1 and t2:
+            s1, s2 = self._clean_string(t1), self._clean_string(t2)
+            return difflib.SequenceMatcher(None, s1.upper(), s2.upper()).ratio()
+
+    def _clean_string(self, s):
+        sorted_str = sorted(' '.join(s.split(',')).split())
+        return ' '.join([x.strip() for x in sorted_str])
+
+    def _compare_movie_year(self, y1, y2):
+        if y1 and y2:
+            diff = abs(abs(y1) - abs(y2)) / 3
+            if diff >= 1.0:
+                return 0.0
+            else:
+                return math.sqrt(1 - diff)
+        return 0.0
