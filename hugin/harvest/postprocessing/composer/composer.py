@@ -45,8 +45,6 @@ class Composer(provider.IPostprocessing):
         custom_results = []
         valid_results = [result for result in results if result.result_dict]
         grouped_results = self._group_by_imdbid(valid_results)
-        import pprint
-        pprint.pprint(grouped_results)
         for results in grouped_results.values():
             if profile is None:
                 new_result = self._merge_results_by_priority(results)
@@ -55,7 +53,8 @@ class Composer(provider.IPostprocessing):
                     results, profile
                 )
                 if new_result == []:
-                    return []
+                    continue
+
             normalized_multi_genre = self._create_multi_provider_genre(
                 results, 'genre_norm'
             )
