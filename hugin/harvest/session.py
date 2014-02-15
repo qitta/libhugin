@@ -441,11 +441,11 @@ class Session:
         else:
             query.cache = None
 
-        if query['type'] == 'movie' and query['id_title_lookup']:
-            self._imdbid_title_lookup(query)
-
         if query['fuzzysearch']:
             self._fuzzy_search(query)
+
+        if query['type'] == 'movie' and query['id_title_lookup']:
+            self._imdbid_title_lookup(query)
 
         downloadqueue = DownloadQueue(
             num_threads=self._config['download_threads'],
@@ -571,7 +571,7 @@ class Session:
                 query['imdbid'] = imdbids.pop().strip('/')
 
     def _imdbid_title_lookup(self, query):
-        if query['imdbid'] and query['title'] is None and query['year'] is None:
+        if query['imdbid']:
             fmt = 'http://www.google.com/search?&q={id}+imdb&btnI=745'
             url = requests.get(fmt.format(id=query['imdbid']))
             if not 'google' in url.url:

@@ -4,7 +4,7 @@
 """Libhugin commandline tool.
 
 Usage:
-  gylfie (-t <title>) [-y <year>] [-a <amount>] [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>] [-P <pm>]  [-r <processor>] [-f <pfile>]
+  gylfie (-t <title>) [-y <year>] [-a <amount>] [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>] [-P <pm>]  [-r <processor>] [-f <pfile>] [-L <lm>]
   gylfie (-i <imdbid>) [-p <providers>...] [-c <converter>] [-o <path>] [-l <lang>] [-r <processor>] [-f <pfile>]
   gylfie (-n <name>) [--items <num>] [-p <providers>...] [-c <converter>] [-o <path>]
   gylfie list-provider
@@ -25,6 +25,7 @@ Options:
   -a, --amount=<amount>             Amount of items to retrieve.
   -l, --language=<lang>             Language in ISO 639-1 [default: de]
   -P, --predator-mode               The magic 'fuzzy search' mode.
+  -L, --lookup-mode                 Does a title -> imdbid lookup.
   -f, --profile-file=<pfile>        User specified profile.
   -v, --version                     Show version.
   -h, --help                        Show this screen.
@@ -167,6 +168,7 @@ if __name__ == '__main__':
         if args['--amount']:
             args['--amount'] = int(args['--amount'])
         q = session.create_query(
+            id_title_lookup=args['--lookup-mode'],
             title=args['--title'],
             year=args['--year'],
             imdbid=args['--imdbid'],

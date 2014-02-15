@@ -26,7 +26,7 @@ class Query(UserDict):
             'retries': 5,
             'fuzzysearch': False,
             'strategy': 'flat',
-            'id_title_lookup': True
+            'id_title_lookup': False
         })
 
         self._check_params_contradictory(user_data)
