@@ -5,6 +5,7 @@
 
 from urllib.request import urlopen
 from urllib.error import HTTPError
+from urllib.error import URLError
 from http.client import BadStatusLine
 import json
 
@@ -162,8 +163,8 @@ class TMDBConfig:
             self._profile_sizes = response['profile_sizes']
             self._logo_sizes = response['logo_sizes']
             response_bytes.close()
-        except (UnicodeDecodeError, HTTPError, BadStatusLine) as e:
-            print('Error while downloading tmdb configuration.')
+        except (UnicodeDecodeError, HTTPError, BadStatusLine, URLError) as e:
+            print('Error while downloading tmdb configuration.', e)
 
 if __name__ == '__main__':
     t = TMDBConfig.get_instance()
