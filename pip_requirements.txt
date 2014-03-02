@@ -23,5 +23,7 @@ requests
 
 jinja2
 
+docopt
+
 #: beautifulsoup4
 beautifulsoup4
