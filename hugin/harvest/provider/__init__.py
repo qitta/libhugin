@@ -37,7 +37,6 @@ def _result_mask(result, mask):
     result_mask = {key: None for key in mask}
     if result:
         result_mask.update(result)
-        return result_mask
     return result_mask
 
 
