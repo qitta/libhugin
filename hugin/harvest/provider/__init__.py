@@ -11,18 +11,35 @@ __all__ = ['IMovieProvider', 'IPersonProvider', 'IPictureProvider',
            'IOutputConverter', 'IPostprocessing', 'IProvider']
 
 MOVIE_ATTR_MASK = [
-            'title', 'original_title', 'plot', 'runtime', 'imdbid',
-            'vote_count', 'rating', 'providerid', 'alternative_titles',
-            'directors', 'writers', 'crew', 'year', 'poster', 'fanart',
-            'countries', 'genre', 'genre_norm', 'collection', 'studios',
-            'trailers', 'actors', 'keywords', 'tagline', 'outline'
-        ]
+    'title', 'original_title', 'plot', 'runtime', 'imdbid', 'vote_count',
+    'rating', 'providerid', 'alternative_titles', 'directors', 'writers',
+    'crew', 'year', 'poster', 'fanart', 'countries', 'genre', 'genre_norm',
+    'collection', 'studios', 'trailers', 'actors', 'keywords', 'tagline',
+    'outline'
+]
 
 PERSON_ATTR_MASK = [
-            'name', 'alternative_names', 'photo', 'birthday', 'placeofbirth',
-            'imdbid', 'providerid', 'homepage', 'deathday', 'popularity',
-            'biography', 'known_for'
+    'name', 'alternative_names', 'photo', 'birthday', 'placeofbirth',
+    'imdbid', 'providerid', 'homepage', 'deathday', 'popularity',
+    'biography', 'known_for'
 ]
+
+
+def movie_result_mask(result):
+    return _result_mask(result, MOVIE_ATTR_MASK)
+
+
+def person_result_mask(result):
+    return _result_mask(result, PERSON_ATTR_MASK)
+
+
+def _result_mask(result, mask):
+    result_mask = {key: None for key in mask}
+    if result:
+        result_mask.update(result)
+        return result_mask
+    return result_mask
+
 
 class IProvider(IPlugin):
 

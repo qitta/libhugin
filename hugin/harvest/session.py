@@ -22,6 +22,7 @@ from hugin.utils.stringcompare import string_similarity_ratio
 from hugin.harvest.pluginhandler import PluginHandler
 from hugin.harvest.downloadqueue import DownloadQueue
 from hugin.harvest.provider.result import Result
+from hugin.harvest.provider import movie_result_mask, person_result_mask
 from hugin.harvest.cache import Cache
 from hugin.harvest.query import Query
 
@@ -654,10 +655,17 @@ class Session:
     def _job_to_result(self, job, query):
         """ Return a result generated from finished job and query. """
         retries = query.retries - job.retries_left
+
+        if query['type'] == 'movie':
+            clean_result = movie_result_mask(job.result)
+
+        if query['type'] == 'person':
+            clean_result = person_result_mask(job.result)
+
         result = Result(
             provider=job.provider,
             query=query,
-            result=job.result,
+            result=clean_result,
             retries=retries
         )
         return result
