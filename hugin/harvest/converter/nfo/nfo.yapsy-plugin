@@ -1,0 +1,9 @@
+[Core]
+Name = NFO
+Module = nfo
+
+[Documentation]
+Description = Renders result with a basic xbmc nfo xml format.
+Author = Christoph Piechula
+Version = 1.0
+Website = n/a

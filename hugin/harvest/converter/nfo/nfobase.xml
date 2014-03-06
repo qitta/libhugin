@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<movie>
+    <title>{title}</title>
+    <originaltitle>{originaltitle}</originaltitle>
+    <sorttitle>{sorttitle}</sorttitle>
+    <set>{set}</set>
+    <rating>{rating}</rating>
+    <year>{year}</year>
+    <top250>{top250}</top250>
+    <votes>{votes}</votes>
+    <outline>{outline}</outline>
+    <plot>{plot}</plot>
+    <tagline>{tagline}</tagline>
+    <runtime>{runtime}</runtime>
+    <thumb>{thumb}</thumb>
+    <mpaa>{mppa}</mpaa>
+    <playcount>{playcount}</playcount>
+    <id>{id}</id>
+    <filenameandpath>{filename}</filenameandpath>
+    <trailer>{trailer}</trailer>
+    {genre}{credits}{FILEINFO}{director}{ACTORS}
+</movie>

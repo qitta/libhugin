@@ -1,0 +1,4 @@
+    <actor>
+        <name>{name}</name>
+        <role>{role}</role>
+    </actor>
