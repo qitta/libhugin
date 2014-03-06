@@ -25,5 +25,7 @@ jinja2
 
 docopt
 
+Flask
+
 #: beautifulsoup4
 beautifulsoup4
