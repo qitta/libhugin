@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-#3rd party
-from lxml import etree
-
 # hugin
 import hugin.harvest.provider as provider
 from hugin.harvest.provider.result import Result
