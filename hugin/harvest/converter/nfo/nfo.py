@@ -3,11 +3,10 @@
 
 # hugin
 import hugin.harvest.provider as provider
-from hugin.harvest.provider.result import Result
 
 # http://wiki.xbmc.org/index.php?title=NFO_files/movies
-
-value_dict = {
+# key == nfo attr, item == result_dict key for the specific attr
+nfo_dict_map = {
     'title': 'title', 'originaltitle': 'original_title', 'sorttitle': 'title',
     'set': 'collection', 'rating': 'rating', 'year': 'year', 'top250':
     'top250', 'votes': 'vote_count', 'outline': 'outline', 'plot': 'plot',
@@ -34,57 +33,68 @@ class Nfo(provider.IOutputConverter):
         self.file_ext = '.nfo'
 
     def convert(self, result):
-        if not isinstance(result, Result):
-            return None
-
-        if result._result_type == 'movie':
+        if result and result._result_type == 'movie':
             return self._create_nfo(result)
 
+# Helper functions
     def _create_nfo(self, result):
-        for nfo_tag, dict_key in value_dict.items():
-            self._set_value(value_dict, nfo_tag, dict_key, result)
-        return self._base.format(**value_dict)
+        for nfo_tag, dict_key in nfo_dict_map.items():
+            self._set_value(nfo_dict_map, nfo_tag, dict_key, result)
+        return self._base.format(**nfo_dict_map)
 
-    def _set_value(self, value_dict, nfo_tag, dict_key, result):
+    def _set_value(self, nfo_dict_map, nfo_tag, dict_key, result):
 
         if dict_key in result._result_dict:
-            print(dict_key)
 
             if dict_key in ['genre', 'directors', 'writers', 'countries']:
-                value_dict[nfo_tag] = self._create_multi_tag(
+                nfo_dict_map[nfo_tag] = self._create_multi_tag(
                     result._result_dict[dict_key], nfo_tag
                 )
             elif dict_key in ['trailers', 'poster']:
-                value_dict[nfo_tag] = self._extract_attr_tuple(
+                nfo_dict_map[nfo_tag] = self._extract_tuple_attr(
                     result._result_dict[dict_key]
                 )
             else:
-                value_dict[nfo_tag] = result._result_dict[dict_key] or ''
+                nfo_dict_map[nfo_tag] = result._result_dict[dict_key] or ''
         else:
             if dict_key in ['ACTORS']:
-                value_dict[nfo_tag] = self._create_actor_section(
+                nfo_dict_map[nfo_tag] = self._create_actor_section(
                     result._result_dict['actors']
                 )
             else:
-                value_dict[nfo_tag] = ''
+                nfo_dict_map[nfo_tag] = ''
 
     def _create_multi_tag(self, attr, tagname):
         tag = '<{tagname}>{{attr}}</{tagname}>\n'.format(tagname=tagname)
         attrs = []
-        for item in attr:
-            attrs.append(tag.format(attr=item))
-        return ''.join(attrs)
+        if attr:
+            for item in attr:
+                attrs.append(tag.format(attr=item))
+            return ''.join(attrs)
 
     def _create_actor_section(self, result):
         actors = []
-        for role, name in result:
-            actors.append(self._actors.format(name=name, role=role))
-        return ''.join(actors)
+        if result:
+            for role, name in result:
+                actors.append(self._actors.format(name=name, role=role))
+            return ''.join(actors)
 
-    def _extract_attr_tuple(self, result):
-        for _, item in result:
-            return item
+    def _extract_tuple_attr(self, result):
+        if result:
+            for _, item in result:
+                return item
 
     def _open_template(self, template):
         with open(template, 'r') as f:
             return f.read()
+
+if __name__ == '__main__':
+    from hugin.harvest.session import Session
+    s = Session()
+    q = s.create_query(title='Sin', amount=5)
+    r = s.submit(q)
+    p = Nfo()
+    print(r[0])
+    print(p.convert(r[0]))
+    print('FILM:', r[0])
+    print(p.convert(r[0]))
