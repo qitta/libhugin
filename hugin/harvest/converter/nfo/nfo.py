@@ -35,26 +35,25 @@ class Nfo(provider.IOutputConverter):
 
     def _set_value(self, nfo_dict_map, nfo_tag, dict_key, result):
 
-        close_tag = '{close_tag}'.format(close_tag=dict_key)
         if dict_key in result:
 
             if dict_key in ['genre', 'directors', 'writers', 'countries']:
                 nfo_dict_map[nfo_tag] = self._create_multi_tag(
                     result[dict_key], nfo_tag
-                )
-            elif dict_key in ['trailers', 'poster']:
+                ) or ' '
+            elif dict_key in ['trailers', 'poster', 'collection']:
                 nfo_dict_map[nfo_tag] = self._extract_tuple_attr(
-                    result[dict_key], dict_key
+                    result.get(dict_key), dict_key
                 )
             else:
-                nfo_dict_map[nfo_tag] = result[dict_key] or close_tag
+                nfo_dict_map[nfo_tag] = result[dict_key] or ' '
         else:
             if dict_key in ['ACTORS']:
                 nfo_dict_map[nfo_tag] = self._create_actor_section(
                     result['actors']
                 )
             else:
-                nfo_dict_map[nfo_tag] = close_tag
+                nfo_dict_map[nfo_tag] = ' '
 
     def _get_nfo_result_dict(self):
         return {
@@ -85,11 +84,13 @@ class Nfo(provider.IOutputConverter):
 
     def _extract_tuple_attr(self, result, dict_key):
         if result:
+            if dict_key == 'collection':
+                return result[0] or ' '
             for size, item in result:
                 if dict_key == 'poster' and size == 'original':
                     return item
                 elif dict_key == 'trailers':
-                    return item
+                    return item or ' '
 
     def _open_template(self, template):
         with open(template, 'r') as f:

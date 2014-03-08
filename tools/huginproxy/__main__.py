@@ -1,8 +1,24 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+"""Libhugin commandline tool.
+
+Usage:
+  gylfie [-p]
+  gylfie -h | --help
+  gylfie --version
+
+Options:
+  -p, --postprocess                 Enables postprocessing via analyzer
+  -v, --version                     Show version.
+  -h, --help                        Show this screen.
+
+"""
+
 import re
 
+# 3rd party libs
+from docopt import docopt
 from flask import Flask
 from flask import Response
 
@@ -10,12 +26,13 @@ import hugin.harvest.session as HarvestSession
 import hugin.analyze.session as AnalyzerSession
 
 
-app = Flask(__name__)
 
 SESSION = HarvestSession.Session()
 ANALYZER = AnalyzerSession.Session('/tmp/dummydb')
+POSTPROCESSING = False
 CACHE = {}
 
+app = Flask(__name__)
 
 def _build_search_results(results):
     enities = []
@@ -27,10 +44,13 @@ def _build_search_results(results):
                 title=result._result_dict['title'],
                 year=result._result_dict['year'],
                 imdbid=result._result_dict['imdbid'],
+                provider=result._provider.name,
                 nr=num
             )
         )
-        postprocess(result)
+        if POSTPROCESSING:
+            postprocess(result)
+
         CACHE[num] = result
     return ''.join(enities)
 
@@ -58,6 +78,7 @@ def search(title):
 
 @app.route('/movie/<num>')
 def get_movie(num):
+    """ Get movie with a specific number. """
     result = CACHE[int(num)]
     nfo_converter = SESSION.converter_plugins('nfo')
     nfo_file = nfo_converter.convert(result)
@@ -65,6 +86,7 @@ def get_movie(num):
 
 
 def postprocess(result):
+    """ Do postprocess via libhugin analyzer. """
     plotcleaner = ANALYZER.modifier_plugins('plot')
     result._result_dict['plot'] = ANALYZER.process_raw(
         plotcleaner, 'plot', result._result_dict['plot']
@@ -72,8 +94,12 @@ def postprocess(result):
 
 
 def _read_template(template):
-    with open(template, 'r') as f:
-        return f.read()
+    """ Helper for reading templates. """
+    with open(template, 'r') as file:
+        return file.read()
 
 if __name__ == "__main__":
+    ARGS = docopt(__doc__, version="Libhugin webapi-proxy tool.")
+    if ARGS['--postprocess']:
+        POSTPROCESSING = True
     app.run()
