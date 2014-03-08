@@ -27,5 +27,13 @@ docopt
 
 Flask
 
+https://bitbucket.org/spirit/guess_language/downloads/guess_language-spirit-0.5a4.tar.bz2
+
+PyStemmer
+
+pyxDamerauLevenshtein
+
+Pyaml
+
 #: beautifulsoup4
 beautifulsoup4
