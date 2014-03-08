@@ -1,0 +1,5 @@
+<entity>
+    <title>{title} ({year}), [{imdbid}]</title>
+    <url>http://localhost:5000/movie/{nr}</url>
+</entity>
+
