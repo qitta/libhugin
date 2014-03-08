@@ -6,11 +6,14 @@ import re
 from flask import Flask
 from flask import Response
 
-from hugin.harvest.session import Session
+import hugin.harvest.session as HarvestSession
+import hugin.analyze.session as AnalyzerSession
 
 
 app = Flask(__name__)
-SESSION = Session()
+
+SESSION = HarvestSession.Session()
+ANALYZER = AnalyzerSession.Session('/tmp/dummydb')
 CACHE = {}
 
 
@@ -18,73 +21,59 @@ def _build_search_results(results):
     enities = []
     CACHE.clear()
     for num, result in enumerate(results):
-        title = result._result_dict['title']
-        imdbid = result._result_dict['imdbid']
-        year = result._result_dict['year']
-        tmp = """<entity>
-            <title>{title} ({year}), [{imdbid}]</title>
-            <url>http://localhost:5000/movie/{nr}</url>
-        </entity>
-        """.format(title=title, year=year, imdbid=imdbid, nr=num)
-        print(tmp)
-        enities.append(tmp)
-        CACHE[num] = result._result_dict
+        template = _read_template('tools/huginproxy/result_enity.xml')
+        enities.append(
+            template.format(
+                title=result._result_dict['title'],
+                year=result._result_dict['year'],
+                imdbid=result._result_dict['imdbid'],
+                nr=num
+            )
+        )
+        postprocess(result)
+        CACHE[num] = result
     return ''.join(enities)
 
 
 @app.route('/search/<title>')
 def search(title):
     imdbid = re.findall('tt\d+', title)
+    # search by imdbid
     if imdbid:
         query = SESSION.create_query(
             imdbid=imdbid.pop(), providers=['tmdbmovie'], language='de'
         )
     else:
+    # search by title
         query = SESSION.create_query(
             title=str(title), fuzzysearch=True,
             providers=['tmdbmovie'], language='de'
         )
-    result = SESSION.submit(query)
-    string = """<?xml version="1.0" encoding="iso-8859-1" standalone="yes"?>
-    <results>
-        {results}
-    </results>
-    """.format(results=_build_search_results(result))
-    return Response(string, mimetype='text/xml')
+    results = SESSION.submit(query)
+    template = _read_template('tools/huginproxy/results.xml')
+    return Response(
+        template.format(results=_build_search_results(results)),
+        mimetype='text/xml')
 
 
 @app.route('/movie/<num>')
 def get_movie(num):
     result = CACHE[int(num)]
-    poster = result.get('poster')
-    if poster:
-        _, result['poster'] = poster.pop()
-    else:
-        result['poster'] = ''
-    string = """<?xml version="1.0" encoding="iso-8859-1" standalone="yes"?>
-     <details>
-        <title>{title}</title>
-        <year>{year}</year>
-        <director></director>
-        <top250></top250>
-        <mpaa></mpaa>
-        <tagline></tagline>
-        <runtime></runtime>
-        <thumb>{poster}</thumb>
-        <credits></credits>
-        <rating></rating>
-        <votes></votes>
-        <genre></genre>
-        <actor>
-            <name></name>
-            <role></role>
-        </actor>
-        <outline></outline>
-        <plot>{plot}</plot>
- </details>
-    """.format(**result)
-    return Response(string, mimetype='text/xml')
+    nfo_converter = SESSION.converter_plugins('nfo')
+    nfo_file = nfo_converter.convert(result)
+    return Response(nfo_file, mimetype='text/xml')
 
+
+def postprocess(result):
+    plotcleaner = ANALYZER.modifier_plugins('plot')
+    result._result_dict['plot'] = ANALYZER.process_raw(
+        plotcleaner, 'plot', result._result_dict['plot']
+    )
+
+
+def _read_template(template):
+    with open(template, 'r') as f:
+        return f.read()
 
 if __name__ == "__main__":
     app.run()
