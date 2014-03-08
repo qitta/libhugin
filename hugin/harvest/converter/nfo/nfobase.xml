@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
-<movie>
+<details>
     <title>{title}</title>
     <originaltitle>{originaltitle}</originaltitle>
     <sorttitle>{sorttitle}</sorttitle>
@@ -19,4 +19,4 @@
     <filenameandpath>{filename}</filenameandpath>
     <trailer>{trailer}</trailer>
     {genre}{credits}{FILEINFO}{director}{ACTORS}
-</movie>
+</details>
