@@ -576,7 +576,9 @@ class Session:
             fmt = 'http://www.google.com/search?&q={id}+imdb&btnI=745'
             url = requests.get(fmt.format(id=query['imdbid']))
             if not 'google' in url.url:
-                title, year = re.search('\>(.+?)\s*\((\d{4})', url.text).groups()
+                title, year = re.search(
+                    '\>(.+?)\s*\((\d{4})', url.text
+                ).groups()
                 if year.isnumeric():
                     query['title'], query['year'] = title, int(year)
                 else:
