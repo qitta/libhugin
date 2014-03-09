@@ -1,17 +1,14 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-#!/usr/bin/env python
-# encoding: utf-8
-
 """Libhugin analyzer commandline testtool.
 
 Usage:
-  ferki list-modifier
-  ferki list-analyzer
-  ferki list-comparator
-  ferki -h | --help
-  ferki --version
+  freki list-modifier
+  freki list-analyzer
+  freki list-comparator
+  freki -h | --help
+  freki --version
 
 Options:
   -v, --version                     Show version.
@@ -30,9 +27,9 @@ def list_plugins(plugins):
 
 if __name__ == '__main__':
     from hugin.analyze.session import Session
-    session = Session('/tmp/ferki-temp-db')
+    session = Session('/tmp/freki-temp-db')
 
-    args = docopt(__doc__, version="Libhugin 'ferki' clitool v0.1")
+    args = docopt(__doc__, version="Libhugin 'freki' clitool v0.1")
 
     if args['list-modifier']:
         list_plugins(session.modifier_plugins())
