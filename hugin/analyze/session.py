@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+# stdlib
 import os
 import pickle
+
+# hugin
 from hugin.analyze.movie import Movie
 from hugin.analyze.pluginhandler import PluginHandler
 
@@ -49,7 +52,7 @@ class Session:
         self._database[movie.key] = movie
 
     def stats(self):
-        return "Databse: {}, Entries: {}\n".format(
+        return "Database: {}, Entries: {}\n".format(
             self._dbname, len(self._database.keys())
         )
 
@@ -78,6 +81,7 @@ class Session:
             with open(self._dbname, 'rb') as f:
                 return pickle.load(f)
         except FileNotFoundError as e:
+            print('File not found:', e)
             return dict()
 
     def database_shutdown(self):

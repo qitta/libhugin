@@ -29,7 +29,7 @@ Reference
 ~~~~~~~~~
 """
 
-# Stdlib:
+# stdlib
 import re
 import operator
 
@@ -37,19 +37,20 @@ from collections import deque, Counter, OrderedDict
 from itertools import combinations
 
 
-# External:
+# 3rd party
 import Stemmer
 import guess_language
 guess_language.use_enchant(True)
 from pyxdameraulevenshtein import normalized_damerau_levenshtein_distance
 
-# Internal:
+# hugin
 import hugin.analyze.stopwords
 
 
 
 
 # This is a fallback for the case when no stemmer for a language was found:
+
 class DummyStemmer:
     """Stemmer class that does not modify it's input"""
     def stemWord(self, word):

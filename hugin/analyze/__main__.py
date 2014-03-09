@@ -1,19 +1,23 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-from hugin.analyze.session import Session
+# stdlib
+from collections import Counter
 import os
 import sys
 import glob
 import xmltodict
 import json
-from guess_language import guess_language
-from collections import Counter
 
+# 3rd party
+from guess_language import guess_language
+
+# hugin
+from hugin.analyze.session import Session
 
 MASK = {
-    'title': 'title', 'originaltitle': 'original_title', 'year': 'year', 'plot':
-    'plot', 'director': 'directors', 'genre': 'genre_norm'
+    'title': 'title', 'originaltitle': 'original_title', 'year': 'year',
+    'plot': 'plot', 'director': 'directors', 'genre': 'genre_norm'
 }
 
 
@@ -45,9 +49,8 @@ if __name__ == '__main__':
             nfofile = os.path.join(full_movie_path, nfofile.pop())
         s.add(nfofile, read_attrs)
 
-    import pprint
     for item in dict(s._database).values():
         if item.attributes and item.attributes.get('plot'):
-            c[guess_language(item.attributes['plot'])] +=1
+            c[guess_language(item.attributes['plot'])] += 1
     print(s.stats(), c)
     s.database_shutdown()

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+# stdlib
 from itertools import combinations
-
 from collections import Counter
 
 # hugin
@@ -14,19 +14,23 @@ class KeywordCmp(plugin.IComparator):
     def compare(self, movie_a, movie_b):
         pass
 
-    def process_db(self, database):
+    def process_db(self, database, attr_name='KeywordExtractor'):
         for a, b in combinations(database.values(), 2):
-            keywords_a = a.comparator_data.get('KeywordExtractor')
-            keywords_b = b.comparator_data.get('KeywordExtractor')
+            keywords_a = a.comparator_data.get(attr_name)
+            keywords_b = b.comparator_data.get(attr_name)
             if keywords_a and keywords_b:
                 rating = self._compare_keywords(keywords_a, keywords_b)
-                rating = sum(rating.values())/len(rating)
+                rating = sum(rating.values()) / len(rating)
                 a.comparator_data.setdefault(self.name, set()).add(
                     (b, rating)
                 )
                 b.comparator_data.setdefault(self.name, set()).add(
                     (a, rating)
                 )
+
+##############################################################################
+# -------------------------- helper functions --------------------------------
+##############################################################################
 
     def _compare_keywords(self, keywords_a, keywords_b):
         result = {}
@@ -37,7 +41,7 @@ class KeywordCmp(plugin.IComparator):
             for cnt_b, group_b in grouped_b.items():
                 if cnt_a == cnt_b:
                     rating = self._compare(group_a, group_b, cnt_a)
-                    result[cnt_a] += rating/min(len(group_a), len(group_b))
+                    result[cnt_a] += rating / min(len(group_a), len(group_b))
 
         return result
 

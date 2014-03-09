@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+# stdlib
 from collections import defaultdict
 from functools import reduce
 import subprocess
@@ -34,7 +35,9 @@ class MovieFileAnalyzer(plugin.IAnalyzer):
         for movie in db.values():
             self.process(movie)
 
-# -------------------------- Helper functions --------------------------------
+##############################################################################
+# -------------------------- helper functions --------------------------------
+##############################################################################
 
     def _get_movie_files(self, path, threshold=MOVIE_FILESIZE):
         movie_files = []
