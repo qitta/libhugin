@@ -72,8 +72,11 @@ def stats():
 
 @app.route('/toggle_pp')
 def toggle_pp():
-    global POSTPROCESSING
-    POSTPROCESSING = not POSTPROCESSING
+    try:
+        global POSTPROCESSING
+        POSTPROCESSING = not POSTPROCESSING
+    except Exception as e:
+        print(e)
     return 'Postprocessing enabled: {}'.format(POSTPROCESSING)
 
 
@@ -112,7 +115,7 @@ def _build_search_results(results):
 def postprocess(result):
     """ Postprocess example. """
     plotcleaner = ANALYZER.modifier_plugins('plot')
-    result._result_dict['plot'] = ANALYZER.process_raw(
+    result._result_dict['plot'] = ANALYZER.modify_raw(
         plotcleaner, 'plot', result._result_dict['plot']
     )
 
