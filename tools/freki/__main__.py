@@ -4,13 +4,12 @@
 """Libhugin analyzer commandline testtool.
 
 Usage:
-  freki --create <database> <datapath>
-  freki list-modifier
-  freki list-analyzer
-  freki list-comparator
-  freki analyze <item>
-  freki modify <item>
-  freki compare <item>
+  freki create <database> <datapath>
+  freki list <database>
+  freki list <database> item <item>
+  freki list <database> analyzer <modifier>
+  freki list-modifier | list-analyzer
+  freki (analyze | modify) <plugin> <database>
   freki -h | --help
   freki --version
 
@@ -22,10 +21,8 @@ Options:
 
 # stdlib
 import os
-import sys
 import glob
 import xmltodict
-import json
 from collections import Counter
 
 # 3rd party
@@ -33,20 +30,17 @@ from guess_language import guess_language
 from docopt import docopt
 from hugin.analyze.session import Session
 
-# hugin
-from hugin.analyze.session import Session
-
 MASK = {
-    'title': 'title', 'originaltitle': 'original_title', 'year': 'year',
-    'plot': 'plot', 'director': 'directors', 'genre': 'genre_norm'
+    'title': 'title', 'originaltitle': 'originaltitle', 'year': 'year',
+    'plot': 'plot', 'director': 'director', 'genre': 'genre'
 }
 
+
 #nfo read helper
-def read_attrs(nfofile, mask):
+def read_attrs(nfo_file, mask):
     try:
-        with open(nfofile, 'r') as f:
+        with open(nfo_file, 'r') as f:
             xml = xmltodict.parse(f.read())
-            print(mask.keys())
             attributes = {key: None for key in mask.keys()}
             for key, filekey in mask.items():
                 attributes[key] = xml['movie'][filekey]
@@ -73,7 +67,7 @@ def modify(plugin, data):
 
 
 def analyze(plugin, data):
-    pass
+    plugin.analyze(movie)
 
 
 def compare(plugin, data):
@@ -81,12 +75,9 @@ def compare(plugin, data):
 
 
 if __name__ == '__main__':
-    from hugin.analyze.session import Session
     args = docopt(__doc__, version="Libhugin 'freki' clitool v0.1")
 
-    print(args)
-
-    if args['--create']:
+    if args['create']:
         s = Session(args['<database>'], attr_mask=MASK)
         path = args['<datapath>']
         c = Counter()
@@ -106,13 +97,30 @@ if __name__ == '__main__':
         print(s.stats(), c)
         s.database_shutdown()
 
-    #if args['list-modifier']:
-    #    list_plugins(session.modifier_plugins())
+    if args['list']:
+        s = Session(args['<database>'])
+        database = s.get_database()
+        for movie in database.values():
+            if args['item']:
+                print(movie, movie.attributes[args['<item>']])
+            else:
+                import pprint
+                print(movie)
+                pprint.pprint(movie.analyzer_data)
+                print("")
 
-    #if args['list-analyzer']:
-    #    list_plugins(session.analyzer_plugins())
+    if args['analyze'] or args['modify']:
+        s = Session(args['<database>'])
+        database = s.get_database()
+        for movie in database.values():
+            plugin = s.analyzer_plugins(args['<plugin>'])
+            plugin.analyze(movie)
+        s.database_shutdown()
 
-    #if args['list-comparator']:
-    #    list_plugins(session.comparator_plugins())
+    if args['list-modifier']:
+        session = Session('/tmp/temp')
+        list_plugins(session.modifier_plugins())
 
-
+    if args['list-analyzer']:
+        session = Session('/tmp/temp')
+        list_plugins(session.analyzer_plugins())
