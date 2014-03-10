@@ -19,7 +19,7 @@ MOVIE_FILESIZE = (1 * 1024 ** 2)
 
 class MovieFileAnalyzer(plugin.IAnalyzer):
 
-    def process(self, movie):
+    def analyze(self, movie):
         movie_metadata = []
         for moviefile in self._get_movie_files(movie.key):
             output = subprocess.check_output(
@@ -31,7 +31,7 @@ class MovieFileAnalyzer(plugin.IAnalyzer):
             movie_metadata.append((moviefile, normalized_metadata))
         movie.analyzer_data[self.name] = movie_metadata
 
-    def process_database(self, db):
+    def analyze_all(self, db):
         for movie in db.values():
             self.process(movie)
 

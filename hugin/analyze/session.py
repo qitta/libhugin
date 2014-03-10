@@ -32,10 +32,22 @@ class Session:
             'Comparator'
         )
 
-    def process_raw(self, plugin, attr, data):
+    def analyze_raw(self, plugin, attr, data):
         attributes = {attr: data}
         movie = Movie('/tmp', 'fakenfo', attributes)
-        plugin.process_movie(movie)
+        plugin.analyze(movie)
+        return movie.attributes[attr]
+
+    def modify_raw(self, plugin, attr, data):
+        attributes = {attr: data}
+        movie = Movie('/tmp', 'fakenfo', attributes)
+        plugin.modify(movie)
+        return movie.attributes[attr]
+
+    def compare_raw(self, plugin, attr, data):
+        attributes = {attr: data}
+        movie = Movie('/tmp', 'fakenfo', attributes)
+        plugin.compare(movie)
         return movie.attributes[attr]
 
     def add(self, nfofile, helper):
@@ -81,7 +93,6 @@ class Session:
             with open(self._dbname, 'rb') as f:
                 return pickle.load(f)
         except FileNotFoundError as e:
-            print('File not found:', e)
             return dict()
 
     def database_shutdown(self):

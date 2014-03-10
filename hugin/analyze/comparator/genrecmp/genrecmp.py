@@ -13,7 +13,7 @@ class GenreCmp(plugin.IComparator):
     def compare(self, movie_a, movie_b):
         pass
 
-    def process_db(self, database, threshold=0.51, attr_name='genre'):
+    def compare_all(self, database, threshold=0.51, attr_name='genre'):
         for a, b in combinations(database.values(), 2):
             if a.attributes.get(attr_name) and b.attributes.get(attr_name):
                 distance = self._genre_distance(a, b, attr_name)

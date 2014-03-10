@@ -6,21 +6,26 @@ from yapsy.IPlugin import IPlugin
 
 class IModifier(IPlugin):
 
-    def process_movie(self, movie):
+    def modify(self, movie):
         pass
 
-    def process_database(self, database):
+    def modify_all(self, database):
         pass
+
 
 class IAnalyzer(IPlugin):
 
-    def process_movie(self, movie):
+    def analyze(self, movie):
         pass
 
-    def process_database(self, database):
+    def analyze_all(self, database):
         pass
+
 
 class IComparator(IPlugin):
 
-    def process(self, movie_a, movie_b):
+    def compare(self, movie_a, movie_b):
+        pass
+
+    def compare_all(self, database):
         pass

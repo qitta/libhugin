@@ -14,7 +14,7 @@ class KeywordCmp(plugin.IComparator):
     def compare(self, movie_a, movie_b):
         pass
 
-    def process_db(self, database, attr_name='KeywordExtractor'):
+    def compare_all(self, database, attr_name='KeywordExtractor'):
         for a, b in combinations(database.values(), 2):
             keywords_a = a.comparator_data.get(attr_name)
             keywords_b = b.comparator_data.get(attr_name)

@@ -8,7 +8,7 @@ from hugin.analyze.rake import extract_keywords
 
 class KeywordExtractor(plugin.IAnalyzer):
 
-    def process_movie(self, movie, score_threshold=1.0, attr_name='plot'):
+    def analyze(self, movie, score_threshold=1.0, attr_name='plot'):
         if movie.attributes.get(attr_name):
             lang, keywords = extract_keywords(
                 movie.attributes.get(attr_name), use_stemmer=False
@@ -19,6 +19,6 @@ class KeywordExtractor(plugin.IAnalyzer):
                     keywordlist.append(list(keyword))
             movie.analyzer_data[self.name] = keywordlist
 
-    def process_database(self, database):
+    def analyze_all(self, database):
         for movie in database.values():
             self.process_movie(movie)
