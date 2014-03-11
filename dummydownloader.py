@@ -5,6 +5,8 @@ import json
 import os
 import sys
 
+
+
 from hugin.harvest.session import Session
 
 USAGE = """Usage:

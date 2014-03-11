@@ -4,6 +4,7 @@
 # stdlib
 import os
 import pickle
+from collections import OrderedDict
 
 # hugin
 from hugin.analyze.movie import Movie
@@ -93,7 +94,7 @@ class Session:
             with open(self._dbname, 'rb') as f:
                 return pickle.load(f)
         except FileNotFoundError as e:
-            return dict()
+            return OrderedDict()
 
     def database_shutdown(self):
         with open(self._dbname, 'wb') as f:

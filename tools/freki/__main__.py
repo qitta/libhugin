@@ -6,8 +6,8 @@
 Usage:
   freki create <database> <datapath>
   freki list <database>
-  freki list <database> item <item>
-  freki list <database> analyzer <modifier>
+  freki list <database> attr <attr>
+  freki list <database> analyzerdata
   freki list-modifier | list-analyzer
   freki (analyze | modify) <plugin> <database>
   freki -h | --help
@@ -22,6 +22,7 @@ Options:
 # stdlib
 import os
 import glob
+import pprint
 import xmltodict
 from collections import Counter
 
@@ -63,15 +64,11 @@ def list_plugins(plugins):
 
 
 def modify(plugin, data):
-    pass
+    plugin.modify(movie)
 
 
 def analyze(plugin, data):
     plugin.analyze(movie)
-
-
-def compare(plugin, data):
-    pass
 
 
 if __name__ == '__main__':
@@ -98,29 +95,40 @@ if __name__ == '__main__':
         s.database_shutdown()
 
     if args['list']:
-        s = Session(args['<database>'])
+        s = Session(args['<database>'], attr_mask=MASK)
         database = s.get_database()
-        for movie in database.values():
-            if args['item']:
-                print(movie, movie.attributes[args['<item>']])
-            else:
-                import pprint
-                print(movie)
+        for num, movie in enumerate(database.values()):
+            if args['attr']:
+                print('{}) {}\n{}: \t{}\n'.format(
+                    num,
+                    movie,
+                    args['<attr>'],
+                    movie.attributes[args['<attr>']])
+                )
+            elif args['analyzerdata']:
+                print('{}) {}'.format(num, movie))
                 pprint.pprint(movie.analyzer_data)
+            else:
+                print('{}) {}'.format(num, movie))
+                pprint.pprint(movie.attributes)
                 print("")
-
-    if args['analyze'] or args['modify']:
-        s = Session(args['<database>'])
-        database = s.get_database()
-        for movie in database.values():
-            plugin = s.analyzer_plugins(args['<plugin>'])
-            plugin.analyze(movie)
         s.database_shutdown()
 
-    if args['list-modifier']:
-        session = Session('/tmp/temp')
-        list_plugins(session.modifier_plugins())
+    if any([args['analyze'], args['modify']]):
+        s = Session(args['<database>'], attr_mask=MASK)
+        database = s.get_database()
+        for movie in database.values():
+            if args['analyze']:
+                plugin = s.analyzer_plugins(args['<plugin>'])
+                plugin.analyze(movie)
+            elif args['modify']:
+                plugin = s.modifier_plugins(args['<plugin>'])
+                plugin.modify(movie)
+        s.database_shutdown()
 
-    if args['list-analyzer']:
+    if any([args['list-modifier'], args['list-analyzer']]):
         session = Session('/tmp/temp')
-        list_plugins(session.analyzer_plugins())
+        if args['list-modifier']:
+            list_plugins(session.modifier_plugins())
+        if args['list-analyzer']:
+            list_plugins(session.analyzer_plugins())
