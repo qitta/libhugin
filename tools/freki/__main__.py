@@ -11,6 +11,7 @@ Usage:
   freki list-modifier | list-analyzer
   freki (analyze | modify) plugin <plugin> <database>
   freki (analyze | modify) plugin <plugin> pluginattrs <pluginattrs> <database>
+  freki export <database>
   freki -h | --help
   freki --version
 
@@ -21,80 +22,58 @@ Options:
 """
 
 # stdlib
-import os
-import glob
 import pprint
-import xmltodict
-from collections import Counter
 
 # 3rd party
-from guess_language import guess_language
 from docopt import docopt
 from hugin.analyze.session import Session
-
-MASK = {
-    'title': 'title', 'originaltitle': 'originaltitle', 'year': 'year',
-    'plot': 'plot', 'director': 'director', 'genre': 'genre'
-}
-
-
-#nfo read helper
-def read_attrs(nfo_file, mask):
-    try:
-        with open(nfo_file, 'r') as f:
-            xml = xmltodict.parse(f.read())
-            attributes = {key: None for key in mask.keys()}
-            for key, filekey in mask.items():
-                attributes[key] = xml['movie'][filekey]
-            return attributes
-    except Exception as e:
-        print('Exception', e)
-
-
-def stats(session):
-    print(session.stats())
+from hugin.filewalk import data_import
+from hugin.filewalk import data_export
+from hugin.filewalk import attr_import_func
+from hugin.filewalk import attr_mapping
 
 
 def list_plugins(plugins):
     for item in plugins:
         print(
-            'Name: \t\t{}\nDescription: \t{}\n'.format(
-                item.name, item.description
+            'Name: \t\t{}\nDescription: \t{}\nParameters: \t{}\n'.format(
+                item.name, item.description, item.parameters()
             )
         )
 
 
-def modify(plugin, data):
-    plugin.modify(movie)
+def split_pluginattrs(pluginattrs):
+    try:
+        raw_attrs = pluginattrs.split(',')
+        return dict([attr.split('=') for attr in raw_attrs])
+    except TypeError:
+        return {}
 
 
-def analyze(plugin, data):
-    plugin.analyze(movie)
+def cluster_kwargs(args, plugin):
+    if args['pluginattrs']:
+        attrs = split_pluginattrs(args['<pluginattrs>'])
+        params = plugin.parameters()
+        return {key: constructor(attrs[key]) for key, constructor in params.items()}
+    return {}
 
 
 if __name__ == '__main__':
     args = docopt(__doc__, version="Libhugin 'freki' clitool v0.1")
-    print(args)
+    MASK = attr_mapping()
 
     if args['create']:
         s = Session(args['<database>'], attr_mask=MASK)
         path = args['<datapath>']
-        c = Counter()
-        for moviefolder in os.listdir(path):
-            full_movie_path = os.path.join(path, moviefolder)
-            nfofile = glob.glob1(full_movie_path, '*.nfo')
-            if nfofile == []:
-                nfofile = full_movie_path
-                c['no_nfo'] += 1
-            else:
-                nfofile = os.path.join(full_movie_path, nfofile.pop())
-            s.add(nfofile, read_attrs)
-
-        for item in dict(s._database).values():
-            if item.attributes and item.attributes.get('plot'):
-                c[guess_language(item.attributes['plot'])] += 1
-        print(s.stats(), c)
+        metadata = data_import(path)
+        for nfofile in metadata:
+            s.add(nfofile, attr_import_func)
         s.database_shutdown()
+
+    if args['export']:
+        s = Session(args['<database>'], attr_mask=MASK)
+        database = s.get_database()
+        data_export(database.values())
 
     if args['list']:
         s = Session(args['<database>'], attr_mask=MASK)
@@ -122,10 +101,10 @@ if __name__ == '__main__':
         for movie in database.values():
             if args['analyze']:
                 plugin = s.analyzer_plugins(args['<plugin>'])
-                plugin.analyze(movie)
+                plugin.analyze(movie, **cluster_kwargs(args, plugin))
             elif args['modify']:
                 plugin = s.modifier_plugins(args['<plugin>'])
-                plugin.modify(movie)
+                plugin.modify(movie, **cluster_kwargs(args, plugin))
         s.database_shutdown()
 
     if any([args['list-modifier'], args['list-analyzer']]):

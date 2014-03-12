@@ -51,17 +51,19 @@ class Session:
         plugin.compare(movie)
         return movie.attributes[attr]
 
-    def add(self, nfofile, helper):
+    def add(self, metadata_file, helper):
         attrs_mask = {key: None for key in self._mask.keys()}
-        if os.path.isdir(nfofile):
-            # there is no nfofile, so we get the directory
-            movie = Movie(nfofile, None, attrs_mask)
+        if os.path.isdir(metadata_file):
+            # there is no metadata_file, so we get the directory
+            movie = Movie(metadata_file, None, attrs_mask)
         else:
-            # we have a nfofile, so we can get the directory
-            helper_attrs = helper(nfofile, self._mask)
+            # we have a metadata_file, so we can get the directory
+            helper_attrs = helper(metadata_file, self._mask)
             if helper_attrs is None:
                 helper_attrs = attrs_mask
-            movie = Movie(os.path.dirname(nfofile), nfofile, helper_attrs)
+            movie = Movie(
+                os.path.dirname(metadata_file), metadata_file, helper_attrs
+            )
         self._database[movie.key] = movie
 
     def stats(self):
