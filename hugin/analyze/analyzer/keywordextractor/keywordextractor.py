@@ -22,3 +22,9 @@ class KeywordExtractor(plugin.IAnalyzer):
     def analyze_all(self, database):
         for movie in database.values():
             self.process_movie(movie)
+
+    def parameters(self):
+        return {
+            'score_threshold': float,
+            'attr_name': str
+        }

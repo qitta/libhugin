@@ -14,7 +14,7 @@ class PlotChange(plugin.IModifier):
     def modify(self, movie, attr_name='plot', change_to='en'):
         query = self._session.create_query(
             title=movie.attributes.get('title'),
-            provider=['tmdbmovie'],
+            providers=['tmdbmovie'],
             amount=1,
             language=change_to
         )
@@ -25,3 +25,9 @@ class PlotChange(plugin.IModifier):
     def modify_all(self, db):
         for movie in db.values():
             self.movie(movie)
+
+    def parameters(self):
+        return {
+            'attr_name': str,
+            'change_to': str
+        }

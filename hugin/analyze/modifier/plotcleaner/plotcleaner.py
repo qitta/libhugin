@@ -18,3 +18,8 @@ class PlotCleaner(plugin.IModifier):
     def modify_all(self, db):
         for movie in db.values():
             self.movie(movie)
+
+    def parameters(self):
+        return {
+            'attr_name': str
+        }
