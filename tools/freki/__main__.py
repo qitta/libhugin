@@ -9,7 +9,8 @@ Usage:
   freki list <database> attr <attr>
   freki list <database> analyzerdata
   freki list-modifier | list-analyzer
-  freki (analyze | modify) <plugin> <database>
+  freki (analyze | modify) plugin <plugin> <database>
+  freki (analyze | modify) plugin <plugin> pluginattrs <pluginattrs> <database>
   freki -h | --help
   freki --version
 
@@ -73,6 +74,7 @@ def analyze(plugin, data):
 
 if __name__ == '__main__':
     args = docopt(__doc__, version="Libhugin 'freki' clitool v0.1")
+    print(args)
 
     if args['create']:
         s = Session(args['<database>'], attr_mask=MASK)
