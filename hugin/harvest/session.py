@@ -499,6 +499,10 @@ class Session:
                     job, downloadqueue, query, results
                 )
         downloadqueue.push(None)
+
+        if query.remove_invalid:
+            results = [result for result in results if result._result_dict.get('title')]
+
         return self._select_results_by_strategy(results, query)
 
     def submit(self, query):
@@ -566,7 +570,7 @@ class Session:
 
     def _fuzzy_search(self, query):
         if query['title'] and query['imdbid'] is None:
-            fmt = 'http://www.google.com/search?hl=de&q={title}+imdb&btnI=745'
+            fmt = 'http://www.google.com/search?hl=de&q={title}+imdb+movie&btnI=745'
             url = requests.get(fmt.format(title=query['title'])).url
             imdbids = re.findall('\/tt\d*/', url)
             if imdbids:
@@ -593,8 +597,6 @@ class Session:
         :param query: The query that belongs to the results given.
 
         """
-        if query.remove_invalid:
-            results = [result for result in results if result._result_dict]
 
         if len(results) == 0:
             return results
