@@ -6,6 +6,7 @@
 # stdlib
 from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
+from collections import OrderedDict
 from itertools import zip_longest
 from functools import reduce
 from operator import add
@@ -619,6 +620,11 @@ class Session:
         # sort by ratio
         for provider, results in result_map.items():
             result_map[provider] = self._sort_by_ratio(results, query)
+        result_map = OrderedDict(
+            sorted(
+                result_map.items(), key=lambda t: t[0]._priority, reverse=True
+            )
+        )
 
         results = list(
             filter(None, reduce(add, zip_longest(*result_map.values())))
@@ -641,6 +647,7 @@ class Session:
                     query.title, result._result_dict['title']
                 )
                 ratio = max(ratio_a or 0.0, ratio_b or 0.0)
+
                 # TODO: Fix first time wrong results. Maybe sort by year?
                 if query.get('year') and result._result_dict['year']:
                     a, b = query.get('year'), result._result_dict['year']
