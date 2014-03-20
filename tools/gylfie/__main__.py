@@ -100,12 +100,12 @@ def _format_result(num, result):
     attrs = {
         'person': {
             'mask': hugin.PERSON_ATTR_MASK,
-            'prof': 'hugin/person.mask',
+            'prof': 'tools/gylfie/person.mask',
             'formatter': _format_person
         },
         'movie': {
             'mask': hugin.MOVIE_ATTR_MASK,
-            'prof': 'hugin/movie.mask',
+            'prof': 'tools/gylfie/movie.mask',
             'formatter': _format_movie
         }
     }
