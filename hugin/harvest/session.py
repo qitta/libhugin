@@ -570,8 +570,8 @@ class Session:
 
     def _fuzzy_search(self, query):
         if query['title'] and query['imdbid'] is None:
-            fmt = 'http://www.google.com/search?hl=de&q={title}+imdb+movie&btnI=745'
-            url = requests.get(fmt.format(title=query['title'])).url
+            fmt = 'http://www.google.com/search?hl=de&q={title}+{year}+imdb+movie&btnI=745'
+            url = requests.get(fmt.format(title=query['title'], year=query.get('year') or '')).url
             imdbids = re.findall('\/tt\d*/', url)
             if imdbids:
                 query['imdbid'] = imdbids.pop().strip('/')
