@@ -109,7 +109,7 @@ class Session:
         self._provider = self._plugin_handler.get_plugins_from_category(
             'Provider'
         )
-        self._postprocessing = self._plugin_handler.get_plugins_from_category(
+        self._postprocessor = self._plugin_handler.get_plugins_from_category(
             'Postprocessor'
         )
         self._converter = self._plugin_handler.get_plugins_from_category(
@@ -761,12 +761,12 @@ class Session:
         """
         return self._get_plugin(self._provider, pluginname)
 
-    def postprocessing_plugins(self, pluginname=None):
-        """ Return postprocessing plugins.
+    def postprocessor_plugins(self, pluginname=None):
+        """ Return postprocessor plugins.
 
         See analogue: :meth:`provider_plugins`
         """
-        return self._get_plugin(self._postprocessing, pluginname)
+        return self._get_plugin(self._postprocessor, pluginname)
 
     def converter_plugins(self, pluginname=None):
         """ Return converter plugins.

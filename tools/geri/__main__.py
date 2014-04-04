@@ -9,7 +9,7 @@ Usage:
   geri (-n <name>) [--items <num>] [-p <providers>...] [-c <converter>] [-o <path>]
   geri list-provider
   geri list-converter
-  geri list-postprocessing
+  geri list-postprocessor
   geri -h | --help
   geri --version
 
@@ -126,7 +126,7 @@ def _load_profile(filename):
 
 def output(args, results, session):
     if args['--postprocess']:
-        processor = session.postprocessing_plugins(args['--postprocess'])
+        processor = session.postprocessor_plugins(args['--postprocess'])
         if processor:
             if args['--profile-file']:
                 profile = _load_profile(args['--profile-file'])
@@ -193,5 +193,5 @@ if __name__ == '__main__':
     if args['list-provider']:
         list_plugins(session.provider_plugins())
 
-    if args['list-postprocessing']:
-        list_plugins(session.postprocessing_plugins())
+    if args['list-postprocessor']:
+        list_plugins(session.postprocessor_plugins())

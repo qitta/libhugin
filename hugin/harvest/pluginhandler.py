@@ -13,7 +13,7 @@ from hugin.harvest.provider import IMovieProvider, IPersonProvider, IProvider
 
 class PluginHandler:
     """
-    Handles management of provider, postprocessing and converter plugins.
+    Handles management of provider, postprocessor and converter plugins.
 
     .. autosummary::
 
@@ -39,15 +39,15 @@ class PluginHandler:
         }
         self._provider_plugins = []
         self._converter_plugins = []
-        self._postprocessing_plugins = []
+        self._postprocessor_plugins = []
         self._collect_all_plugins()
 
     def _collect_all_plugins(self):
-        """ Collect all provider, converter and postprocessing plugins.  """
+        """ Collect all provider, converter and postprocessor plugins.  """
         self._plugin_manager.setPluginPlaces([
             'hugin/harvest/provider',
             'hugin/harvest/converter',
-            'hugin/harvest/postprocessing'
+            'hugin/harvest/postprocessor'
         ])
 
         # setting filter categories for pluginmanager
@@ -63,7 +63,7 @@ class PluginHandler:
             # output converter
             'OutputConverter': IOutputConverter,
 
-            # postprocessing filter
+            # postprocessor filter
             'Postprocessor': IPostprocessor
         })
         self._plugin_manager.collectPlugins()

@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 """ This module provides the Interface definition for provider, converter and
-postprocessing plugins.
+postprocessor plugins.
 """
 
 from yapsy.IPlugin import IPlugin
@@ -267,10 +267,10 @@ class IOutputConverter(IPlugin):
         )
 
 
-#  postprocessing plugins
+#  postprocessor plugins
 class IPostprocessor(IPlugin):
 
-    """ A base class postprocessing plugins.  """
+    """ A base class postprocessor plugins.  """
     def __init__(self):
         self.name = 'IOutputConverter name placeholder'
         self.description = 'IOutputConverter description placeholder'
