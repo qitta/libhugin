@@ -16,7 +16,7 @@ class OFDBCommon:
             # seems to be currently the only correct working mirror, other
             # mirrors wont't find e.g. plot metadata, even if it exists
             'http://ofdbgw.geeksphere.de/{path}/{query}',
-            'http://ofdbgw.home-of-root.de/{path}/{query}'
+            #'http://ofdbgw.home-of-root.de/{path}/{query}'
 
             # those mirrors seems to be broken
             #'http://ofdbgw.scheeper.de/{path}/{query}'
