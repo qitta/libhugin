@@ -456,7 +456,7 @@ implement the following method:
 Developing a output converter plugin
 ####################################
 
-All output converter plugins have to inherit from :class:`IOutputConverter` and
+All output converter plugins have to inherit from :class:`IConverter` and
 im implement the following method:
 
-.. automethod:: hugin.harvest.provider.IOutputConverter.convert
+.. automethod:: hugin.harvest.provider.IConverter.convert

@@ -84,7 +84,7 @@ You may also want to write your own postprocessor plugin, see:
 
 .. _convplugin:
 
-Outputconverter plugins
+Converter plugins
 -----------------------
 
 Output converter are plugins that convert the provider delivered result to a
