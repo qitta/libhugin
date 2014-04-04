@@ -67,19 +67,19 @@ yourself, its quite easy. For more information see: :ref:`providerapi`.
 
 .. _postplugin:
 
-Postprocessing plugins
+Postprocessor plugins
 ----------------------
 
-Postprocessing plugins are meant to *normalize* or *postprocess* the raw data
-in a way specified by the user. Postprocessing plugins usually operate on result objects.
+Postprocessor plugins are meant to *normalize* or *postprocess* the raw data
+in a way specified by the user. Postprocessor plugins usually operate on result objects.
 
-There are currently some simple postprocessing plugins available:
+There are currently some simple postprocessor plugins available:
 
     * Resulttrimmer
     * Customprovider
 
-You may also want to write your own postprocessing plugin, see:
-:ref:`postprocessingapi`.
+You may also want to write your own postprocessor plugin, see:
+:ref:`postprocessorapi`.
 
 
 .. _convplugin:

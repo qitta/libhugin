@@ -39,7 +39,7 @@ libhuin project structure
     │   ├── downloadqueue.py
     │   ├── __init__.py
     │   ├── pluginhandler.py
-  * │   ├── postprocessing   <-- postprocessing plugin folder
+  * │   ├── postprocessor   <-- postprocessor plugin folder
     │   │   ├── composer
     │   │   │   ├── composer.py
     │   │   │   ├── composer.yapsy-plugin
@@ -80,7 +80,7 @@ Currently the plugin system is based on yapsy, so you will need to define a
 *.yapsy-plugin*-file according to the yapsy plugin convention.
 
 In the following snippet, you see examplar the converter dictionary. No matter
-if a content provider, output converter or postprocessing plugin the structure
+if a content provider, output converter or postprocessor plugin the structure
 is analogue to the following converter example:
 
 .. code-block:: sh
@@ -97,7 +97,7 @@ is analogue to the following converter example:
 
 The plugin itself is located in a folder with a __init__.py to make it act as a
 module. The plugin itself in this case is the json.py file, in this case this is
-a class inheriting from the postprocessing interface implementing the needed
+a class inheriting from the postprocessor interface implementing the needed
 methods. The *.yapsy-plugin* file is a description file that should name and
 describe the plugin precisely.
 
@@ -438,16 +438,16 @@ The parse reponse method
 .. automethod:: hugin.harvest.provider.IProvider.parse_response
 
 
-.. _postprocessingapi:
+.. _postprocessorapi:
 
 ##################################
-Developing a postprocessing plugin
+Developing a postprocessor plugin
 ##################################
 
-All postprocessing plugins have to inherit from :class:`IPostprocessing` and
+All postprocessor plugins have to inherit from :class:`IPostprocessor` and
 implement the following method:
 
-.. automethod:: hugin.harvest.provider.IPostprocessing.process
+.. automethod:: hugin.harvest.provider.IPostprocessor.process
 
 
 .. _outputconverterapi:

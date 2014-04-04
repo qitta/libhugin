@@ -24,7 +24,7 @@ To get help, just use the *-h* parameter as usaual.
       gylfie (-n <name>) [--items <num>] [-p <providers>...] [-c <converter>] [-o <path>]
       gylfie list-provider
       gylfie list-converter
-      gylfie list-postprocessing
+      gylfie list-postprocessor
       gylfie -h | --help
       gylfie --version
 
@@ -201,7 +201,7 @@ Searching for a person
 
 .. note::
 
-    Currently the postprocessing composer plugin is limited to movies only.
+    Currently the postprocessor composer plugin is limited to movies only.
     There is also no imdbid person search, as this is not supported by the used
     webservices.
 
@@ -233,7 +233,7 @@ Searching for the person *Emma Stone*:
     Biography: None found.
 
 
-Using postprocessing plugins
+Using postprocessor plugins
 ============================
 
 Composing your own movie results
@@ -242,7 +242,7 @@ Composing your own movie results
 A result delivered by a specific provider might not always be what you want.
 There might be missing some attributes or maybe you just want to get your
 default metadata from provider TMDBmovie, but your plot always from the
-OFDBmovie provider. This is the point where the postprocessing plugins comes
+OFDBmovie provider. This is the point where the postprocessor plugins comes
 into play.
 
 
@@ -322,7 +322,7 @@ according to that list will be copied to be the composer result base. Besides
 the default key you can specify movie attribute keys with a list of providers as
 value. Those attributes will be filled in according to the same schema.
 
-Creating a simple user profile for the composer postprocessing plugin:
+Creating a simple user profile for the composer postprocessor plugin:
 
 .. code-block:: sh
 

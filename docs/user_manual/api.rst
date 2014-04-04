@@ -20,10 +20,10 @@ To *communicate* with libhugin you will need to create a :class:`Session` first.
 .. autoclass:: Session
 
 
-Provider-, Postprocessing- and Converter plugins
+Provider-, Postprocessor- and Converter plugins
 ------------------------------------------------
 
-This session methods :meth:`provider_plugins`, :meth:`postprocessing_plugins` and
+This session methods :meth:`provider_plugins`, :meth:`postprocessor_plugins` and
 :meth:`converter_plugins` can be use in the same way to get the plugins name or description.
 You can to it just by iterating over the provider returned list.
 
@@ -57,7 +57,7 @@ Output:
    Default omdb movie metadata provider.
 
 .. automethod:: hugin.harvest.session.Session.provider_plugins
-.. automethod:: hugin.harvest.session.Session.postprocessing_plugins
+.. automethod:: hugin.harvest.session.Session.postprocessor_plugins
 .. automethod:: hugin.harvest.session.Session.converter_plugins
 
 
