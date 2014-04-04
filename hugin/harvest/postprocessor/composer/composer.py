@@ -34,7 +34,7 @@ class Composer(provider.IPostprocessor):
             'trailers', 'actors', 'keywords', 'tagline', 'outline'
         ]
 
-    def process(self, results, profile=None):
+    def process(self, results, profile=None, merge_genre=True):
         """
         Merge results to fill gaps or create results defined by profile.
 
@@ -58,7 +58,8 @@ class Composer(provider.IPostprocessor):
             normalized_multi_genre = self._create_multi_provider_genre(
                 results, 'genre_norm'
             )
-            new_result._result_dict['genre_norm'] = normalized_multi_genre
+            if merge_genre:
+                new_result._result_dict['genre_norm'] = normalized_multi_genre
             custom_results.append(new_result)
         return custom_results
 
@@ -261,3 +262,9 @@ class Composer(provider.IPostprocessor):
             else:
                 return math.sqrt(1 - diff)
         return 0.0
+
+    def parameters(self):
+        return {
+            'profile': dict,
+            'merge_genre': bool
+        }

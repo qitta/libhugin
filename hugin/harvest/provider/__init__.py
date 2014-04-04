@@ -266,6 +266,9 @@ class IConverter(IPlugin):
             name=self.name, description=self.description
         )
 
+    def parameters(self):
+        return {}
+
 
 #  postprocessor plugins
 class IPostprocessor(IPlugin):
@@ -288,3 +291,6 @@ class IPostprocessor(IPlugin):
         return '{name} <{description}>'.format(
             name=self.name, description=self.description
         )
+
+    def parameters(self):
+        return {}
