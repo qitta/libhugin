@@ -1,0 +1,5 @@
+{num}) {title} ({year}), IMDBid: {imdbid}, Provider: {provider} 
+Genre: {genre}
+Genre normalisiert: {genre_norm} 
+
+Inhalt: {plot}

@@ -68,7 +68,7 @@ if __name__ == '__main__':
         metadata = data_import(path)
         for nfofile in metadata:
             s.add(nfofile, attr_import_func)
-        s.database_shutdown()
+        s.database_close()
 
     if args['export']:
         s = Session(args['<database>'], attr_mask=MASK)
@@ -93,7 +93,7 @@ if __name__ == '__main__':
                 print('{}) {}'.format(num, movie))
                 pprint.pprint(movie.attributes)
                 print("")
-        s.database_shutdown()
+        s.database_close()
 
     if any([args['analyze'], args['modify']]):
         s = Session(args['<database>'], attr_mask=MASK)
@@ -105,7 +105,7 @@ if __name__ == '__main__':
             elif args['modify']:
                 plugin = s.modifier_plugins(args['<plugin>'])
                 plugin.modify(movie, **cluster_kwargs(args, plugin))
-        s.database_shutdown()
+        s.database_close()
 
     if any([args['list-modifier'], args['list-analyzer']]):
         session = Session('/tmp/temp')
