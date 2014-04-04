@@ -98,6 +98,6 @@ class Session:
         except FileNotFoundError as e:
             return OrderedDict()
 
-    def database_shutdown(self):
+    def database_close(self):
         with open(self._dbname, 'wb') as f:
             pickle.dump(self._database, f)

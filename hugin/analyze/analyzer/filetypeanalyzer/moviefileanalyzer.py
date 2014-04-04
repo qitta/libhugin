@@ -35,11 +35,9 @@ class MovieFileAnalyzer(plugin.IAnalyzer):
         for movie in db.values():
             self.process(movie)
 
-
 ##############################################################################
 # -------------------------- helper functions --------------------------------
 ##############################################################################
-
     def _get_movie_files(self, path, threshold=MOVIE_FILESIZE):
         movie_files = []
         files = [os.path.join(path, item) for item in os.listdir(path)]
@@ -62,6 +60,10 @@ class MovieFileAnalyzer(plugin.IAnalyzer):
 
         meta_grouped = {'audio': [], 'video': [], 'subtitle': []}
         for key, valuedict in attrs.items():
+
+            # HUH?? ÄÄÄÄRRÄÄÄÄY? warum nicht
+            # meta_grouped[key].append(valuedict)? -> FORSCHUNG!
+
             if 'audio' in key:
                 meta_grouped['audio'].append(valuedict)
             if 'video' in key:
