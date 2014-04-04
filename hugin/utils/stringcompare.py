@@ -17,10 +17,12 @@ def string_similarity_ratio(s1, s2):
     same string).
 
     """
-    s1 = _clean_movie_title(s1)
-    s2 = _clean_movie_title(s2)
     if s1 and s2:
-        return difflib.SequenceMatcher(None, s1, s2).ratio()
+        return difflib.SequenceMatcher(
+            None,
+            _clean_movie_title(s1),
+            _clean_movie_title(s2)
+        ).ratio()
 
 
 def _clean_movie_title(title):
