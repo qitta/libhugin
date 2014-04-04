@@ -8,7 +8,7 @@ import json
 import hugin.harvest.provider as provider
 
 
-class Json(provider.IOutputConverter):
+class Json(provider.IConverter):
 
     def __init__(self):
         self.file_ext = '.json'

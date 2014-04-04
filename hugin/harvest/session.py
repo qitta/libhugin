@@ -104,7 +104,7 @@ class Session:
 
         self._plugin_handler = PluginHandler()
         self._plugin_handler.activate_plugins_by_category('Provider')
-        self._plugin_handler.activate_plugins_by_category('OutputConverter')
+        self._plugin_handler.activate_plugins_by_category('Converter')
         self._plugin_handler.activate_plugins_by_category('Postprocessor')
         self._provider = self._plugin_handler.get_plugins_from_category(
             'Provider'
@@ -113,7 +113,7 @@ class Session:
             'Postprocessor'
         )
         self._converter = self._plugin_handler.get_plugins_from_category(
-            'OutputConverter'
+            'Converter'
         )
         self._cache = Cache()
         self._cache.open(path=self._config['cache_path'])

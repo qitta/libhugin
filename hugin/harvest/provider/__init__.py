@@ -8,7 +8,7 @@ postprocessor plugins.
 from yapsy.IPlugin import IPlugin
 
 __all__ = ['IMovieProvider', 'IPersonProvider', 'IPictureProvider',
-           'IOutputConverter', 'IPostprocessor', 'IProvider']
+           'IConverter', 'IPostprocessor', 'IProvider']
 
 MOVIE_ATTR_MASK = [
     'title', 'original_title', 'plot', 'runtime', 'imdbid', 'vote_count',
@@ -245,12 +245,12 @@ class IPersonPictureProvider(IProvider):
 
 
 # converter plugins
-class IOutputConverter(IPlugin):
+class IConverter(IPlugin):
 
     """ A base class for output converter plugins.  """
     def __init__(self):
-        self.name = 'IOutputConverter name placeholder'
-        self.description = 'IOutputConverter description placeholder'
+        self.name = 'IConverter name placeholder'
+        self.description = 'IConverter description placeholder'
 
     def convert(self, result):
         """ Convert a single result object.
@@ -272,8 +272,8 @@ class IPostprocessor(IPlugin):
 
     """ A base class postprocessor plugins.  """
     def __init__(self):
-        self.name = 'IOutputConverter name placeholder'
-        self.description = 'IOutputConverter description placeholder'
+        self.name = 'IConverter name placeholder'
+        self.description = 'IConverter description placeholder'
 
     def process(self, result):
         """ Convert a single result object.

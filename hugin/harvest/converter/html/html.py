@@ -9,7 +9,7 @@ import hugin.harvest.provider as provider
 from hugin.harvest.provider.result import Result
 
 
-class Html(provider.IOutputConverter):
+class Html(provider.IConverter):
 
     def __init__(self):
         self._templateLoader = FileSystemLoader('hugin/harvest/converter/html')

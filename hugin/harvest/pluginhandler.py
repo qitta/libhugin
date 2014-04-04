@@ -7,7 +7,7 @@
 from yapsy.PluginManager import PluginManager
 
 # hugin
-from hugin.harvest.provider import IOutputConverter, IPostprocessor
+from hugin.harvest.provider import IConverter, IPostprocessor
 from hugin.harvest.provider import IMovieProvider, IPersonProvider, IProvider
 
 
@@ -22,19 +22,19 @@ class PluginHandler:
         get_plugins_from_category
         is_activated
 
-    Categories are Provider, OutputConverter and Postprocessor.
+    Categories are Provider, Converter and Postprocessor.
 
     """
     def __init__(self):
         self._plugin_manager = PluginManager()
         self._category_active = {
             'Provider': False,
-            'OutputConverter': False,
+            'Converter': False,
             'Postprocessor': False
         }
         self._plugin_from_category = {
             'Provider': [],
-            'OutputConverter': [],
+            'Converter': [],
             'Postprocessor': []
         }
         self._provider_plugins = []
@@ -61,7 +61,7 @@ class PluginHandler:
             'Person': IPersonProvider,
 
             # output converter
-            'OutputConverter': IOutputConverter,
+            'Converter': IConverter,
 
             # postprocessor filter
             'Postprocessor': IPostprocessor

@@ -8,7 +8,7 @@ import hugin.harvest.provider as provider
 # nfo specs taken from http://wiki.xbmc.org/index.php?title=NFO_files/movies
 
 
-class Nfo(provider.IOutputConverter):
+class Nfo(provider.IConverter):
 
     def __init__(self):
         self._base = self._open_template(
