@@ -63,7 +63,7 @@ def get_movie(num):
 
 @app.route('/stats')
 def stats():
-    response = 'Postprocessing enabled: {}\nResults in queue: {}'.format(
+    response = 'Postprocessor enabled: {}\nResults in queue: {}'.format(
         POSTPROCESSING,
         len(CACHE)
     )
@@ -77,7 +77,7 @@ def toggle_pp():
         POSTPROCESSING = not POSTPROCESSING
     except Exception as e:
         print(e)
-    return 'Postprocessing enabled: {}'.format(POSTPROCESSING)
+    return 'Postprocessor enabled: {}'.format(POSTPROCESSING)
 
 
 @app.route('/shutdown')

@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-""" Postprocessing module to create a custom result out of found results. """
+""" Postprocessor module to create a custom result out of found results. """
 
 # hugin
 import hugin.harvest.provider as provider
 from hugin.harvest.provider.result import Result
 
 
-class ResultDictTrimmer(provider.IPostprocessing):
+class ResultDictTrimmer(provider.IPostprocessor):
 
     def __init__(self):
         self._strattrs = set([

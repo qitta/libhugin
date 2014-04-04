@@ -8,7 +8,7 @@ postprocessing plugins.
 from yapsy.IPlugin import IPlugin
 
 __all__ = ['IMovieProvider', 'IPersonProvider', 'IPictureProvider',
-           'IOutputConverter', 'IPostprocessing', 'IProvider']
+           'IOutputConverter', 'IPostprocessor', 'IProvider']
 
 MOVIE_ATTR_MASK = [
     'title', 'original_title', 'plot', 'runtime', 'imdbid', 'vote_count',
@@ -268,7 +268,7 @@ class IOutputConverter(IPlugin):
 
 
 #  postprocessing plugins
-class IPostprocessing(IPlugin):
+class IPostprocessor(IPlugin):
 
     """ A base class postprocessing plugins.  """
     def __init__(self):

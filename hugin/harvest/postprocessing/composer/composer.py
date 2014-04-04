@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-""" Postprocessing module to create a custom result out of found results. """
+""" Postprocessor module to create a custom result out of found results. """
 
 # stdlib
 from collections import defaultdict
@@ -14,7 +14,7 @@ from hugin.harvest.provider.result import Result
 import hugin.harvest.provider as provider
 
 
-class Composer(provider.IPostprocessing):
+class Composer(provider.IPostprocessor):
     """Create a custom result.
 
     .. autosummary::
