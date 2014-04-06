@@ -21,7 +21,6 @@ httplib2
 #: requests
 requests
 
-#: jinja2
 jinja2
 
 #: docopt
