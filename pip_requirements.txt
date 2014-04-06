@@ -21,21 +21,29 @@ httplib2
 #: requests
 requests
 
+#: jinja2
 jinja2
 
+#: docopt
 docopt
 
+#: flask
 Flask
 
-https://bitbucket.org/spirit/guess_language/downloads/guess_language-spirit-0.5a4.tar.bz2
+#: guess_language
+guess_language-spirit>=0.5a4
 
+#: Stemmer
 PyStemmer
 
+#: pyxdameraulevenshtein
 pyxDamerauLevenshtein
 
+#: yaml
 Pyaml
 
 #: beautifulsoup4
 beautifulsoup4
 
+#: xmltodict
 xmltodict
