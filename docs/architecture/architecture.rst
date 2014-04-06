@@ -11,7 +11,7 @@ parts are modular and may be extended by plugins.
 .. _harvest:
 
 libhugin harvest
-=============
+================
 
 
 The libhugin harvest part is responsible for fetching movie and person metadata
