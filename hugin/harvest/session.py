@@ -17,6 +17,7 @@ import queue
 import copy
 import requests
 import re
+import uuid
 
 # hugin
 from hugin.utils.stringcompare import string_similarity_ratio
@@ -31,7 +32,7 @@ from hugin.harvest.query import Query
 class Session:
 
     def __init__(
-        self, cache_path='/tmp', parallel_jobs=1, parallel_downloads_per_job=8,
+        self, cache_path=None, parallel_jobs=1, parallel_downloads_per_job=8,
         timeout_sec=5, user_agent='libhugin/1.0'
     ):
         """
@@ -92,6 +93,10 @@ class Session:
 
         """
         signal.signal(signal.SIGINT, self._signal_handler)
+
+        if cache_path is None:
+            cache_path = '/tmp/{uuid}'.format(uuid=str(uuid.uuid4()))
+
         self._config = {
             'cache_path': cache_path,
             # limit parallel jobs to 4, there is no reason for a huge number of
