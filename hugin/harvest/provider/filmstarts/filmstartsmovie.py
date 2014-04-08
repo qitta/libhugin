@@ -11,8 +11,8 @@ from hugin.utils.stringcompare import string_similarity_ratio
 import hugin.harvest.provider as provider
 
 
-class FILMSTARSMovie(provider.IMovieProvider):
-    """ FILMSTARS Movie text metadata provider.
+class FILMSTARTSMovie(provider.IMovieProvider):
+    """ FILMSTARTS Movie text metadata provider.
 
     Interfaces implemented according to hugin.provider.interfaces.
 
@@ -63,7 +63,7 @@ class FILMSTARSMovie(provider.IMovieProvider):
                     if html and 'castcrew' in url:
                         responses['crew'] = BeautifulSoup(html)
                 except (TypeError, ValueError) as e:
-                    print('Exception in _identify_response filmstars.', e)
+                    print('Exception in _identify_response filmstarts.', e)
         return responses
 
     def _parse_search_module(self, result, search_params):
@@ -82,7 +82,7 @@ class FILMSTARSMovie(provider.IMovieProvider):
                             {'title': title, 'ratio': ratio, 'url': url}
                         )
             except AttributeError as e:
-                print('AttributeError in _parse_search_module, filmstars.', e)
+                print('AttributeError in _parse_search_module, filmstarts.', e)
                 return None
 
         similarity_map.sort(key=lambda value: value['ratio'], reverse=True)
@@ -129,7 +129,7 @@ class FILMSTARSMovie(provider.IMovieProvider):
                 year, *_ = yearstring.groups()
                 return int(year)
         except Exception as e:
-            print('Exception in _parse_year filmstars.', e)
+            print('Exception in _parse_year filmstarts.', e)
 
     def _parse_plot(self, response):
         plot = response.find(itemprop="description")
@@ -141,7 +141,7 @@ class FILMSTARSMovie(provider.IMovieProvider):
             poster_div = response.find("div", {"class": "poster"})
             return [(None, poster_div.find("img").get("src"))]
         except Exception as e:
-            print('Unhandeled exception in filmstars _parse_poster.', e)
+            print('Unhandeled exception in filmstarts _parse_poster.', e)
 
     def _parse_genre(self, response):
         genres = []
