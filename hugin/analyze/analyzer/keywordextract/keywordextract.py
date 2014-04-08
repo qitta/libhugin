@@ -6,7 +6,7 @@ import hugin.analyze as plugin
 from hugin.analyze.rake import extract_keywords
 
 
-class KeywordExtractor(plugin.IAnalyzer):
+class KeywordExtract(plugin.IAnalyzer):
 
     def analyze(self, movie, score_threshold=1.0, attr_name='plot'):
         if movie.attributes.get(attr_name):

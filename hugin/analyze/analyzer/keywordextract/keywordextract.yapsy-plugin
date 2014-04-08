@@ -1,6 +1,6 @@
 [Core]
-Name = KeywordExtractor
-Module = keywordextractor
+Name = KeywordExtract
+Module = keywordextract
 
 [Documentation]
 Description = Extracts significant keywords from plot using the rake (rapid automatic keyword extraction) algorithm.
