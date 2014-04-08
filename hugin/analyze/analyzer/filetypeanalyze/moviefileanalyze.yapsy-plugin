@@ -1,6 +1,6 @@
 [Core]
-Name = MovieFileAnalyzer
-Module = moviefileanalyzer
+Name = MovieFileAnalyze
+Module = moviefileanalyze
 
 [Documentation]
 Description = Analayze movie files, extract video or audio information.

@@ -17,7 +17,7 @@ import hugin.analyze as plugin
 MOVIE_FILESIZE = (1 * 1024 ** 2)
 
 
-class MovieFileAnalyzer(plugin.IAnalyzer):
+class MovieFileAnalyze(plugin.IAnalyzer):
 
     def analyze(self, movie):
         movie_metadata = []
