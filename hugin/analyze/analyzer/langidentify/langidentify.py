@@ -7,7 +7,7 @@ from guess_language import guess_language
 import hugin.analyze as plugin
 
 
-class PlotLangIdentify(plugin.IAnalyzer):
+class LangIdentify(plugin.IAnalyzer):
 
     def analyze(self, movie, attr_name='plot'):
         lang = str(guess_language(movie.attributes.get(attr_name) or ''))

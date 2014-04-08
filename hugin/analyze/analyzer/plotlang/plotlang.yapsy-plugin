@@ -1,9 +1,0 @@
-[Core]
-Name = PlotLang
-Module = plotlang
-
-[Documentation]
-Description = Analyzes the language of a given plot.
-Author = Christoph Piechula
-Version = 1.0
-Website = n/a

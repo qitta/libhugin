@@ -1,0 +1,9 @@
+[Core]
+Name = LangIdentify
+Module = langidentify
+
+[Documentation]
+Description = Analyzes the language of a given text.
+Author = Christoph Piechula
+Version = 1.0
+Website = n/a
