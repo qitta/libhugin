@@ -201,7 +201,7 @@ Searching for a person
 
 .. note::
 
-    Currently the postprocessor composer plugin is limited to movies only.
+    Currently the postprocessor compose plugin is limited to movies only.
     There is also no imdbid person search, as this is not supported by the used
     webservices.
 
@@ -249,15 +249,15 @@ into play.
 Automatic result composing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Currently there is a Composer provider, which allows you to compose your result
+Currently there is a Compose provider, which allows you to compose your result
 by your own needs.
 
-The auto fill mode of the composer plugin is triggered if there is no user
+The auto fill mode of the compose plugin is triggered if there is no user
 specified profile file given:
 
 .. code-block:: sh
 
-    $  gylfie -i tt1937390 -r composer
+    $  gylfie -i tt1937390 -r compose
 
     Provider: OMDBMovie <movie>
 
@@ -282,7 +282,7 @@ specified profile file given:
     Genre       : ['Drama', 'Erotik', 'Sex']
 
 
-    Provider: Composer
+    Provider: Compose
 
     Title       : Nymphomaniac (2013), imdbid: tt1937390, raiting: None
     Plot        : A self-diagnosed nymphomaniac recounts her erotic experiences [...]
@@ -290,25 +290,25 @@ specified profile file given:
     Genre       : ['Drama']
 
 
-The automatic mode of the composer creates the composer result according  to the
+The automatic mode of the compose creates the compose result according  to the
 provider priority. Currently the priority is a constant value.
 
     * TMDBmovie priority = 90
     * OMDBmovie priority = 80
     * OFDBmovie priority = 70
 
-The provider with the highest priority fills in the composer result first. As
+The provider with the highest priority fills in the compose result first. As
 you see in this case, there is missing the plot metadata attribute of the
 tmdbmovie provider. This gets automatically filled in by the next available plot
 from a lower priority provider. To fill all metadata found in the current query,
-the composer fills in the missing tmdbmovie gap with the plot of the omdbmovie
+the compose fills in the missing tmdbmovie gap with the plot of the omdbmovie
 provider data.
 
 
 User specified result composing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Another feature is to tell the composer how to fill in the composer result. This
+Another feature is to tell the compose how to fill in the compose result. This
 can be achieved by using a userprofile file formatted according to a python
 dictionary.
 
@@ -318,11 +318,11 @@ User profiles
 
 A user profile is formatted like a python dictionary. It has a *default* key,
 which specifies a list with movie providers. The first available provider result
-according to that list will be copied to be the composer result base. Besides
+according to that list will be copied to be the compose result base. Besides
 the default key you can specify movie attribute keys with a list of providers as
 value. Those attributes will be filled in according to the same schema.
 
-Creating a simple user profile for the composer postprocessor plugin:
+Creating a simple user profile for the compose postprocessor plugin:
 
 .. code-block:: sh
 
@@ -336,7 +336,7 @@ omdbmovie provider result attribute. If there is no tmdbmovie provider result,
 the ofdbmovie provider result is copied. If the ofdbmovie plot attribute is
 empty, the omdbmovie attribute will be filled in.
 
-If there is no default provider available, no composer result will be created.
+If there is no default provider available, no compose result will be created.
 If the plot of the ofdbmovie and omdbmovie provider is missing, the plot
 attribute will remain unchanged.
 
@@ -344,7 +344,7 @@ Now let's run the query with our beautiful profile:
 
 .. code-block:: sh
 
-    $ gylfie -i tt0780504 -r composer -f userprofile
+    $ gylfie -i tt0780504 -r compose -f userprofile
 
     Provider: TMDBMovie <picture, movie>
 
@@ -370,7 +370,7 @@ Now let's run the query with our beautiful profile:
     Genre       : ['Action', 'Drama', 'Thriller']
 
 
-    Provider: Composer
+    Provider: Compose
 
     Title       : Drive (2011), imdbid: tt0780504, raiting: 6.6
     Plot        : „Ich fahre.“ So beantwortet der „Driver“ (Ryan Gosling) die [...]

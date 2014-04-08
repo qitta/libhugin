@@ -75,7 +75,7 @@ in a way specified by the user. Postprocessor plugins usually operate on result 
 
 There are currently some simple postprocessor plugins available:
 
-    * Resulttrimmer
+    * Trim
     * Customprovider
 
 You may also want to write your own postprocessor plugin, see:

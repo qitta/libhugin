@@ -40,11 +40,11 @@ libhuin project structure
     │   ├── __init__.py
     │   ├── pluginhandler.py
   * │   ├── postprocessor   <-- postprocessor plugin folder
-    │   │   ├── composer
-    │   │   │   ├── composer.py
-    │   │   │   ├── composer.yapsy-plugin
+    │   │   ├── compose
+    │   │   │   ├── compose.py
+    │   │   │   ├── compose.yapsy-plugin
     │   │   │   └── __init__.py
-    │   │   └── resultdicttrimmer
+    │   │   └── trim
     │   │       └── [...]
   * │   ├── provider    <-- provider plugin folder
   * │   │   ├── genrefiles <-- provider subfolder with genre norm data
