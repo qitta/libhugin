@@ -8,7 +8,7 @@ import hugin.harvest.provider as provider
 from hugin.harvest.provider.result import Result
 
 
-class ResultDictTrimmer(provider.IPostprocessor):
+class Trim(provider.IPostprocessor):
 
     def __init__(self):
         self._strattrs = set([
@@ -78,7 +78,7 @@ class ResultDictTrimmer(provider.IPostprocessor):
         pass
 
 if __name__ == '__main__':
-    rdt = ResultDictTrimmer()
+    rdt = Trim()
     rd = {
         'title': '    katzen   ',  # str testattr
         'rating': None,  # str testattr

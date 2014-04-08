@@ -1,9 +1,0 @@
-[Core]
-Name = Composer
-Module = composer
-
-[Documentation]
-Description = Postprocessing plugin to generate a custom user defined result.
-Author = Christoph Piechula
-Version = 1.0
-Website = n/a

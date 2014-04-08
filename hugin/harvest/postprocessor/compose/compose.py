@@ -14,7 +14,7 @@ from hugin.harvest.provider.result import Result
 import hugin.harvest.provider as provider
 
 
-class Composer(provider.IPostprocessor):
+class Compose(provider.IPostprocessor):
     """Create a custom result.
 
     .. autosummary::
@@ -79,7 +79,7 @@ class Composer(provider.IPostprocessor):
                     multi_provider_genre.add(genre_list)
         return multi_provider_genre
 
-    def _create_result_copy(self, result, provider_name='Composer'):
+    def _create_result_copy(self, result, provider_name='Compose'):
         """
         Create a new result object.
 

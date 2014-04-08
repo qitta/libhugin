@@ -1,0 +1,9 @@
+[Core]
+Name = Compose
+Module = compose
+
+[Documentation]
+Description = Postprocessor plugin to generate a custom user defined result.
+Author = Christoph Piechula
+Version = 1.0
+Website = n/a
