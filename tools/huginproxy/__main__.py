@@ -114,9 +114,9 @@ def _build_search_results(results):
 
 def postprocess(result):
     """ Postprocess example. """
-    plotcleaner = ANALYZER.modifier_plugins('plotclean')
+    bracketclean = ANALYZER.modifier_plugins('bracketclean')
     result._result_dict['plot'] = ANALYZER.modify_raw(
-        plotcleaner, 'plot', result._result_dict['plot']
+        bracketclean, 'plot', result._result_dict['plot']
     )
 
 
