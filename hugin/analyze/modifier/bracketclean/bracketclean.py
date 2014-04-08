@@ -6,7 +6,7 @@ import hugin.analyze as plugin
 import re
 
 
-class PlotCleaner(plugin.IModifier):
+class BracketClean(plugin.IModifier):
 
     def modify(self, movie, attr_name='plot'):
         plot = movie.attributes.get(attr_name)

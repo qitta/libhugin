@@ -1,0 +1,9 @@
+[Core]
+Name = BracketClean
+Module = bracketclean
+
+[Documentation]
+Description = Removes brackets e.g. brakets with actor name from text.
+Author = Christoph Piechula
+Version = 1.0
+Website = n/a
