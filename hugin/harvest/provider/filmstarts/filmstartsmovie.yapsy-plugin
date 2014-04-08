@@ -1,6 +1,6 @@
 [Core]
 Name = FILMSTATRSMovie
-Module = filmstarsmovie
+Module = filmstartsmovie
 
 [Documentation]
 Description = Default filmstarts movie metadata provider.
