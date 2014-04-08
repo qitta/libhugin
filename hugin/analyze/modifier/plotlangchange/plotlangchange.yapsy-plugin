@@ -1,6 +1,6 @@
 [Core]
-Name = PlotChange
-Module = plotchange
+Name = PlotLangChange
+Module = plotlangchange
 
 [Documentation]
 Description = Allows to exchange plot to given language.

@@ -6,7 +6,7 @@ import hugin.analyze as plugin
 from hugin.harvest.session import Session
 
 
-class PlotChange(plugin.IModifier):
+class PlotLangChange(plugin.IModifier):
 
     def __init__(self):
         self._session = Session()
