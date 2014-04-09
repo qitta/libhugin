@@ -61,8 +61,8 @@ def get_movie(num):
     return Response('Cache is empty.', mimetype='text')
 
 
-@app.route('/stats')
-def stats():
+@app.route('/info')
+def info():
     response = 'Postprocessor enabled: {}\nResults in queue: {}'.format(
         POSTPROCESSING,
         len(CACHE)
