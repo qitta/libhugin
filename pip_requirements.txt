@@ -41,8 +41,6 @@ pyxDamerauLevenshtein
 #: yaml
 Pyaml
 
-#: beautifulsoup4
 beautifulsoup4
 
-#: xmltodict
 xmltodict
