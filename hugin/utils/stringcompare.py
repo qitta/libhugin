@@ -4,6 +4,7 @@
 """ String compare utils. """
 
 import difflib
+from pyxdameraulevenshtein import normalized_damerau_levenshtein_distance
 
 
 def string_similarity_ratio(s1, s2):
@@ -18,11 +19,10 @@ def string_similarity_ratio(s1, s2):
 
     """
     if s1 and s2:
-        return difflib.SequenceMatcher(
-            None,
+        return 1 - normalized_damerau_levenshtein_distance(
             _clean_movie_title(s1),
             _clean_movie_title(s2)
-        ).ratio()
+        )
 
 
 def _clean_movie_title(title):
