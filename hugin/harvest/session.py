@@ -588,8 +588,8 @@ class Session:
 
     def _imdbid_title_lookup(self, query):
         if query['imdbid']:
-            fmt = 'http://www.google.com/search?&q={id}+imdb&btnI=745'
-            url = requests.get(fmt.format(id=query['imdbid']))
+            fmt = 'http://www.imdb.com/title/{imdb_id}'
+            url = requests.get(fmt.format(imdb_id=query['imdbid']))
             if not 'google' in url.url:
                 title, year = re.search(
                     '\>(.+?)\s*\((\d{4})', url.text

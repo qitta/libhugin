@@ -40,7 +40,7 @@ class DownloadQueue:
         :param local_cache: A local cache for lookup before download.
 
         """
-        self._num_threads = min(num_threads, 10)
+        self._num_threads = min(num_threads, 20)
         self._headers = {
             'User-Agent': user_agent,
             'Connection': 'close',
@@ -108,7 +108,7 @@ class DownloadQueue:
 
         with self._url_to_job_lock:
             job = self._url_to_job.pop(id(urls))
-        job = self._fill_job_response(job, response_list)
+            job = self._fill_job_response(job, response_list)
         self._job_result_queue.put(job)
 
     def _fill_job_response(self, job, response_list):
